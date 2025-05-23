@@ -1,0 +1,14 @@
+.custom-toast {
+    min-height: 40px !important;
+    width: 250px !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    background: #fdfdfd !important;
+    color: #333 !important;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+  }
+  

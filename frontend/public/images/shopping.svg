@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <!-- Background Pattern -->
+  <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+    <circle cx="2" cy="2" r="1" fill="#FEE2E2"/>
+  </pattern>
+  <rect width="800" height="600" fill="url(#dots)"/>
+
+  <!-- Shopping Bag -->
+  <path d="M300 200 L500 200 L550 500 L250 500 Z" fill="#FECDD3" stroke="#FB7185" stroke-width="4"/>
+  <path d="M320 150 C320 100 480 100 480 150" stroke="#FB7185" stroke-width="8" fill="none"/>
+
+  <!-- Dress -->
+  <path d="M380 250 Q400 270 420 250 L440 450 L360 450 Z" fill="#FDA4AF" stroke="#F43F5E" stroke-width="2"/>
+  
+  <!-- Shopping Tags -->
+  <g transform="translate(450,300) rotate(15)">
+    <rect x="0" y="0" width="60" height="40" rx="5" fill="#FFF1F2" stroke="#FB7185" stroke-width="2"/>
+    <text x="30" y="25" font-family="Arial" font-size="12" fill="#E11D48" text-anchor="middle">SALE</text>
+  </g>
+
+  <!-- Decorative Elements -->
+  <circle cx="350" cy="350" r="15" fill="#FFF1F2" stroke="#FB7185" stroke-width="2"/>
+  <circle cx="450" cy="380" r="10" fill="#FFF1F2" stroke="#FB7185" stroke-width="2"/>
+  
+  <!-- Stars -->
+  <path d="M280 280 L290 290 L300 280 L290 270 Z" fill="#F43F5E"/>
+  <path d="M480 320 L490 330 L500 320 L490 310 Z" fill="#F43F5E"/>
+  <path d="M380 420 L390 430 L400 420 L390 410 Z" fill="#F43F5E"/>
+</svg>
