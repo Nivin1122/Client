@@ -77,22 +77,31 @@ const Cart = () => {
 
   const confirmRemoveItem = () => {
     if (!itemToDelete) return;
-    dispatch(removeFromCart({
-      productId: itemToDelete.product._id,
-      variantId: itemToDelete.variant._id,
-      sizeVariantId: itemToDelete.sizeVariant._id,
-    }))
-    .then(() => toast.success("Item removed from cart successfully"))
-    .catch((error) =>
-      toast.error(error || "Failed to remove item from cart")
-    );
+
+    dispatch(
+      removeFromCart({
+        productId: itemToDelete.product._id,
+        variantId: itemToDelete.variant._id,
+        sizeVariantId: itemToDelete.sizeVariant._id,
+      })
+    )
+      .then(() => {
+        toast.success("Item removed from cart successfully");
+        setShowModal(false);
+        setItemToDelete(null);
+      })
+      .catch((error) => {
+        toast.error(error?.message || "Failed to remove item from cart");
+      });
   };
 
   return (
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl">
-        <h1 className="text-3xl font-serif text-center mb-10">Your Cart</h1>
+        <h1 className="text-3xl font-serif text-center mt-10 mb-10">
+          Your Cart
+        </h1>
 
         {loading && <p className="text-center">Loading...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
@@ -101,7 +110,7 @@ const Cart = () => {
         )}
 
         {cartItems.length > 0 && (
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="overflow-x-auto -mx-4 p-5 sm:mx-0">
             <table className="w-full text-sm hidden md:table">
               <thead>
                 <tr className="border-b text-gray-600">
@@ -128,7 +137,9 @@ const Cart = () => {
                           }
                         />
                         <div>
-                          <h3 className="font-medium">{item.product.name}</h3>
+                          <h3 className="font-medium w-80 overflow-hidden h-10">
+                            {item.product.name}
+                          </h3>
                           <p className="text-xs text-gray-500 mt-1">
                             Stock:{" "}
                             <span className="text-green-600">
@@ -137,7 +148,7 @@ const Cart = () => {
                           </p>
                           <button
                             onClick={() => handleRemoveClick(item)}
-                            className="text-red-500 text-xs mt-2 hover:underline"
+                            className="w-100 mt-2 px-4 py-1 border border-red-500 text-red-500 text-sm rounded-md hover:bg-red-500 hover:text-white transition duration-200 text-center"
                           >
                             Remove
                           </button>
@@ -300,7 +311,7 @@ const Cart = () => {
                     </div>
 
                     <button
-                      onClick={() => removeItem(item)}
+                      onClick={() => handleRemoveClick(item)}
                       className="text-red-500 text-sm hover:underline w-full text-center mt-2"
                     >
                       Remove
@@ -334,18 +345,21 @@ const Cart = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:justify-end">
-                <button
-                  onClick={() => navigate("/checkout")}
-                  className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 w-full sm:w-auto"
-                >
-                  CHECKOUT
-                </button>
-                <Link
-                  to="/products"
-                  className="text-sm text-red-500 hover:text-red-600 text-center"
-                >
-                  Continue Shopping
-                </Link>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
+                  <button
+                    onClick={() => navigate("/checkout")}
+                    className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition duration-200 w-full sm:w-auto text-center"
+                  >
+                    CHECKOUT
+                  </button>
+
+                  <Link
+                    to="/products"
+                    className="inline-block border border-red-500 text-red-500 px-6 py-3 rounded-md hover:bg-red-500 hover:text-white transition duration-200 w-full sm:w-auto text-center"
+                  >
+                    Continue Shopping
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

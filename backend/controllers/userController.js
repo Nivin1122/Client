@@ -24,7 +24,10 @@ const transporter = nodemailer.createTransport({
 
 const registerUser = asyncHandler(async (req, res) => {
   try {
-    const { username, email, password, confirmPassword, referralCode } = req.body;
+    const { username, email, password, confirmPassword } = req.body;
+    console.log("Email:", email)
+
+
 
     console.log("Body: ", req.body);
 
@@ -157,24 +160,24 @@ const getUserProfile = asyncHandler(async (req, res) => {
 
     const user = await User.findById(userId)
       .select("-password")
-      .populate({
-        path: 'referredBy',
-        select: 'username'
-      });
+      // .populate({
+      //   path: 'referredBy',
+      //   select: 'username'
+      // });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Get wallet details
-    const wallet = await Wallet.findOne({ userId });
-    const referralTransactions = wallet?.transactions.filter(t => t.description.includes('referral'));
+    // const wallet = await Wallet.findOne({ userId });
+    // const referralTransactions = wallet?.transactions.filter(t => t.description.includes('referral'));
 
     res.status(200).json({
       message: "User profile fetched successfully",
       user: {
         ...user.toObject(),
-        referralEarnings: referralTransactions?.reduce((sum, t) => sum + t.amount, 0) || 0
+        // referralEarnings: referralTransactions?.reduce((sum, t) => sum + t.amount, 0) || 0
       }
     });
   } catch (err) {

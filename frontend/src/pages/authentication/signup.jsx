@@ -1,14 +1,22 @@
 import { useForm } from "react-hook-form";
 import { FcGoogle } from "react-icons/fc";
 import exclusive from "../../assets/bestseller.png";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
+import OtpVerificationModal from "../../components/models/verifyOtpModal"; // Import your modal component
 
 const SignUp = () => {
   const [loading, setLoading] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [formData, setFormData] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const navigate = useNavigate();
+  
   const {
     register,
     handleSubmit,
@@ -17,24 +25,58 @@ const SignUp = () => {
     formState: { errors },
   } = useForm();
 
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-      const response = await axiosInstance.post("/users/register", {
+      // First send OTP
+      await axiosInstance.post("/otp/send-otp", { email: data.email });
+      setFormData({
         username: data.username,
         email: data.email,
         password: data.password,
-        confirmPassword: data.confirmPassword,  // Make sure this field name matches backend
-        referralCode: data.referralCode         // Add if you have this field
+        confirmPassword: data.confirmPassword
       });
-  
+      setShowOtpModal(true);
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to send OTP";
+      setSnackbar({
+        open: true,
+        message,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpVerificationSuccess = async () => {
+    try {
+      setLoading(true);
+      // Proceed with registration after OTP verification
+      const response = await axiosInstance.post("/users/register", formData);
+
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-        navigate("/");
+        setSnackbar({
+          open: true,
+          message: "Registration successful!",
+          severity: "success",
+        });
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
       }
     } catch (error) {
       const message = error.response?.data?.message || "Registration failed";
-      setError("submit", { message });
+      setSnackbar({
+        open: true,
+        message,
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -42,7 +84,7 @@ const SignUp = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      <div className="w-full md:w-1/2 p-8 flex items-center justify-center bg-white">
+      <div className="w-full md:w-1/2 p-8 flex items-center justify-center bg-white relative">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <h1 className="text-4xl font-serif font-bold text-rose-600 mb-2">
@@ -50,6 +92,7 @@ const SignUp = () => {
             </h1>
             <p className="text-gray-600 text-lg">Create your account</p>
           </div>
+          
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {errors.submit && (
               <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
@@ -161,7 +204,7 @@ const SignUp = () => {
 
             <div className="flex justify-start text-sm text-gray-600 mt-2">
               <p>
-                Don't have an account?{" "}
+                Already have an account?{" "}
                 <a href="/login" className="text-rose-600 hover:underline">
                   Login
                 </a>
@@ -187,16 +230,16 @@ const SignUp = () => {
             </button>
           </form>
           <p className="text-xs text-gray-400 text-center mt-4">
-              By continuing, you agree to our{" "}
-              <a href="/terms" className="underline hover:text-rose-600">
-                Terms of Service
-              </a>{" "}
-              and{" "}
-              <a href="/privacy" className="underline hover:text-rose-600">
-                Privacy Policy
-              </a>
-              .
-            </p>
+            By continuing, you agree to our{" "}
+            <a href="/terms" className="underline hover:text-rose-600">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" className="underline hover:text-rose-600">
+              Privacy Policy
+            </a>
+            .
+          </p>
         </div>
       </div>
       <div className="hidden md:block w-1/2 bg-rose-50">
@@ -206,6 +249,39 @@ const SignUp = () => {
           className="w-full h-full object-cover"
         />
       </div>
+
+      {/* OTP Verification Modal */}
+      <OtpVerificationModal
+        open={showOtpModal}
+        onClose={(success) => {
+          setShowOtpModal(false);
+          if (success) {
+            handleOtpVerificationSuccess();
+          }
+        }}
+        email={formData?.email || ""}
+      />
+
+      {/* Snackbar for notifications */}
+      {snackbar.open && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className={`p-4 rounded-md shadow-lg ${
+            snackbar.severity === "error" 
+              ? "bg-red-100 text-red-800" 
+              : "bg-green-100 text-green-800"
+          }`}>
+            <div className="flex justify-between items-center">
+              <div>{snackbar.message}</div>
+              <button 
+                onClick={handleCloseSnackbar}
+                className="ml-4 text-lg font-bold"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

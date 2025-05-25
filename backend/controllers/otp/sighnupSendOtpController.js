@@ -21,7 +21,7 @@ const sendEmail = async (email, otp) => {
     from: process.env.EMAIL_USER,
     to: email,
     subject: "Your OTP Code",
-    text: `Your OTP is ${otp}. It will expire in 1 minute.`,
+    text: `Your OTP is ${otp}. It will expire in 2 minutes.`,
   };
 
   await transporter.sendMail(mailOptions);
@@ -35,7 +35,7 @@ const sendOtp = asyncHandler(async (req, res, next) => {
   }
 
   const otp = generateOtp();
-  const expiresAt = new Date(Date.now() + 1 * 60 * 1000); 
+  const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes expiry
 
   try {
     await Otp.findOneAndUpdate(
@@ -100,7 +100,7 @@ const resendOtp = asyncHandler(async (req, res, next) => {
 
     if (!otpDoc || otpDoc.expiresAt < new Date()) {
       otp = generateOtp();
-      expiresAt = new Date(Date.now() + 1 * 60 * 1000);
+      expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes expiry
 
       await Otp.findOneAndUpdate(
         { email },
@@ -117,7 +117,7 @@ const resendOtp = asyncHandler(async (req, res, next) => {
     res
       .status(200)
       .json({
-        message: `OTP resent successfully. It will expire in 1 minute.`,
+        message: `OTP resent successfully. It will expire in 2 minutes.`,
       });
   } catch (error) {
     next(error);

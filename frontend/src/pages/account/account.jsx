@@ -22,7 +22,7 @@ const Account = () => {
 
   // Form data states
   const [editData, setEditData] = useState({
-    fullName: "",
+    // fullName: "",
     username: "",
     email: ""
   });
@@ -63,7 +63,7 @@ const Account = () => {
       const response = await axiosInstance.get("/users/profile");
       setUserProfile(response.data.user);
       setEditData({
-        fullName: response.data.user.fullName || "",
+        // fullName: response.data.user.fullName || "",
         username: response.data.user.username || "",
         email: response.data.user.email || ""
       });
@@ -86,7 +86,6 @@ const Account = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!newAddress.fullName.trim()) errors.fullName = "Full name is required";
     if (!newAddress.address.trim()) errors.address = "Address is required";
     if (!newAddress.city.trim()) errors.city = "City is required";
     if (!newAddress.state) errors.state = "State is required";
@@ -165,7 +164,7 @@ const Account = () => {
     e.preventDefault();
     try {
       const response = await axiosInstance.put(`/users/editProfile/${userProfile._id}`, {
-        fullName: editData.fullName,
+        // fullName: editData.fullName,
         username: editData.username
       });
       setUserProfile(response.data.user);
@@ -263,10 +262,6 @@ const Account = () => {
               <h3 className="text-lg font-medium text-gray-900">Personal Information</h3>
             </div>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Full Name</label>
-                <p className="text-gray-900 font-medium">{userProfile?.fullName || "Not set"}</p>
-              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">Username</label>
                 <p className="text-gray-900 font-medium">{userProfile?.username}</p>
@@ -512,21 +507,21 @@ const Account = () => {
             </div>
           )}
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-8 mt-10">
             {/* Sidebar */}
             <div className="w-full lg:w-1/4">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-32">
                 <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
                   <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-semibold">
-                    {userProfile?.fullName?.charAt(0) || userProfile?.username?.charAt(0) || 'U'}
+                    {userProfile?.userProfile?.username?.charAt(0) || 'U'}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{userProfile?.fullName || userProfile?.username}</p>
+                    <p className="font-semibold text-gray-900">{userProfile?.username}</p>
                     <p className="text-sm text-gray-600">{userProfile?.email}</p>
                   </div>
                 </div>
 
-                <nav className="space-y-2">
+                <nav className="space-y-2 ">
                   {sidebarItems.map((item) => {
                     const Icon = item.icon;
                     return (
@@ -573,7 +568,7 @@ const Account = () => {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1">
+            <div className="flex-1 mt-10">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
                 {loading ? (
                   <div className="flex items-center justify-center py-12">
@@ -596,15 +591,6 @@ const Account = () => {
             <div className="bg-white rounded-xl max-w-md w-full p-6">
               <h3 className="text-xl font-semibold mb-6">Edit Profile</h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    value={editData.fullName}
-                    onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                  />
-                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
                   <input

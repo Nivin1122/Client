@@ -5,7 +5,6 @@ import Header from "../../components/header";
 import Footer from "../../components/footer";
 import axiosInstance from "../../utils/axiosInstance";
 import { clearCart } from "../../redux/slices/cartSlice";
-import Modal from "../../components/ui/modal";
 
 
 const Checkout = () => {

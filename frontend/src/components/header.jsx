@@ -61,7 +61,7 @@ const Header = ({ onCategorySelect }) => {
     } else {
       navigate(`/products?category=${category._id}`);
       if (onCategorySelect) {
-        onCategorySelect(category._id, category.name);
+        onCategorySelect(category._id);
       }
     }
   };
