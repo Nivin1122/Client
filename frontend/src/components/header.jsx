@@ -28,6 +28,7 @@ const Header = ({ onCategorySelect }) => {
         // Add HOME as first category
         const allCategories = [
           { _id: "home", name: "HOME" },
+          { _id: "all", name: "All" },
           ...response.data.categories
         ];
         setCategories(allCategories);
@@ -40,6 +41,7 @@ const Header = ({ onCategorySelect }) => {
         // Fallback to some default categories if API fails
         setCategories([
           { _id: "home", name: "HOME" },
+          { _id: "all", name: "All" },
           { _id: "new-arrivals", name: "New Arrivals" },
           { _id: "bestsellers", name: "Bestsellers" }
         ]);
@@ -51,20 +53,20 @@ const Header = ({ onCategorySelect }) => {
 
   const handleCategoryClick = (category) => {
     setActiveTab(category._id);
-    
-    // If it's the HOME category, navigate to home page
+  
     if (category._id === "home") {
       navigate("/");
+    } else if (category._id === "all") {
+      navigate("/products");
     } else {
-      // Navigate to products page with category ID
       navigate(`/products?category=${category._id}`);
-      
-      // Call the prop function to inform Products component about category change
-      if (onCategorySelect) {
-        onCategorySelect(category._id);
-      }
+    }
+  
+    if (onCategorySelect) {
+      onCategorySelect(category._id);
     }
   };
+  
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white z-50 shadow-sm">

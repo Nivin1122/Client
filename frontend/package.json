@@ -28,6 +28,7 @@
     "lucide-react": "^0.509.0",
     "npm": "^11.4.0",
     "primeng": "^19.1.2",
+    "rc-slider": "^11.1.8",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.56.3",

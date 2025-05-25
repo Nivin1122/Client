@@ -13,60 +13,128 @@ const getAllProducts = asyncHandler(async (req, res) => {
       search = "",
       colors = [],
       sizes = [],
+      categories = [],
+      brands = [],
+      minPrice = 0,
+      maxPrice = 10000,
+      sortBy = 'newest'
     } = req.query;
     const skip = (page - 1) * limit;
 
-    const query = { isDeleted: false };
-    
-    if (search) {
-      query.name = { $regex: search, $options: "i" };
-    }
+    // Build aggregation pipeline for efficient filtering
+    const pipeline = [
+      // Match initial criteria
+      {
+        $match: {
+          isDeleted: false,
+          ...(search && { name: { $regex: search, $options: "i" } }),
+          ...(req.query.category && { category: new mongoose.Types.ObjectId(req.query.category) }),
+          ...(brands.length > 0 && { brand: { $in: brands.split(',').map(id => new mongoose.Types.ObjectId(id)) } })
+        }
+      },
+      // Lookup and unwind variants
+      {
+        $lookup: {
+          from: "variants",
+          localField: "variants",
+          foreignField: "_id",
+          as: "variants"
+        }
+      },
+      { $unwind: "$variants" },
+      // Apply color filter if needed
+      ...(colors.length > 0 ? [{
+        $match: {
+          "variants.color": { $in: colors.split(',') }
+        }
+      }] : []),
+      // Lookup and unwind sizes
+      {
+        $lookup: {
+          from: "sizevariants",
+          localField: "variants.sizes",
+          foreignField: "_id",
+          as: "variants.sizes"
+        }
+      },
+      { $unwind: "$variants.sizes" },
+      // Apply size and price filters
+      {
+        $match: {
+          ...(sizes.length > 0 && { "variants.sizes.size": { $in: sizes.split(',') } }),
+          "variants.sizes.price": { $gte: Number(minPrice), $lte: Number(maxPrice) }
+        }
+      },
+      // Group back to product level
+// Group back to product level
+{
+  $group: {
+    _id: "$_id",
+    name: { $first: "$name" },
+    description: { $first: "$description" },
+    category: { $first: "$category" },
+    brand: { $first: "$brand" },
+    variants: { $push: "$variants" },
+    createdAt: { $first: "$createdAt" }
+  }
+} // <-- THIS NEEDS TO BE FOLLOWED BY:
+]; // <-- ADD THIS LINE TO CLOSE THE ARRAY
 
-    // Add category filter if category is provided
-    const category = req.query.category;
-    if (category) {
-      query.category = category;
-    }
+// Add sorting to pipeline
+const sortStage = {
+  $sort: sortBy === 'price_low_high' 
+    ? { 'variants.sizes.price': 1 }
+    : sortBy === 'price_high_low'
+      ? { 'variants.sizes.price': -1 }
+      : { createdAt: -1 }
+};
 
-    if (colors.length > 0) {
-      query['variants.color'] = { $in: colors };
-    }
+    pipeline.push(sortStage);
 
-    if (sizes.length > 0) {
-      query['variants.sizes.size'] = { $in: sizes };
-    }
+    // Add lookups for brand and category
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'brands',
+          localField: 'brand',
+          foreignField: '_id',
+          as: 'brand'
+        }
+      },
+      { $unwind: '$brand' },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      { $unwind: '$category' }
+    );
 
-    const products = await Product.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit))
-      .populate("brand", "name")
-      .populate("category", "name")
-      .populate({
-        path: "variants",
-        populate: {
-          path: "sizes",
-          model: "SizeVariant",
-        },
-      })
-      .populate("activeOffer");
+    // Get total count before pagination
+    const countPipeline = [...pipeline];
+    const [{ count: totalProducts } = { count: 0 }] = await Product.aggregate([...countPipeline, { $count: 'count' }]);
 
-    const totalProducts = await Product.countDocuments(query);
+    // Add pagination
+    pipeline.push(
+      { $skip: skip },
+      { $limit: parseInt(limit) }
+    );
 
-    // Process products to include availability, variant reviews and ratings
+    // Execute pipeline
+    const products = await Product.aggregate(pipeline);
+
+    // Process products to include availability and reviews
     const productsWithStatusAndReviews = await Promise.all(products.map(async (product) => {
-      const productObj = product.toObject();
-      
       // Get variant-specific reviews and ratings
-      if (productObj.variants && productObj.variants.length > 0) {
-        productObj.variants = await Promise.all(productObj.variants.map(async (variant) => {
+      if (product.variants && product.variants.length > 0) {
+        product.variants = await Promise.all(product.variants.map(async (variant) => {
           const variantReviews = await Review.find({ variant: variant._id });
-          let averageRating = 0;
-          
-          if (variantReviews.length > 0) {
-            const totalRating = variantReviews.reduce((sum, review) => sum + review.rating, 0);
-            averageRating = totalRating / variantReviews.length;
-          }
+          const averageRating = variantReviews.length > 0
+            ? variantReviews.reduce((sum, review) => sum + review.rating, 0) / variantReviews.length
+            : 0;
           
           return {
             ...variant,
@@ -77,18 +145,16 @@ const getAllProducts = asyncHandler(async (req, res) => {
       }
       
       return {
-        ...productObj,
-        availability: productObj.isDeleted ? "Coming Soon" : "Available",
-        activeOffer: productObj.activeOffer ? {
-          _id: productObj.activeOffer,
-        } : null
+        ...product,
+        availability: product.isDeleted ? "Coming Soon" : "Available",
+        activeOffer: product.activeOffer ? { _id: product.activeOffer } : null
       };
     }));
 
     res.status(200).json({
       products: productsWithStatusAndReviews,
       totalPages: Math.ceil(totalProducts / limit),
-      currentPage: parseInt(page),
+      currentPage: parseInt(page)
     });
   } catch (error) {
     console.error("Error in getAllProducts:", error);
