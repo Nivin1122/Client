@@ -28,6 +28,7 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get("category") || null
   );
+  const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [filters, setFilters] = useState({
@@ -86,8 +87,9 @@ const Products = () => {
   };
 
   // Handle category selection from Header component
-  const handleCategorySelect = (categoryId) => {
+  const handleCategorySelect = (categoryId, name) => {
     setSelectedCategory(categoryId);
+    setSelectedCategoryName(name);
     setCurrentPage(1); // Reset to first page when category changes
     setIsSearching(false);
     setSearchQuery("");
@@ -199,28 +201,31 @@ const Products = () => {
   }, []);
 
   // Get lowest price from all variants with sizes
-  const getLowestPrice = useMemo(() => (variants) => {
-    let lowestPrice = Infinity;
-    let discountPrice = null;
+  const getLowestPrice = useMemo(
+    () => (variants) => {
+      let lowestPrice = Infinity;
+      let discountPrice = null;
 
-    variants.forEach((variant) => {
-      if (variant.sizes && variant.sizes.length > 0) {
-        variant.sizes.forEach((size) => {
-          if (size.price < lowestPrice) {
-            lowestPrice = size.price;
-            discountPrice = size.discountPrice;
-          }
-        });
-      }
-    });
+      variants.forEach((variant) => {
+        if (variant.sizes && variant.sizes.length > 0) {
+          variant.sizes.forEach((size) => {
+            if (size.price < lowestPrice) {
+              lowestPrice = size.price;
+              discountPrice = size.discountPrice;
+            }
+          });
+        }
+      });
 
-    if (lowestPrice === Infinity)
-      return { price: "Price not available", discountPrice: null };
-    return {
-      price: `Rs. ${lowestPrice.toFixed(2)}`,
-      discountPrice: discountPrice ? `Rs. ${discountPrice.toFixed(2)}` : null,
-    };
-  }, []);
+      if (lowestPrice === Infinity)
+        return { price: "Price not available", discountPrice: null };
+      return {
+        price: `Rs. ${lowestPrice.toFixed(2)}`,
+        discountPrice: discountPrice ? `Rs. ${discountPrice.toFixed(2)}` : null,
+      };
+    },
+    []
+  );
 
   // Get currently selected variant object
   const getSelectedVariant = useMemo(
@@ -256,7 +261,7 @@ const Products = () => {
           getSelectedVariant,
           getAvailableSizes,
         }) => (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {products.map((product) => {
               const currentVariant = getSelectedVariant(product);
               const priceInfo = getLowestPrice(product.variants);
@@ -264,7 +269,7 @@ const Products = () => {
               return (
                 <div
                   key={product._id}
-                  className="relative w-full"
+                  className="relative w-full aspect-[3/4] flex flex-col"
                   onMouseEnter={() => handleProductMouseEnter(product._id)}
                   onMouseLeave={handleProductMouseLeave}
                 >
@@ -362,10 +367,7 @@ const Products = () => {
                                 key={variant._id}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleVariantChange(
-                                    product._id,
-                                    variant._id
-                                  );
+                                  handleVariantChange(product._id, variant._id);
                                 }}
                                 className={`w-6 h-6 rounded-full border ${
                                   selectedVariant[product._id] === variant._id
@@ -457,11 +459,14 @@ const Products = () => {
             <h2 className="text-2xl font-bold">
               {isSearching
                 ? `Search Results for "${searchQuery}"`
-                : selectedCategory
-                ? selectedCategory.charAt(0).toUpperCase() +
-                  selectedCategory.slice(1)
+                : `Category: ${selectedCategory}`
+                ? `Products ${
+                    selectedCategoryName.charAt(0).toUpperCase() +
+                    selectedCategoryName.slice(1)
+                  }`
                 : "All Products"}
             </h2>
+
             <div className="relative w-64">
               <input
                 type="text"

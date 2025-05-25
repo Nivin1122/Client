@@ -105,7 +105,7 @@ const checkoutSchema = new mongoose.Schema(
       status: {
         type: String,
         required: true,
-        enum: ["pending", "completed", "failed", "cancelled", "retry_pending"],
+        enum: ["pending", "completed", "failed", "cancelled", "retry_pending", "created"],
         default: "pending"
       },
       transactionId: {

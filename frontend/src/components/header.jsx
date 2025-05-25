@@ -60,10 +60,9 @@ const Header = ({ onCategorySelect }) => {
       navigate("/products");
     } else {
       navigate(`/products?category=${category._id}`);
-    }
-  
-    if (onCategorySelect) {
-      onCategorySelect(category._id);
+      if (onCategorySelect) {
+        onCategorySelect(category._id, category.name);
+      }
     }
   };
   

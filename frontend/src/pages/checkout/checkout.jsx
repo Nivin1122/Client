@@ -4,7 +4,9 @@ import { useSelector, useDispatch } from "react-redux";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import axiosInstance from "../../utils/axiosInstance";
-import { clearCart } from "../../redux/slices/cartSlice"; // Add this import
+import { clearCart } from "../../redux/slices/cartSlice";
+import Modal from "../../components/ui/modal";
+
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [newAddress, setNewAddress] = useState({
     fullName: "",
     address: "",
@@ -29,6 +32,8 @@ const Checkout = () => {
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   const indianStates = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
     "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
@@ -36,6 +41,33 @@ const Checkout = () => {
     "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
     "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
   ];
+
+  // Load Razorpay script
+  useEffect(() => {
+    const loadRazorpayScript = () => {
+      return new Promise((resolve) => {
+        if (window.Razorpay) {
+          setRazorpayLoaded(true);
+          resolve(true);
+          return;
+        }
+
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => {
+          setRazorpayLoaded(true);
+          resolve(true);
+        };
+        script.onerror = () => {
+          console.error("Failed to load Razorpay SDK");
+          resolve(false);
+        };
+        document.body.appendChild(script);
+      });
+    };
+
+    loadRazorpayScript();
+  }, []);
 
   const validateForm = () => {
     const errors = {};
@@ -87,7 +119,7 @@ const Checkout = () => {
       try {
         const response = await axiosInstance.post("/address/add-address", {
           ...newAddress,
-          locality: newAddress.address, // Backend expects locality field
+          locality: newAddress.address,
           addressType: newAddress.addressType.charAt(0).toUpperCase() + newAddress.addressType.slice(1)
         });
         
@@ -113,27 +145,161 @@ const Checkout = () => {
     }
   };
 
+  const handleOnlinePayment = async (checkoutId) => {
+    try {
+      if (!razorpayLoaded) {
+        throw new Error("Razorpay SDK not loaded. Please refresh and try again.");
+      }
+
+      // Create payment order with checkoutId
+      const response = await axiosInstance.post("/payment/create-order", {
+        amount: Math.round(totalPrice * 100), // Convert to paise
+        currency: "INR",
+        checkoutId: checkoutId
+      });
+
+      const orderData = response.data;
+      const selectedAddr = addresses.find(addr => addr._id === selectedAddress);
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Use environment variable
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "TrendRove",
+        description: "Payment for your order",
+        order_id: orderData.id,
+        handler: async function (response) {
+          try {
+            setLoading(true);
+            const verifyResponse = await axiosInstance.post("/payment/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              checkoutId: checkoutId
+            });
+        
+            if (verifyResponse.data.status === "success") {
+              dispatch(clearCart());
+              setError("");
+              setShowSuccessModal(true); // ✅ Show modal instead of immediate navigation
+            } else {
+              throw new Error("Payment verification failed");
+            }
+          } catch (error) {
+            console.error("Payment verification failed:", error);
+            setError("Payment verification failed. Please contact support.");
+            try {
+              await axiosInstance.post("/payment/cancel", {
+                orderId: orderData.id,
+                checkoutId: checkoutId,
+                status: "failed",
+                error: error.message
+              });
+            } catch (cancelError) {
+              console.error("Error canceling payment:", cancelError);
+            }
+          } finally {
+            setLoading(false);
+          }
+        },
+        
+        prefill: {
+          name: selectedAddr?.fullName || "",
+          contact: selectedAddr?.mobileNumber || "",
+          email: "" // Add email if available
+        },
+        theme: {
+          color: "#000000"
+        },
+        modal: {
+          ondismiss: async function () {
+            try {
+              setLoading(true);
+              // Mark order as retry_pending when modal is dismissed
+              await axiosInstance.post("/payment/cancel", {
+                orderId: orderData.id,
+                checkoutId: checkoutId,
+                status: "retry_pending"
+              });
+              
+              setError("Payment cancelled. Your order has been saved and you can retry payment from the orders page.");
+              
+              // Clear cart and redirect to orders
+              dispatch(clearCart());
+              setTimeout(() => {
+                navigate("/orders");
+              }, 2000);
+            } catch (error) {
+              console.error("Error handling payment cancellation:", error);
+              setError("Payment cancelled. Please check your orders page.");
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      
+      rzp.on("payment.failed", async function (response) {
+        try {
+          setLoading(true);
+          console.error("Payment failed:", response.error);
+          
+          // Cancel the payment on backend
+          await axiosInstance.post("/payment/cancel", {
+            orderId: orderData.id,
+            checkoutId: checkoutId,
+            status: "retry_pending",
+            error: response.error
+          });
+          
+          setError("Payment failed. Your order has been saved and you can retry payment from the orders page.");
+          
+          // Clear cart and redirect to orders
+          dispatch(clearCart());
+          setTimeout(() => {
+            navigate("/orders");
+          }, 2000);
+        } catch (error) {
+          console.error("Error handling payment failure:", error);
+          setError("Payment failed. Please try again or contact support.");
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      rzp.open();
+    } catch (error) {
+      console.error("Error in online payment:", error);
+      setError(error.message || "Failed to initialize payment. Please try again.");
+      setLoading(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (!selectedAddress) {
       setError("Please select a delivery address");
       return;
     }
-  
+
     if (!cartItems.length) {
       setError("Your cart is empty");
       return;
     }
-  
+
     setLoading(true);
     setError("");
-  
+
     try {
       const checkoutData = {
         cartId,
         addressId: selectedAddress,
         shippingMethod: "Standard",
         paymentMethod,
-        transactionId: Date.now().toString(),
+        transactionId: paymentMethod === "cod"
+        ? `COD_${Date.now()}`
+        : `ONLINE_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
         paymentStatus: paymentMethod === "cod" ? "pending" : "retry_pending",
         finalTotal: totalPrice
       };
@@ -141,73 +307,28 @@ const Checkout = () => {
       const response = await axiosInstance.post("/checkout/create-checkout", checkoutData);
 
       if (response.data.success) {
-        // Clear cart after successful checkout
-        dispatch(clearCart());
-        
+        const checkoutId = response.data.order._id;
+
         if (paymentMethod === "cod") {
+          // Clear cart for COD orders
+          dispatch(clearCart());
+          alert("Order placed successfully!");
           navigate("/orders");
-        } else {
-          // Handle online payment flow
-          const orderResponse = await axiosInstance.post("/api/payment/create-order", {
-            amount: totalPrice * 100, // Convert to paise
-            currency: "INR",
-            checkoutId: response.data.order._id
-          });
-
-          if (orderResponse.data) {
-            // Initialize Razorpay
-            const options = {
-              key: process.env.REACT_APP_RAZORPAY_KEY_ID,
-              amount: orderResponse.data.amount,
-              currency: orderResponse.data.currency,
-              name: "TrendRove",
-              description: "Payment for your order",
-              order_id: orderResponse.data.id,
-              handler: async (response) => {
-                try {
-                  await axiosInstance.post("/api/payment/verify", {
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                    checkoutId: orderResponse.data._id
-                  });
-                  navigate("/orders");
-                } catch (error) {
-                  console.error("Payment verification failed:", error);
-                  setError("Payment verification failed");
-                }
-              },
-              prefill: {
-                name: addresses.find(addr => addr._id === selectedAddress)?.fullName,
-                contact: addresses.find(addr => addr._id === selectedAddress)?.mobileNumber
-              },
-              theme: {
-                color: "#3399cc"
-              }
-            };
-
-            const rzp = new window.Razorpay(options);
-            rzp.open();
-
-            rzp.on("payment.failed", async () => {
-              try {
-                await axiosInstance.post("/api/payment/cancel", {
-                  orderId: orderResponse.data.id,
-                  checkoutId: response.data.order._id
-                });
-              } catch (cancelError) {
-                console.error("Error canceling payment:", cancelError);
-              }
-              setError("Payment failed. Please try again.");
-            });
-          }
+        } else if (paymentMethod === "online") {
+          // Handle online payment
+          await handleOnlinePayment(checkoutId);
         }
+      } else {
+        throw new Error(response.data.message || "Failed to create order");
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      setError(error.response?.data?.message || "Failed to process checkout");
+      setError(error.response?.data?.message || error.message || "Failed to process checkout");
     } finally {
-      setLoading(false);
+      if (paymentMethod === "cod") {
+        setLoading(false);
+      }
+      // For online payments, loading is handled in payment handlers
     }
   };
 
@@ -219,12 +340,41 @@ const Checkout = () => {
   return (
     <>
       <Header />
+      {showSuccessModal && (
+  <Modal onClose={() => setShowSuccessModal(false)}>
+    <div className="flex flex-col items-center gap-4">
+      <h2 className="text-2xl font-semibold text-green-600">Payment Successful!</h2>
+      <p className="text-gray-600">Thank you for your order.</p>
+      <div className="flex gap-4 mt-4">
+        <button
+          onClick={() => navigate("/orders")}
+          className="bg-black text-white px-4 py-2 rounded"
+        >
+          Go to Orders
+        </button>
+        <button
+          onClick={() => navigate("/")}
+          className="bg-gray-200 text-black px-4 py-2 rounded"
+        >
+          Continue Shopping
+        </button>
+      </div>
+    </div>
+  </Modal>
+)}
+
       <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl">
         <h1 className="text-3xl font-serif text-center mb-10">Checkout</h1>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
+          </div>
+        )}
+
+        {!razorpayLoaded && paymentMethod === "online" && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+            Loading payment gateway... Please wait.
           </div>
         )}
 
@@ -455,17 +605,24 @@ const Checkout = () => {
                         checked={paymentMethod === "online"}
                         onChange={(e) => setPaymentMethod(e.target.value)}
                       />
-                      <span>Online Payment</span>
+                      <span>Online Payment (Credit/Debit Card, UPI, Net Banking)</span>
                     </label>
                   </div>
                 </div>
 
                 <button
                   onClick={handleCheckout}
-                  disabled={loading}
-                  className="w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 disabled:bg-gray-400 mt-6"
+                  disabled={loading || (paymentMethod === "online" && !razorpayLoaded)}
+                  className="w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 disabled:bg-gray-400 mt-6 flex items-center justify-center"
                 >
-                  {loading ? "Processing..." : `Pay Rs. ${totalPrice}`}
+                  {loading ? (
+                    <>
+                      <div className="h-5 w-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    `${paymentMethod === "cod" ? "Place Order" : "Pay"} Rs. ${totalPrice}`
+                  )}
                 </button>
               </div>
             </div>

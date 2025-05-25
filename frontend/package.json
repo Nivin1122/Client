@@ -25,6 +25,7 @@
     "dayjs": "^1.11.13",
     "embla-carousel-react": "^8.6.0",
     "install": "^0.13.0",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.509.0",
     "npm": "^11.4.0",
     "primeng": "^19.1.2",

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Product = require("../../models/product/productModel");
 const Variant = require("../../models/product/variantModel");
 const Review = require("../../models/review/reviewModel")
@@ -28,8 +29,12 @@ const getAllProducts = asyncHandler(async (req, res) => {
         $match: {
           isDeleted: false,
           ...(search && { name: { $regex: search, $options: "i" } }),
-          ...(req.query.category && { category: new mongoose.Types.ObjectId(req.query.category) }),
-          ...(brands.length > 0 && { brand: { $in: brands.split(',').map(id => new mongoose.Types.ObjectId(id)) } })
+          ...(req.query.category && {
+            category: mongoose.Types.ObjectId.isValid(req.query.category) 
+              ? new mongoose.Types.ObjectId(req.query.category)
+              : null
+          }),
+          ...(brands.length > 0 && { brand: { $in: brands.split(',').map(id => mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null).filter(id => id !== null) } })
         }
       },
       // Lookup and unwind variants

@@ -18,7 +18,7 @@ const calculateTotalItems = (items) => {
 // Helper function to calculate total price
 const calculateTotalPrice = (items) => {
   return items.reduce((total, item) => {
-    const price = item.sizeVariant.discountPrice || item.price;
+    const price = item.sizeVariant?.discountPrice || item.finalPrice || item.price;
     return total + (price * item.quantity);
   }, 0);
 };
