@@ -24,10 +24,33 @@ const transporter = nodemailer.createTransport({
 
 const registerUser = asyncHandler(async (req, res) => {
   try {
-    const { username, email, password, confirmPassword } = req.body;
+    const { username, email, password, confirmPassword, otp } = req.body;
     console.log("Email:", email)
 
+    // First verify OTP
+    if (!otp) {
+      return res.status(400).json({ message: "OTP verification required" });
+    }
 
+    // Verify OTP
+    const otpDoc = await Otp.findOne({ email: email.toLowerCase().trim() });
+    console.log("OTP Document:", otpDoc);
+    
+    if (!otpDoc || !otpDoc.email) {
+      return res.status(400).json({ message: "Please request a new OTP" });
+    }
+
+    if (otpDoc.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (otpDoc.expiresAt < new Date()) {
+      await Otp.deleteOne({ email: email });
+      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+    }
+
+    // Delete the OTP document as it's been verified
+    await Otp.deleteOne({ email });
 
     console.log("Body: ", req.body);
 
@@ -170,14 +193,14 @@ const getUserProfile = asyncHandler(async (req, res) => {
     }
 
     // Get wallet details
-    // const wallet = await Wallet.findOne({ userId });
-    // const referralTransactions = wallet?.transactions.filter(t => t.description.includes('referral'));
+    const wallet = await Wallet.findOne({ userId });
+    const referralTransactions = wallet?.transactions.filter(t => t.description.includes('referral'));
 
     res.status(200).json({
       message: "User profile fetched successfully",
       user: {
         ...user.toObject(),
-        // referralEarnings: referralTransactions?.reduce((sum, t) => sum + t.amount, 0) || 0
+        referralEarnings: referralTransactions?.reduce((sum, t) => sum + t.amount, 0) || 0
       }
     });
   } catch (err) {

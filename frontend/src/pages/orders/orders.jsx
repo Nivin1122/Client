@@ -83,7 +83,7 @@ const Orders = () => {
   return (
     <>
       <Header />
-      <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl">
+      <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl mt-10">
         <h1 className="text-3xl font-serif text-center mb-10">My Orders</h1>
 
         {loading && <p className="text-center">Loading orders...</p>}
