@@ -1,40 +1,37 @@
 const asyncHandler = require("express-async-handler");
 const Category = require("../../../models/product/categoryModel");
 
+// admin/controllers/product/CategoryController.js
+
 const addCategory = asyncHandler(async (req, res) => {
-  const { name } = req.body;
+  const { name, parent } = req.body;
 
   if (!name) {
     return res.status(400).json({ message: "Category name is required" });
   }
 
-  try {
-    const existingCategory = await Category.findOne({ name });
-    if (existingCategory) {
-      return res.status(400).json({ message: "Category already exists" });
-    }
-
-    const category = await Category.create({ name });
-    res
-      .status(201)
-      .json({ message: "Category created successfully", category });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error adding category", error: error.message });
+  const existingCategory = await Category.findOne({ name });
+  if (existingCategory) {
+    return res.status(400).json({ message: "Category already exists" });
   }
+
+  const category = await Category.create({
+    name,
+    parent: parent || null,
+  });
+
+  res.status(201).json({ message: "Category created", category });
 });
+
 
 const getAllCategoriesAdmin = asyncHandler(async (req, res) => {
-  try {
-    const categories = await Category.find({}).sort({createdAt:-1});
-    res.status(200).json({ categories });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching categories", error: error.message });
-  }
+  const categories = await Category.find({})
+    .populate("parent", "name")
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({ categories });
 });
+
 
 const editCategory = asyncHandler(async (req, res) => {
   const { id } = req.params;

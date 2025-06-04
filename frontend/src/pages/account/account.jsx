@@ -3,7 +3,16 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import axiosInstance from "../../utils/axiosInstance";
-import { User, Package, ShoppingCart, MapPin, LogOut, Edit2, Mail, Phone } from "lucide-react";
+import {
+  User,
+  Package,
+  ShoppingCart,
+  MapPin,
+  LogOut,
+  Edit2,
+  Mail,
+  Phone,
+} from "lucide-react";
 
 const Account = () => {
   const navigate = useNavigate();
@@ -18,18 +27,22 @@ const Account = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailOtp, setEmailOtp] = useState("");
+  const [emailOtpTimer, setEmailOtpTimer] = useState(0);
+  const [emailOtpTimerId, setEmailOtpTimerId] = useState(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
 
   // Form data states
   const [editData, setEditData] = useState({
     // fullName: "",
     username: "",
-    email: ""
+    email: "",
   });
   const [otpData, setOtpData] = useState({
     otp: "",
     timer: 120,
-    showResend: false
+    showResend: false,
   });
   const [newAddress, setNewAddress] = useState({
     fullName: "",
@@ -42,13 +55,37 @@ const Account = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const indianStates = [
-    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
-    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
-    "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
-    "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
   ];
 
   useEffect(() => {
@@ -65,7 +102,7 @@ const Account = () => {
       setEditData({
         // fullName: response.data.user.fullName || "",
         username: response.data.user.username || "",
-        email: response.data.user.email || ""
+        email: response.data.user.email || "",
       });
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -113,9 +150,11 @@ const Account = () => {
         const response = await axiosInstance.post("/address/add-address", {
           ...newAddress,
           locality: newAddress.address,
-          addressType: newAddress.addressType.charAt(0).toUpperCase() + newAddress.addressType.slice(1)
+          addressType:
+            newAddress.addressType.charAt(0).toUpperCase() +
+            newAddress.addressType.slice(1),
         });
-        
+
         setAddresses([...addresses, response.data.address]);
         setShowAddressForm(false);
         setNewAddress({
@@ -142,7 +181,7 @@ const Account = () => {
   const handleDeleteAddress = async (addressId) => {
     try {
       await axiosInstance.delete(`/address/delete-address/${addressId}`);
-      setAddresses(addresses.filter(addr => addr._id !== addressId));
+      setAddresses(addresses.filter((addr) => addr._id !== addressId));
       setSuccess("Address deleted successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
@@ -154,19 +193,26 @@ const Account = () => {
   const handleLogout = async () => {
     try {
       await axiosInstance.post("/users/logout");
+      localStorage.removeItem("token");
+      toast.success("Successfully logged out!");
+      setShowLogoutModal(false);
       navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);
+      toast.error("Logout failed. Please try again.");
     }
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axiosInstance.put(`/users/editProfile/${userProfile._id}`, {
-        // fullName: editData.fullName,
-        username: editData.username
-      });
+      const response = await axiosInstance.put(
+        `/users/editProfile/${userProfile._id}`,
+        {
+          // fullName: editData.fullName,
+          username: editData.username,
+        }
+      );
       setUserProfile(response.data.user);
       setShowEditModal(false);
       setSuccess("Profile updated successfully!");
@@ -177,24 +223,71 @@ const Account = () => {
     }
   };
 
+  const startEmailOtpTimer = () => {
+    setEmailOtpTimer(120);
+    const timerId = setInterval(() => {
+      setEmailOtpTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerId);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    setEmailOtpTimerId(timerId);
+  };
+
   const handleEmailChange = async () => {
     try {
-      await axiosInstance.post("/users/forgot-password-send-otp", {
-        email: editData.email
+      const response = await axiosInstance.post("/users/update-email-send-otp", {
+        email: newEmail,
       });
-      setShowEmailModal(false);
-      setShowOtpModal(true);
-      startOtpTimer();
+      if (response.data) {
+        setSuccess("OTP sent to your current email");
+        setShowEmailModal(false);
+        setShowOtpModal(true);
+        startEmailOtpTimer();
+      }
     } catch (error) {
-      console.error("Error sending OTP:", error);
-      setError(error.response?.data?.message || "Failed to send OTP");
+      setError(error.response?.data?.message || "Error sending OTP");
+    }
+  };
+
+  const handleEmailOtpSubmit = async () => {
+    try {
+      const response = await axiosInstance.post("/users/verify-update-email-otp", {
+        otp: emailOtp,
+      });
+      if (response.data) {
+        await fetchUserProfile(); // Fetch updated profile data immediately
+        setSuccess("Email updated successfully");
+        setShowOtpModal(false);
+        clearInterval(emailOtpTimerId);
+        setEmailOtpTimer(0);
+        setEmailOtp("");
+        setNewEmail("");
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || "Error verifying OTP");
+    }
+  };
+
+  const handleResendEmailOtp = async () => {
+    try {
+      const response = await axiosInstance.post("/users/resend-update-email-otp");
+      if (response.data) {
+        setSuccess("New OTP sent to your current email");
+        startEmailOtpTimer();
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || "Error resending OTP");
     }
   };
 
   const startOtpTimer = () => {
-    setOtpData(prev => ({ ...prev, timer: 120, showResend: false }));
+    setOtpData((prev) => ({ ...prev, timer: 120, showResend: false }));
     const interval = setInterval(() => {
-      setOtpData(prev => {
+      setOtpData((prev) => {
         if (prev.timer <= 1) {
           clearInterval(interval);
           return { ...prev, timer: 0, showResend: true };
@@ -209,10 +302,11 @@ const Account = () => {
     try {
       await axiosInstance.post("/users/verify-forgot-password-otp", {
         email: editData.email,
-        otp: otpData.otp
+        otp: otpData.otp,
       });
+      console.log("Edited email: ", editData.email)
       await axiosInstance.put(`/users/editProfile/${userProfile._id}`, {
-        email: editData.email
+        email: editData.email,
       });
       setShowOtpModal(false);
       fetchUserProfile();
@@ -227,7 +321,7 @@ const Account = () => {
   const handleResendOtp = async () => {
     try {
       await axiosInstance.post("/users/resend-forgot-password-otp", {
-        email: editData.email
+        email: editData.email,
       });
       startOtpTimer();
     } catch (error) {
@@ -244,7 +338,9 @@ const Account = () => {
   const renderProfileSection = () => (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-serif text-gray-900">Profile Information</h2>
+        <h2 className="text-3xl font-serif text-gray-900">
+          Profile Information
+        </h2>
         <button
           onClick={() => setShowEditModal(true)}
           className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
@@ -259,12 +355,18 @@ const Account = () => {
           <div className="bg-gray-50 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
               <User className="text-gray-600" size={20} />
-              <h3 className="text-lg font-medium text-gray-900">Personal Information</h3>
+              <h3 className="text-lg font-medium text-gray-900">
+                Personal Information
+              </h3>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Username</label>
-                <p className="text-gray-900 font-medium">{userProfile?.username}</p>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Username
+                </label>
+                <p className="text-gray-900 font-medium">
+                  {userProfile?.username}
+                </p>
               </div>
             </div>
           </div>
@@ -274,12 +376,18 @@ const Account = () => {
           <div className="bg-gray-50 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
               <Mail className="text-gray-600" size={20} />
-              <h3 className="text-lg font-medium text-gray-900">Contact Information</h3>
+              <h3 className="text-lg font-medium text-gray-900">
+                Contact Information
+              </h3>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Email Address</label>
-                <p className="text-gray-900 font-medium">{userProfile?.email}</p>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Email Address
+                </label>
+                <p className="text-gray-900 font-medium">
+                  {userProfile?.email}
+                </p>
               </div>
             </div>
           </div>
@@ -306,100 +414,162 @@ const Account = () => {
           <form onSubmit={handleAddressSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
                 <input
                   type="text"
                   placeholder="Enter full name"
                   value={newAddress.fullName}
-                  onChange={(e) => setNewAddress({ ...newAddress, fullName: e.target.value })}
+                  onChange={(e) =>
+                    setNewAddress({ ...newAddress, fullName: e.target.value })
+                  }
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                    formErrors.fullName ? 'border-red-500' : 'border-gray-300'
+                    formErrors.fullName ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {formErrors.fullName && <p className="text-red-500 text-sm mt-1">{formErrors.fullName}</p>}
+                {formErrors.fullName && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {formErrors.fullName}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mobile Number
+                </label>
                 <input
                   type="tel"
                   placeholder="Enter mobile number"
                   value={newAddress.mobileNumber}
-                  onChange={(e) => setNewAddress({ ...newAddress, mobileNumber: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                  onChange={(e) =>
+                    setNewAddress({
+                      ...newAddress,
+                      mobileNumber: e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 10),
+                    })
+                  }
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                    formErrors.mobileNumber ? 'border-red-500' : 'border-gray-300'
+                    formErrors.mobileNumber
+                      ? "border-red-500"
+                      : "border-gray-300"
                   }`}
                 />
-                {formErrors.mobileNumber && <p className="text-red-500 text-sm mt-1">{formErrors.mobileNumber}</p>}
+                {formErrors.mobileNumber && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {formErrors.mobileNumber}
+                  </p>
+                )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Address
+              </label>
               <textarea
                 placeholder="Enter complete address"
                 rows={3}
                 value={newAddress.address}
-                onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
+                onChange={(e) =>
+                  setNewAddress({ ...newAddress, address: e.target.value })
+                }
                 className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                  formErrors.address ? 'border-red-500' : 'border-gray-300'
+                  formErrors.address ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {formErrors.address && <p className="text-red-500 text-sm mt-1">{formErrors.address}</p>}
+              {formErrors.address && (
+                <p className="text-red-500 text-sm mt-1">
+                  {formErrors.address}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City
+                </label>
                 <input
                   type="text"
                   placeholder="Enter city"
                   value={newAddress.city}
-                  onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                  onChange={(e) =>
+                    setNewAddress({ ...newAddress, city: e.target.value })
+                  }
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                    formErrors.city ? 'border-red-500' : 'border-gray-300'
+                    formErrors.city ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {formErrors.city && <p className="text-red-500 text-sm mt-1">{formErrors.city}</p>}
+                {formErrors.city && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.city}</p>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  State
+                </label>
                 <select
                   value={newAddress.state}
-                  onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
+                  onChange={(e) =>
+                    setNewAddress({ ...newAddress, state: e.target.value })
+                  }
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                    formErrors.state ? 'border-red-500' : 'border-gray-300'
+                    formErrors.state ? "border-red-500" : "border-gray-300"
                   }`}
                 >
                   <option value="">Select State</option>
                   {indianStates.map((state) => (
-                    <option key={state} value={state}>{state}</option>
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
                   ))}
                 </select>
-                {formErrors.state && <p className="text-red-500 text-sm mt-1">{formErrors.state}</p>}
+                {formErrors.state && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {formErrors.state}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pincode
+                </label>
                 <input
                   type="text"
                   placeholder="Enter pincode"
                   value={newAddress.pincode}
-                  onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                  onChange={(e) =>
+                    setNewAddress({
+                      ...newAddress,
+                      pincode: e.target.value.replace(/\D/g, "").slice(0, 6),
+                    })
+                  }
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                    formErrors.pincode ? 'border-red-500' : 'border-gray-300'
+                    formErrors.pincode ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {formErrors.pincode && <p className="text-red-500 text-sm mt-1">{formErrors.pincode}</p>}
+                {formErrors.pincode && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {formErrors.pincode}
+                  </p>
+                )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Address Type
+              </label>
               <select
                 value={newAddress.addressType}
-                onChange={(e) => setNewAddress({ ...newAddress, addressType: e.target.value })}
+                onChange={(e) =>
+                  setNewAddress({ ...newAddress, addressType: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
               >
                 <option value="Home">Home</option>
@@ -419,7 +589,7 @@ const Account = () => {
                     Saving...
                   </>
                 ) : (
-                  'Save Address'
+                  "Save Address"
                 )}
               </button>
               <button
@@ -450,7 +620,10 @@ const Account = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {addresses.length > 0 ? (
           addresses.map((address) => (
-            <div key={address._id} className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-colors">
+            <div
+              key={address._id}
+              className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-colors"
+            >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-2">
                   <MapPin size={18} className="text-gray-600" />
@@ -465,16 +638,20 @@ const Account = () => {
                   Delete
                 </button>
               </div>
-              
+
               <div className="space-y-2">
-                <p className="font-semibold text-gray-900">{address.fullName}</p>
+                <p className="font-semibold text-gray-900">
+                  {address.fullName}
+                </p>
                 <p className="text-gray-700">{address.address}</p>
                 <p className="text-gray-700">
                   {address.city}, {address.state} - {address.pincode}
                 </p>
                 <div className="flex items-center gap-2 pt-2">
                   <Phone size={14} className="text-gray-500" />
-                  <p className="text-sm text-gray-600">{address.mobileNumber}</p>
+                  <p className="text-sm text-gray-600">
+                    {address.mobileNumber}
+                  </p>
                 </div>
               </div>
             </div>
@@ -497,7 +674,7 @@ const Account = () => {
         <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl">
           {/* Success/Error Messages */}
           {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 mt-10">
               {success}
             </div>
           )}
@@ -513,11 +690,15 @@ const Account = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-32">
                 <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
                   <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-semibold">
-                    {userProfile?.userProfile?.username?.charAt(0) || 'U'}
+                    {userProfile?.userProfile?.username?.charAt(0) || "U"}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{userProfile?.username}</p>
-                    <p className="text-sm text-gray-600">{userProfile?.email}</p>
+                    <p className="font-semibold text-gray-900">
+                      {userProfile?.username}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {userProfile?.email}
+                    </p>
                   </div>
                 </div>
 
@@ -539,7 +720,7 @@ const Account = () => {
                       </button>
                     );
                   })}
-                  
+
                   <button
                     onClick={() => navigate("/orders")}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-gray-700 hover:bg-gray-100 transition-colors"
@@ -547,7 +728,7 @@ const Account = () => {
                     <Package size={18} />
                     Orders
                   </button>
-                  
+
                   <button
                     onClick={() => navigate("/cart")}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-gray-700 hover:bg-gray-100 transition-colors"
@@ -555,7 +736,7 @@ const Account = () => {
                     <ShoppingCart size={18} />
                     Cart
                   </button>
-                  
+
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-red-600 hover:bg-red-50 transition-colors"
@@ -592,16 +773,22 @@ const Account = () => {
               <h3 className="text-xl font-semibold mb-6">Edit Profile</h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Username
+                  </label>
                   <input
                     type="text"
                     value={editData.username}
-                    onChange={(e) => setEditData({ ...editData, username: e.target.value })}
+                    onChange={(e) =>
+                      setEditData({ ...editData, username: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
                   <div className="flex gap-2">
                     <input
                       type="email"
@@ -645,11 +832,13 @@ const Account = () => {
               <h3 className="text-xl font-semibold mb-6">Change Email</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">New Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    New Email
+                  </label>
                   <input
                     type="email"
-                    value={editData.email}
-                    onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   />
                 </div>
@@ -662,7 +851,8 @@ const Account = () => {
                   </button>
                   <button
                     onClick={handleEmailChange}
-                    className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+                    disabled={!newEmail}
+                    className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:bg-gray-400"
                   >
                     Send OTP
                   </button>
@@ -674,48 +864,91 @@ const Account = () => {
 
         {/* OTP Verification Modal */}
         {showOtpModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h3 className="text-xl font-medium mb-4">Verify OTP</h3>
-              <form onSubmit={handleOtpSubmit} className="space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-md w-full p-6">
+              <h3 className="text-xl font-semibold mb-6">Verify OTP</h3>
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Enter OTP</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Enter OTP sent to your current email ({userProfile?.email})
+                  </label>
                   <input
                     type="text"
-                    value={otpData.otp}
-                    onChange={(e) => setOtpData({ ...otpData, otp: e.target.value })}
+                    value={emailOtp}
+                    onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     maxLength={6}
-                    className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-black focus:ring-black"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                    placeholder="Enter 6-digit OTP"
                   />
-                  <p className="text-sm text-gray-500 mt-2">
-                    Time remaining: {Math.floor(otpData.timer / 60)}:{(otpData.timer % 60).toString().padStart(2, '0')}
-                  </p>
+                  {emailOtpTimer > 0 && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Time remaining: {Math.floor(emailOtpTimer / 60)}:
+                      {emailOtpTimer % 60 < 10 ? `0${emailOtpTimer % 60}` : emailOtpTimer % 60}
+                    </p>
+                  )}
                 </div>
-                {otpData.showResend && (
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    className="text-blue-600 text-sm hover:text-blue-800"
-                  >
-                    Resend OTP
-                  </button>
-                )}
-                <div className="flex justify-end gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowOtpModal(false)}
-                    className="px-4 py-2 border rounded hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
-                  >
-                    Verify
-                  </button>
+                <div className="flex justify-between items-center gap-4 pt-4">
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleResendEmailOtp}
+                      disabled={emailOtpTimer > 0}
+                      className="text-blue-600 text-sm hover:text-blue-800 disabled:text-gray-400"
+                    >
+                      Resend OTP
+                    </button>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOtpModal(false);
+                        setEmailOtp('');
+                        clearInterval(emailOtpTimerId);
+                        setEmailOtpTimer(0);
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleEmailOtpSubmit}
+                      disabled={!emailOtp || emailOtp.length !== 6}
+                      className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:bg-gray-400"
+                    >
+                      Verify OTP
+                    </button>
+                  </div>
                 </div>
-              </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg shadow-md w-96">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Confirm Logout
+              </h3>
+              <p className="text-gray-700 mb-6">
+                Are you sure you want to logout?
+              </p>
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setShowLogoutModal(true)}
+                  className="flex items-center text-red-600 hover:text-red-800"
+                >
+                  <LogOut size={20} className="mr-2" />
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         )}

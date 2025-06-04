@@ -9,6 +9,9 @@ const {
   verifyForgotPasswordOtp,
   resendForgotPasswordOtp,
   resetUserPassword,
+  updateEmailSendOtp,
+  verifyUpdateEmailOtp,
+  resendUpdateEmailOtp,
 } = require("../controllers/userController");
 const { upload } = require("../middleware/multer");
 const passport = require("passport");
@@ -25,6 +28,9 @@ router.post("/forgot-password-send-otp", forgotPasswordSendOtp);
 router.post("/reset-password", resetPassword);
 router.post("/verify-forgot-password-otp", verifyForgotPasswordOtp);
 router.post("/resend-forgot-password-otp", resendForgotPasswordOtp);
+router.post("/update-email-send-otp", authMiddleware, updateEmailSendOtp);
+router.post("/verify-update-email-otp", authMiddleware, verifyUpdateEmailOtp);
+router.post("/resend-update-email-otp", authMiddleware, resendUpdateEmailOtp);
 router.put(
   "/editProfile/:id",
   authMiddleware,

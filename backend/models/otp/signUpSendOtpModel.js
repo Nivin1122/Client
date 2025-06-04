@@ -15,6 +15,10 @@ const otpSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  newEmail: {
+    type: String,
+    match: [/.+@.+\..+/, 'Please enter a valid email address'],
+  }
 });
 
 module.exports = mongoose.model('Otp', otpSchema);

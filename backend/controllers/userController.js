@@ -24,35 +24,8 @@ const transporter = nodemailer.createTransport({
 
 const registerUser = asyncHandler(async (req, res) => {
   try {
-    const { username, email, password, confirmPassword, otp } = req.body;
-    console.log("Email:", email)
-
-    // First verify OTP
-    if (!otp) {
-      return res.status(400).json({ message: "OTP verification required" });
-    }
-
-    // Verify OTP
-    const otpDoc = await Otp.findOne({ email: email.toLowerCase().trim() });
-    console.log("OTP Document:", otpDoc);
-    
-    if (!otpDoc || !otpDoc.email) {
-      return res.status(400).json({ message: "Please request a new OTP" });
-    }
-
-    if (otpDoc.otp !== otp) {
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    if (otpDoc.expiresAt < new Date()) {
-      await Otp.deleteOne({ email: email });
-      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
-    }
-
-    // Delete the OTP document as it's been verified
-    await Otp.deleteOne({ email });
-
-    console.log("Body: ", req.body);
+    const { username, email, password, confirmPassword } = req.body;
+    console.log("Email:", email);
 
     const textRegex = /^[A-Za-z0-9_]+$/;
 
@@ -95,7 +68,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // Rest of the function remains the same...
-    
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -119,17 +92,16 @@ const registerUser = asyncHandler(async (req, res) => {
 
     res.status(201).json({
       message: "Register successfully",
-        // ? "Registration successful! Referral bonus credited to your wallet!" 
-        // : "Registration successful!",
+      // ? "Registration successful! Referral bonus credited to your wallet!"
+      // : "Registration successful!",
       token,
       // referralBonus: referringUser ? true : false
     });
-
   } catch (err) {
     console.error("Registration error:", err);
-    res.status(500).json({ 
-      message: "Registration failed", 
-      error: err.message 
+    res.status(500).json({
+      message: "Registration failed",
+      error: err.message,
     });
   }
 });
@@ -153,11 +125,9 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     if (existUser.isDeleted) {
-      return res
-        .status(400)
-        .json({
-          message: "You are temporarily blocked. Please contact admin.",
-        });
+      return res.status(400).json({
+        message: "You are temporarily blocked. Please contact admin.",
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(password, existUser.password);
@@ -181,12 +151,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId)
-      .select("-password")
-      // .populate({
-      //   path: 'referredBy',
-      //   select: 'username'
-      // });
+    const user = await User.findById(userId).select("-password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -194,14 +159,17 @@ const getUserProfile = asyncHandler(async (req, res) => {
 
     // Get wallet details
     const wallet = await Wallet.findOne({ userId });
-    const referralTransactions = wallet?.transactions.filter(t => t.description.includes('referral'));
+    const referralTransactions = wallet?.transactions.filter((t) =>
+      t.description.includes("referral")
+    );
 
     res.status(200).json({
       message: "User profile fetched successfully",
       user: {
         ...user.toObject(),
-        referralEarnings: referralTransactions?.reduce((sum, t) => sum + t.amount, 0) || 0
-      }
+        referralEarnings:
+          referralTransactions?.reduce((sum, t) => sum + t.amount, 0) || 0,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: "An error occurred", error: err.message });
@@ -440,27 +408,28 @@ const resetUserPassword = asyncHandler(async (req, res) => {
 
     // Validate input
     if (!oldPassword || !newPassword) {
-      return res.status(400).json({ message: 'All fields are required' });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
     // Validate password format
     const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
     if (newPassword.length < 8 || !specialCharRegex.test(newPassword)) {
       return res.status(400).json({
-        message: 'Password must be at least 8 characters long and contain at least one special character'
+        message:
+          "Password must be at least 8 characters long and contain at least one special character",
       });
     }
 
     // Get user
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Verify old password
     const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: 'Current password is incorrect' });
+      return res.status(400).json({ message: "Current password is incorrect" });
     }
 
     // Hash new password
@@ -470,9 +439,9 @@ const resetUserPassword = asyncHandler(async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    res.status(200).json({ message: 'Password updated successfully' });
+    res.status(200).json({ message: "Password updated successfully" });
   } catch (err) {
-    res.status(500).json({ message: 'An error occurred', error: err.message });
+    res.status(500).json({ message: "An error occurred", error: err.message });
   }
 });
 
@@ -487,7 +456,7 @@ passport.use(
     async (req, accessToken, refreshToken, profile, done) => {
       try {
         let user = await User.findOne({ email: profile.emails[0].value });
-        
+
         if (user) {
           // Update Google ID if user exists but doesn't have one
           if (!user.googleId) {
@@ -496,8 +465,10 @@ passport.use(
           }
         } else {
           // Create new user
-          const username = `${profile.name.givenName}${Math.random().toString(36).slice(2, 8)}`.toLowerCase();
-          
+          const username = `${profile.name.givenName}${Math.random()
+            .toString(36)
+            .slice(2, 8)}`.toLowerCase();
+
           user = await User.create({
             googleId: profile.id,
             firstname: profile.name.givenName,
@@ -505,14 +476,14 @@ passport.use(
             username: username,
             email: profile.emails[0].value,
             image: profile.photos[0].value,
-            password: null 
+            password: null,
           });
 
           // Create wallet for new user
           await Wallet.create({
             userId: user._id,
             balance: 0,
-            transactions: []
+            transactions: [],
           });
         }
 
@@ -540,6 +511,133 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 
+const updateEmailSendOtp = asyncHandler(async (req, res) => {
+  try {
+    const { email } = req.body;
+    const userId = req.user.id;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // Check if email already exists for another user
+    const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes expiry
+
+    await Otp.findOneAndUpdate(
+      { email },
+      { otp, expiresAt, newEmail: email },
+      { upsert: true, new: true }
+    );
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Email Update OTP",
+      text: `Your OTP for email update is ${otp}. It will expire in 2 minutes.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: "OTP sent successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error sending OTP", error: error.message });
+  }
+});
+
+const verifyUpdateEmailOtp = asyncHandler(async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const userId = req.user.id;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    const otpDoc = await Otp.findOne({ email });
+    if (!otpDoc) {
+      return res.status(400).json({ message: "Please request a new OTP" });
+    }
+
+    if (otpDoc.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (otpDoc.expiresAt < new Date()) {
+      await Otp.deleteOne({ email });
+      return res
+        .status(400)
+        .json({ message: "OTP has expired. Please request a new one." });
+    }
+
+    // Update user's email
+    const user = await User.findById(userId);
+    user.email = email;
+    await user.save();
+
+    // Delete the OTP document
+    await Otp.deleteOne({ email });
+
+    // Generate new token with updated email
+    const token = Jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET || "1921u0030",
+      { expiresIn: "30d" }
+    );
+
+    res.status(200).json({
+      message: "Email updated successfully",
+      token,
+      user: {
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error updating email", error: error.message });
+  }
+});
+
+const resendUpdateEmailOtp = asyncHandler(async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes expiry
+
+    await Otp.findOneAndUpdate(
+      { email },
+      { otp, expiresAt },
+      { upsert: true, new: true }
+    );
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Email Update OTP",
+      text: `Your new OTP for email update is ${otp}. It will expire in 2 minutes.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: "New OTP sent successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error sending new OTP", error: error.message });
+  }
+});
+
 module.exports = {
   registerUser,
   loginUser,
@@ -549,5 +647,8 @@ module.exports = {
   forgotPasswordSendOtp,
   verifyForgotPasswordOtp,
   resendForgotPasswordOtp,
-  resetUserPassword
+  resetUserPassword,
+  updateEmailSendOtp,
+  verifyUpdateEmailOtp,
+  resendUpdateEmailOtp,
 };

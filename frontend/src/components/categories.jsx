@@ -63,22 +63,23 @@ const Categories = () => {
         {categories.map((category, index) => (
           <div
             key={index}
-            className="relative group overflow-hidden cursor-pointer aspect-[3/4]"
+            className="relative group overflow-hidden cursor-pointer aspect-[3/5]"
           >
             <img
               src={category.image}
               alt={category.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 flex flex-col items-center justify-end bg-black bg-opacity-25 transition-all duration-300 group-hover:bg-opacity-35 pb-6">
+            <div className="absolute inset-0 flex flex-col items-center justify-end pb-6">
               <h3 className="text-white text-base md:text-lg font-medium mb-3 md:mb-4 text-center px-2">
                 {category.title}
               </h3>
-              <button 
+              <button
                 onClick={() => {
                   navigate(`/products?category=${category._id}`);
                 }}
-                className="bg-white text-black px-5 md:px-7 py-1.5 md:py-2 text-xs md:text-sm font-medium tracking-wide hover:bg-opacity-95 transition-colors duration-300">
+                className="bg-white text-black px-5 md:px-7 py-1.5 md:py-2 text-xs md:text-sm font-medium tracking-wide hover:bg-opacity-95 transition-colors duration-300"
+              >
                 SHOP NOW
               </button>
             </div>

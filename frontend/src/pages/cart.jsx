@@ -208,7 +208,9 @@ const Cart = () => {
                     </td>
 
                     <td className="text-right py-4">
-                      Rs. {(item.price * item.quantity).toFixed(2)}
+                      <span className="text-green-600">
+                        Rs. {calculateSubtotal().toFixed(2)}
+                      </span>
                     </td>
                   </tr>
                 ))}

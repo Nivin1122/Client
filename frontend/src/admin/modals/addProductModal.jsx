@@ -18,45 +18,48 @@ import {
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import CloseIcon from "@mui/icons-material/Close";
-import { styled } from '@mui/material/styles';
+import { styled } from "@mui/material/styles";
 import axios from "axios";
 import AddVariantModal from "./addVariantModal";
 import axiosInstance from "@/utils/adminAxiosInstance";
 
 // Styled Components
 const StyledModal = styled(Modal)({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
-const ModalContent = styled(Paper)({
-  width: '80%',
-  maxWidth: '900px',
-  maxHeight: '85vh',
-  overflowY: 'auto',
-  padding: '32px',
-  borderRadius: '12px',
-  backgroundColor: '#fff',
-  '&::-webkit-scrollbar': {
-    width: '8px',
+const ModalContent = styled(Paper)(({ theme }) => ({
+  width: "90%",
+  maxWidth: "900px",
+  maxHeight: "85vh",
+  overflowY: "auto",
+  padding: theme.spacing(4),
+  borderRadius: "12px",
+  backgroundColor: "#fff",
+  [theme.breakpoints.down("sm")]: {
+    padding: theme.spacing(2),
   },
-  '&::-webkit-scrollbar-thumb': {
-    backgroundColor: '#bdbdbd',
-    borderRadius: '4px',
+  "&::-webkit-scrollbar": {
+    width: "8px",
   },
-});
+  "&::-webkit-scrollbar-thumb": {
+    backgroundColor: "#bdbdbd",
+    borderRadius: "4px",
+  },
+}));
 
 const FormSection = styled(Box)({
-  marginBottom: '24px',
+  marginBottom: "24px",
 });
 
-const SectionTitle = styled(Typography)({
-  fontSize: '16px',
+const SectionTitle = styled(Typography)(({ theme }) => ({
+  fontSize: "18px",
   fontWeight: 600,
-  color: '#2c3e50',
-  marginBottom: '16px',
-});
+  color: theme.palette.primary.main,
+  marginBottom: theme.spacing(2),
+}));
 
 const AddProductModal = ({ open, onClose, onProductAdded }) => {
   const [brands, setBrands] = useState([]);
@@ -173,17 +176,20 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
       <StyledModal open={open} onClose={onClose}>
         <ModalContent elevation={3}>
           {/* Header */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            mb: 3 
-          }}>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 600,
-              color: '#1a237e',
-              fontSize: '24px'
-            }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: "space-between",
+              alignItems: { xs: "flex-start", sm: "center" },
+              gap: 2,
+              mb: 3,
+            }}
+          >
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 600, color: "primary.dark" }}
+            >
               Add New Product
             </Typography>
             <IconButton onClick={onClose} size="small">
@@ -197,8 +203,8 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
             {/* Basic Information Section */}
             <FormSection>
               <SectionTitle>Basic Information</SectionTitle>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={4}>
                   <Controller
                     name="productName"
                     control={control}
@@ -212,9 +218,9 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
                         helperText={errors.productName?.message}
                         placeholder="Enter product name"
                         sx={{
-                          '& .MuiOutlinedInput-root': {
-                            '&:hover fieldset': {
-                              borderColor: '#3f51b5',
+                          "& .MuiOutlinedInput-root": {
+                            "&:hover fieldset": {
+                              borderColor: "#3f51b5",
                             },
                           },
                         }}
@@ -247,8 +253,8 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
             {/* Classification Section */}
             <FormSection>
               <SectionTitle>Product Classification</SectionTitle>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={4}>
                   <Controller
                     name="brand"
                     control={control}
@@ -259,7 +265,7 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
                         <Select
                           {...field}
                           label="Brand"
-                          sx={{ backgroundColor: '#fff' }}
+                          sx={{ backgroundColor: "#fff" }}
                         >
                           {brands.map((brand) => (
                             <MenuItem key={brand._id} value={brand.name}>
@@ -287,7 +293,7 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
                         <Select
                           {...field}
                           label="Category"
-                          sx={{ backgroundColor: '#fff' }}
+                          sx={{ backgroundColor: "#fff" }}
                         >
                           {categories.map((category) => (
                             <MenuItem key={category._id} value={category.name}>
@@ -310,8 +316,8 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
             {/* Details Section */}
             <FormSection>
               <SectionTitle>Product Details</SectionTitle>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={4}>
                   <Controller
                     name="gender"
                     control={control}
@@ -376,11 +382,12 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
                 fullWidth
                 sx={{
                   py: 1.5,
-                  backgroundColor: '#3f51b5',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  '&:hover': {
-                    backgroundColor: '#303f9f',
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  backgroundColor: "primary.main",
+                  "&:hover": {
+                    backgroundColor: "primary.dark",
                   },
                 }}
               >
@@ -398,12 +405,12 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert 
-          onClose={handleSnackbarClose} 
+        <Alert
+          onClose={handleSnackbarClose}
           severity={snackbar.severity}
           elevation={6}
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {snackbar.message}
         </Alert>

@@ -18,11 +18,26 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Chip,
 } from "@mui/material";
-import { Add, Block, Search, Edit as EditIcon } from "@mui/icons-material";
-import axios from "axios";
+import { 
+  Add, 
+  Block, 
+  Search, 
+  Edit as EditIcon,
+  PlayArrow as UnblockIcon,
+  Delete as DeleteIcon
+} from "@mui/icons-material";
+import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddCategoryModal from "../../modals/addCategoryModal";
 import EditCategoryModal from "../../modals/editCategoryModal";
+import AddChildCategoryModal from "@/admin/modals/addChildCategory";
 import axiosInstance from "@/utils/adminAxiosInstance";
 
 const Category = () => {
@@ -38,6 +53,8 @@ const Category = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [categoryToBlock, setCategoryToBlock] = useState(null);
+  const [parentCategoryId, setParentCategoryId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +78,8 @@ const Category = () => {
   const handleCategoryAdded = (newCategory) => {
     if (newCategory && newCategory._id) {
       setCategoryData((prevData) => [newCategory, ...prevData]);
+      setSnackbarMessage("Category added successfully!");
+      setSnackbarOpen(true);
     } else {
       console.error("Invalid new category:", newCategory);
     }
@@ -73,6 +92,8 @@ const Category = () => {
           category._id === updatedCategory._id ? updatedCategory : category
         )
       );
+      setSnackbarMessage("Category updated successfully!");
+      setSnackbarOpen(true);
     } else {
       console.error("Invalid updated category:", updatedCategory);
     }
@@ -87,8 +108,15 @@ const Category = () => {
     setPage(0);
   };
 
-  const handleModalOpen = () => setIsModalOpen(true);
-  const handleModalClose = () => setIsModalOpen(false);
+  const handleModalOpen = () => {
+    setParentCategoryId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setParentCategoryId(null);
+  };
 
   const handleEditModalOpen = (category) => {
     if (category && category._id) {
@@ -98,6 +126,7 @@ const Category = () => {
       console.error("Invalid category selected:", category);
     }
   };
+
   const handleEditModalClose = () => {
     setSelectedCategory(null);
     setIsEditModalOpen(false);
@@ -105,7 +134,7 @@ const Category = () => {
 
   const handleBlockCategory = (categoryId) => {
     setCategoryToBlock(categoryId);
-    setIsConfirmationModalOpen(true); 
+    setIsConfirmationModalOpen(true);
   };
 
   const handleConfirmBlock = async () => {
@@ -124,13 +153,13 @@ const Category = () => {
         );
         setSnackbarMessage(response.data.message);
         setSnackbarOpen(true);
-        setIsConfirmationModalOpen(false); 
+        setIsConfirmationModalOpen(false);
       }
     } catch (error) {
       console.error("Error blocking category:", error);
       setSnackbarMessage("Failed to block category.");
       setSnackbarOpen(true);
-      setIsConfirmationModalOpen(false); 
+      setIsConfirmationModalOpen(false);
     }
   };
 
@@ -160,8 +189,59 @@ const Category = () => {
   const handleSnackbarClose = () => setSnackbarOpen(false);
   const handleConfirmationModalClose = () => setIsConfirmationModalOpen(false);
 
+  const groupCategories = (categories) => {
+    const parentMap = {};
+    const childrenMap = {};
+
+    categories.forEach((cat) => {
+      if (!cat.parent) {
+        parentMap[cat._id] = { ...cat, children: [] };
+      } else {
+        if (!childrenMap[cat.parent._id]) childrenMap[cat.parent._id] = [];
+        childrenMap[cat.parent._id].push(cat);
+      }
+    });
+
+    Object.keys(childrenMap).forEach((parentId) => {
+      if (parentMap[parentId]) {
+        parentMap[parentId].children = childrenMap[parentId];
+      }
+    });
+
+    return Object.values(parentMap);
+  };
+
+  const openAddChildModal = (parentId) => {
+    setParentCategoryId(parentId);
+    setIsModalOpen(true);
+  };
+
+  // Filter categories based on search term
+  const filteredCategories = groupCategories(categoryData).filter(parent =>
+    parent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    parent.children.some(child =>
+      child.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
+  // Paginate the filtered categories
+  const paginatedCategories = filteredCategories.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   if (loading) {
-    return <Box sx={{ color: "#FF9800" }}>Loading...</Box>;
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '50vh',
+        color: "#FF9800" 
+      }}>
+        Loading categories...
+      </Box>
+    );
   }
 
   if (error) {
@@ -187,7 +267,7 @@ const Category = () => {
               component="span"
               sx={{ fontSize: "20px", fontWeight: "bold", color: "#FF9800" }}
             >
-              Categories
+              Categories ({filteredCategories.length})
             </Box>
           </Box>
           <Button
@@ -207,7 +287,9 @@ const Category = () => {
             <TextField
               variant="outlined"
               size="small"
-              placeholder="Search..."
+              placeholder="Search categories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
                 endAdornment: (
                   <IconButton>
@@ -230,119 +312,168 @@ const Category = () => {
           </Box>
         </Box>
 
-        {/* Table */}
-        <TableContainer
-          component={Paper}
-          sx={{
-            padding: 2,
-            backgroundColor: "#333",
-            borderRadius: 3,
-          }}
-        >
-          <Table sx={{ width: "100%", backgroundColor: "#424242" }}>
-            <TableHead>
-              <TableRow>
-                <TableCell
-                  sx={{
-                    backgroundColor: "#212121",
-                    color: "#FF9800",
-                    fontWeight: "bold",
+        {/* Categories Display */}
+        <Paper sx={{ padding: 2, backgroundColor: "#333", borderRadius: 3 }}>
+          {paginatedCategories.length === 0 ? (
+            <Box sx={{ 
+              textAlign: 'center', 
+              py: 4, 
+              color: '#888' 
+            }}>
+              No categories found
+            </Box>
+          ) : (
+            paginatedCategories.map((parent) => (
+              <Accordion 
+                key={parent._id}
+                sx={{
+                  backgroundColor: "#424242",
+                  color: "#fff",
+                  mb: 1,
+                  "&:before": {
+                    display: "none",
+                  },
+                }}
+              >
+                <AccordionSummary 
+                  expandIcon={<ExpandMoreIcon sx={{ color: "#FF9800" }} />}
+                  sx={{ 
+                    backgroundColor: "#424242",
+                    "&:hover": { backgroundColor: "#555" }
                   }}
                 >
-                  Category
-                </TableCell>
-                <TableCell
-                  sx={{
-                    backgroundColor: "#212121",
-                    color: "#FF9800",
-                    fontWeight: "bold",
-                  }}
-                >
-                  Created At
-                </TableCell>
-                <TableCell
-                  sx={{
-                    backgroundColor: "#212121",
-                    color: "#FF9800",
-                    fontWeight: "bold",
-                  }}
-                >
-                  Edit Category
-                </TableCell>
-                <TableCell
-                  sx={{
-                    backgroundColor: "#212121",
-                    color: "#FF9800",
-                    fontWeight: "bold",
-                  }}
-                >
-                  Status
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {categoryData
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((category) => (
-                  <TableRow key={category._id}>
-                    <TableCell sx={{ color: "#ffffff" }}>
-                      {category.name}
-                    </TableCell>
-                    <TableCell sx={{ color: "#ffffff" }}>
-                      {new Date(category.createdAt).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        startIcon={<EditIcon />}
-                        sx={{
-                          backgroundColor: "#FF9800",
-                          color: "white",
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    mr: 2
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Typography sx={{ color: "#FF9800", fontWeight: 'bold' }}>
+                        {parent.name}
+                      </Typography>
+                      <Chip
+                        label={parent.isDeleted ? "Blocked" : "Active"}
+                        color={parent.isDeleted ? "error" : "success"}
+                        size="small"
+                      />
+                      <Chip
+                        label={`${parent.children.length} subcategories`}
+                        variant="outlined"
+                        size="small"
+                        sx={{ color: "#FF9800", borderColor: "#FF9800" }}
+                      />
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditModalOpen(parent);
                         }}
-                        onClick={() => handleEditModalOpen(category)}
+                        sx={{ color: "#FF9800" }}
                       >
-                        Edit
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      {category.isDeleted ? (
-                        <Button
-                          variant="contained"
-                          color="error"
-                          startIcon={<Block />}
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          parent.isDeleted 
+                            ? handleUnBlockCategory(parent._id)
+                            : handleBlockCategory(parent._id);
+                        }}
+                        sx={{ color: parent.isDeleted ? "#4caf50" : "#f44336" }}
+                      >
+                        {parent.isDeleted ? <UnblockIcon /> : <Block />}
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ backgroundColor: "#555" }}>
+                  {parent.children.length > 0 ? (
+                    <Box sx={{ mb: 2 }}>
+                      {parent.children.map((child) => (
+                        <Box
+                          key={child._id}
                           sx={{
-                            backgroundColor: "black",
-                            color: "gray",
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            ml: 3,
+                            mb: 1,
+                            p: 1,
+                            backgroundColor: "#666",
+                            borderRadius: 1,
                           }}
-                          onClick={() => handleUnBlockCategory(category._id)}
                         >
-                          Unblock
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="contained"
-                          color="error"
-                          startIcon={<Block />}
-                          sx={{
-                            backgroundColor: "black",
-                            color: "#FF9800",
-                          }}
-                          onClick={() => handleBlockCategory(category._id)}
-                        >
-                          Block
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Typography sx={{ color: "#fff" }}>
+                              • {child.name}
+                            </Typography>
+                            <Chip
+                              label={child.isDeleted ? "Blocked" : "Active"}
+                              color={child.isDeleted ? "error" : "success"}
+                              size="small"
+                            />
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditModalOpen(child)}
+                              sx={{ color: "#FF9800" }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => 
+                                child.isDeleted 
+                                  ? handleUnBlockCategory(child._id)
+                                  : handleBlockCategory(child._id)
+                              }
+                              sx={{ color: child.isDeleted ? "#4caf50" : "#f44336" }}
+                            >
+                              {child.isDeleted ? <UnblockIcon /> : <Block />}
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  ) : (
+                    <Typography sx={{ ml: 3, color: "#888", mb: 2 }}>
+                      No child categories
+                    </Typography>
+                  )}
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<Add />}
+                    sx={{
+                      mt: 1,
+                      ml: 3,
+                      color: "#FF9800",
+                      borderColor: "#FF9800",
+                      "&:hover": {
+                        backgroundColor: "rgba(255, 152, 0, 0.1)",
+                        borderColor: "#FF9800",
+                      }
+                    }}
+                    onClick={() => openAddChildModal(parent._id)}
+                  >
+                    Add Subcategory
+                  </Button>
+                </AccordionDetails>
+              </Accordion>
+            ))
+          )}
+        </Paper>
 
         {/* Pagination */}
         <TablePagination
           component="div"
-          count={categoryData.length}
+          count={filteredCategories.length}
           page={page}
           onPageChange={handleChangePage}
           rowsPerPage={rowsPerPage}
@@ -350,16 +481,28 @@ const Category = () => {
           sx={{
             backgroundColor: "#333",
             color: "#FF9800",
+            mt: 2,
+            borderRadius: 1,
           }}
         />
       </Box>
 
       {/* Modals */}
-      <AddCategoryModal
-        open={isModalOpen}
-        handleClose={handleModalClose}
-        onCategoryAdded={handleCategoryAdded}
-      />
+      {parentCategoryId ? (
+        <AddChildCategoryModal
+          open={isModalOpen}
+          handleClose={handleModalClose}
+          onCategoryAdded={handleCategoryAdded}
+          parentCategoryId={parentCategoryId}
+        />
+      ) : (
+        <AddCategoryModal
+          open={isModalOpen}
+          handleClose={handleModalClose}
+          onCategoryAdded={handleCategoryAdded}
+        />
+      )}
+
       <EditCategoryModal
         open={isEditModalOpen}
         onClose={handleEditModalClose}

@@ -15,6 +15,7 @@ import Header from "../../components/header";
 import Footer from "../../components/footer";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ProductDetail = () => {
   const dispatch = useDispatch();
@@ -33,6 +34,14 @@ const ProductDetail = () => {
   const [isReturnOpen, setIsReturnOpen] = useState(false);
   const [error, setError] = useState(null);
   const [sizes, setSizes] = useState([]);
+  const navigate = useNavigate();
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsAuthenticated(!!token);
+  }, []);
 
   // Fetch product details and variants
   useEffect(() => {
@@ -56,7 +65,7 @@ const ProductDetail = () => {
         const firstVariantWithSizes = variantsResponse.data.variants.find(
           (v) => v.sizes && v.sizes.length > 0
         );
-        
+
         if (firstVariantWithSizes) {
           setSelectedVariant(firstVariantWithSizes);
 
@@ -64,17 +73,17 @@ const ProductDetail = () => {
           const sizesResponse = await axios.get(
             `http://localhost:9090/api/sizes/sizes/${firstVariantWithSizes._id}`
           );
-          
+
           // Ensure we're working with an array
-          const sizeVariants = Array.isArray(sizesResponse.data.sizeVariants) 
-            ? sizesResponse.data.sizeVariants 
+          const sizeVariants = Array.isArray(sizesResponse.data.sizeVariants)
+            ? sizesResponse.data.sizeVariants
             : [sizesResponse.data.sizeVariants];
-          
+
           setSizes(sizeVariants);
 
           // Find the first available size (in stock)
-          const firstAvailableSize = sizeVariants.find(size => size.inStock);
-          
+          const firstAvailableSize = sizeVariants.find((size) => size.inStock);
+
           // Set selected size - prefer an in-stock size if available
           setSelectedSize(firstAvailableSize || sizeVariants[0]);
         }
@@ -102,20 +111,49 @@ const ProductDetail = () => {
       const response = await axios.get(
         `http://localhost:9090/api/sizes/sizes/${variant._id}`
       );
-      
-      const sizeVariants = Array.isArray(response.data.sizeVariants) 
-        ? response.data.sizeVariants 
+
+      const sizeVariants = Array.isArray(response.data.sizeVariants)
+        ? response.data.sizeVariants
         : [response.data.sizeVariants];
-      
+
       setSizes(sizeVariants);
 
       // Find the first available size (in stock) for the new variant
-      const firstAvailableSize = sizeVariants.find(size => size.inStock);
+      const firstAvailableSize = sizeVariants.find((size) => size.inStock);
       setSelectedSize(firstAvailableSize || sizeVariants[0]);
     } catch (err) {
       console.error("Error fetching sizes:", err);
       setSizes([]);
     }
+  };
+
+  const handleRelatedProductClick = (variant) => {
+    // Update the selected variant
+    setSelectedVariant(variant);
+    setSelectedImage(0);
+    setSelectedSize(null);
+
+    // Fetch sizes for the selected variant
+    const fetchSizes = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:9090/api/sizes/sizes/${variant._id}`
+        );
+        const sizeVariants = Array.isArray(response.data.sizeVariants)
+          ? response.data.sizeVariants
+          : [response.data.sizeVariants];
+        setSizes(sizeVariants);
+
+        // Find the first available size (in stock)
+        const firstAvailableSize = sizeVariants.find((size) => size.inStock);
+        setSelectedSize(firstAvailableSize || sizeVariants[0]);
+      } catch (err) {
+        console.error("Error fetching sizes:", err);
+        setSizes([]);
+      }
+    };
+
+    fetchSizes();
   };
 
   // Handle mouse move for zoom effect
@@ -444,13 +482,17 @@ const ProductDetail = () => {
             )}
 
             {/* Quantity Selector */}
+            {/* Quantity Selector */}
             <div className="flex items-center gap-4 mb-6">
               <label className="text-sm">Quantity</label>
               <div className="flex items-center border border-gray-300">
                 <button
-                  onClick={decreaseQuantity}
+                  onClick={() => {
+                    if (!isAuthenticated) return navigate("/login");
+                    decreaseQuantity();
+                  }}
                   className="px-3 py-2 hover:bg-gray-100"
-                  disabled={!selectedSize?.inStock}
+                  disabled={!selectedSize?.inStock || !isAuthenticated}
                 >
                   -
                 </button>
@@ -459,16 +501,23 @@ const ProductDetail = () => {
                   value={quantity}
                   min="1"
                   max={selectedSize?.stockCount || 1}
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                  onChange={(e) => {
+                    if (!isAuthenticated) return navigate("/login");
+                    setQuantity(parseInt(e.target.value) || 1);
+                  }}
                   className="w-12 text-center border-x border-gray-300"
-                  disabled={!selectedSize?.inStock}
+                  disabled={!selectedSize?.inStock || !isAuthenticated}
                 />
                 <button
-                  onClick={increaseQuantity}
+                  onClick={() => {
+                    if (!isAuthenticated) return navigate("/login");
+                    increaseQuantity();
+                  }}
                   className="px-3 py-2 hover:bg-gray-100"
                   disabled={
                     !selectedSize?.inStock ||
-                    quantity >= (selectedSize?.stockCount || 1)
+                    quantity >= (selectedSize?.stockCount || 1) ||
+                    !isAuthenticated
                   }
                 >
                   +
@@ -477,11 +526,15 @@ const ProductDetail = () => {
             </div>
 
             {/* Action Buttons */}
+            {/* Action Buttons */}
             <div className="space-y-4">
               <Button
                 className="w-full border-2 border-black bg-transparent text-black py-6 text-lg hover:bg-black hover:text-white transition-colors"
-                disabled={!selectedSize?.inStock || addingToCart}
+                disabled={
+                  !selectedSize?.inStock || addingToCart || !isAuthenticated
+                }
                 onClick={async () => {
+                  if (!isAuthenticated) return navigate("/login");
                   if (!selectedSize || !selectedVariant) return;
                   setAddingToCart(true);
                   try {
@@ -504,18 +557,24 @@ const ProductDetail = () => {
               >
                 {addingToCart ? "ADDING..." : "ADD TO CART"}
               </Button>
+
               <div className="flex gap-4">
                 <Button
                   className="flex-1 bg-black text-white py-6 text-lg hover:bg-black/90"
-                  disabled={!selectedSize?.inStock}
-                  onClick={() => alert("Proceeding to checkout")}
+                  disabled={!selectedSize?.inStock || !isAuthenticated}
+                  onClick={() => {
+                    if (!isAuthenticated) return navigate("/login");
+                    alert("Proceeding to checkout");
+                  }}
                 >
                   BUY IT NOW
                 </Button>
+
                 <Button
                   className="flex-1 border-2 border-red-500 bg-transparent text-red-500 py-6 text-lg hover:bg-red-500 hover:text-white transition-colors"
-                  disabled={!selectedSize?.inStock}
+                  disabled={!selectedSize?.inStock || !isAuthenticated}
                   onClick={async () => {
+                    if (!isAuthenticated) return navigate("/login");
                     if (!selectedSize || !selectedVariant) return;
                     try {
                       await dispatch(
@@ -534,6 +593,19 @@ const ProductDetail = () => {
                   ADD TO WISHLIST
                 </Button>
               </div>
+
+              {!isAuthenticated && (
+                <p className="text-sm text-red-500 mt-2 text-center">
+                  Please{" "}
+                  <span
+                    className="underline cursor-pointer"
+                    onClick={() => navigate("/login")}
+                  >
+                    authenticate
+                  </span>{" "}
+                  to purchase or save items.
+                </p>
+              )}
             </div>
 
             {/* Product Details */}
@@ -642,6 +714,7 @@ const ProductDetail = () => {
                 <div
                   key={variant?._id || index}
                   className="group cursor-pointer"
+                  onClick={() => handleRelatedProductClick(variant)}
                 >
                   <div className="aspect-square overflow-hidden bg-gray-100 mb-4">
                     <img
@@ -653,14 +726,21 @@ const ProductDetail = () => {
                   <h3 className="text-sm font-medium mb-2 group-hover:underline">
                     {product.name} - {variant.color}
                   </h3>
-                  {sizes &&
-                    sizes.map((size) => (
-                      <div key={size?._id}>
-                        <p className="text-sm">
-                          {/* {formatPrice(size[0].discountPrice)}  // This might cause errors */}
+                  <div className="flex items-center gap-2">
+                    {variant.sizes && variant.sizes[0] && (
+                      <>
+                        <p className="text-sm font-medium">
+                          {formatPrice(variant.sizes[0].discountPrice)}
                         </p>
-                      </div>
-                    ))}
+                        {variant.sizes[0].price >
+                          variant.sizes[0].discountPrice && (
+                          <p className="text-sm text-gray-500 line-through">
+                            {formatPrice(variant.sizes[0].price)}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
           </div>

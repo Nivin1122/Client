@@ -201,26 +201,25 @@ const Products = () => {
   }, []);
 
   // Get lowest price from all variants with sizes
+  // Updated getLowestPrice function
   const getLowestPrice = useMemo(
     () => (variants) => {
-      let lowestPrice = Infinity;
-      let discountPrice = null;
-
-      variants.forEach((variant) => {
-        if (variant.sizes && variant.sizes.length > 0) {
-          variant.sizes.forEach((size) => {
-            if (size.price < lowestPrice) {
-              lowestPrice = size.price;
-              discountPrice = size.discountPrice;
-            }
-          });
-        }
-      });
-
-      if (lowestPrice === Infinity)
+      if (!variants || variants.length === 0) {
         return { price: "Price not available", discountPrice: null };
+      }
+
+      // Find the variant with the lowest price (considering discount if available)
+      const variantWithLowestPrice = variants.reduce((lowest, variant) => {
+        const currentPrice = variant.discountPrice || variant.price;
+        const lowestPrice = lowest.discountPrice || lowest.price;
+        return currentPrice < lowestPrice ? variant : lowest;
+      }, variants[0]);
+
+      const price = variantWithLowestPrice.price;
+      const discountPrice = variantWithLowestPrice.discountPrice;
+
       return {
-        price: `Rs. ${lowestPrice.toFixed(2)}`,
+        price: price ? `Rs. ${price.toFixed(2)}` : "Price not available",
         discountPrice: discountPrice ? `Rs. ${discountPrice.toFixed(2)}` : null,
       };
     },
@@ -261,15 +260,15 @@ const Products = () => {
           getSelectedVariant,
           getAvailableSizes,
         }) => (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {products.map((product) => {
               const currentVariant = getSelectedVariant(product);
               const priceInfo = getLowestPrice(product.variants);
-
+  
               return (
                 <div
                   key={product._id}
-                  className="relative w-full aspect-[3/4] flex flex-col"
+                  className="relative w-full aspect-[4/5] flex flex-col bg-white"
                   onMouseEnter={() => handleProductMouseEnter(product._id)}
                   onMouseLeave={handleProductMouseLeave}
                 >
@@ -279,7 +278,7 @@ const Products = () => {
                       New in
                     </span>
                   )}
-
+  
                   <div className="relative cursor-pointer group">
                     <a href={`/detail/${product._id}`}>
                       <img
@@ -288,10 +287,10 @@ const Products = () => {
                           "/placeholder-product.jpg"
                         }
                         alt={product.name}
-                        className="w-full h-[350px] md:h-[450px] lg:h-[500px] object-cover"
+                        className="w-full h-[350px] md:h-[400px] lg:h-[420px] object-cover"
                       />
                     </a>
-
+  
                     {hoveredProductId === product._id && (
                       <>
                         <button
@@ -357,7 +356,7 @@ const Products = () => {
                         </button>
                       </>
                     )}
-
+  
                     {hoveredProductId === product._id &&
                       product.variants.length > 1 && (
                         <div className="absolute bottom-16 left-0 right-0 bg-white p-2 transition-opacity duration-300 opacity-100">
@@ -385,7 +384,7 @@ const Products = () => {
                           </div>
                         </div>
                       )}
-
+  
                     <div
                       className={`absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
                         hoveredProductId === product._id
@@ -398,7 +397,7 @@ const Products = () => {
                       </button>
                     </div>
                   </div>
-
+  
                   <div className="mt-4 space-y-2">
                     <h3 className="text-sm font-medium line-clamp-2">
                       {product.name}
@@ -406,18 +405,18 @@ const Products = () => {
                     <div className="flex items-center gap-2">
                       {priceInfo.discountPrice ? (
                         <>
-                          <p className="text-sm font-medium">
-                            {priceInfo.discountPrice}
-                          </p>
                           <p className="text-sm text-gray-500 line-through">
                             {priceInfo.price}
                           </p>
+                          <p className="text-sm font-medium text-red-600">
+                            {priceInfo.discountPrice}
+                          </p>
                         </>
                       ) : (
-                        <p className="text-sm">{priceInfo.price}</p>
+                        <p className="text-sm font-medium">{priceInfo.price}</p>
                       )}
                     </div>
-
+  
                     <p className="text-sm text-gray-500">
                       {currentVariant?.color || "Various colors"}
                       {getAvailableSizes(product).length > 0 &&

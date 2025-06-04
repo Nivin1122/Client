@@ -4,7 +4,7 @@ import exclusive from "../../assets/bestseller.png";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import OtpVerificationModal from "../../components/models/verifyOtpModal"; // Import your modal component
+import OtpVerificationModal from "../../components/models/verifyOtpModal";
 
 const SignUp = () => {
   const [loading, setLoading] = useState(false);
@@ -34,13 +34,21 @@ const SignUp = () => {
       setLoading(true);
       // First send OTP
       await axiosInstance.post("/otp/send-otp", { email: data.email });
+      
+      // Store form data for later use after OTP verification
       setFormData({
         username: data.username,
         email: data.email,
         password: data.password,
         confirmPassword: data.confirmPassword
       });
+      
       setShowOtpModal(true);
+      setSnackbar({
+        open: true,
+        message: "OTP sent to your email!",
+        severity: "success",
+      });
     } catch (error) {
       const message = error.response?.data?.message || "Failed to send OTP";
       setSnackbar({
@@ -56,8 +64,16 @@ const SignUp = () => {
   const handleOtpVerificationSuccess = async () => {
     try {
       setLoading(true);
-      // Proceed with registration after OTP verification
-      const response = await axiosInstance.post("/users/register", formData);
+      
+      // Create registration payload
+      const registrationData = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        confirmpassword: formData.confirmPassword
+      };
+
+      const response = await axiosInstance.post("/users/register", registrationData);
 
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
@@ -100,6 +116,7 @@ const SignUp = () => {
               </div>
             )}
 
+
             <div>
               <input
                 type="text"
@@ -110,9 +127,12 @@ const SignUp = () => {
                 {...register("username", {
                   required: "Username is required",
                   pattern: {
-                    value: /^[a-zA-Z0-9_]{3,20}$/,
-                    message:
-                      "Username must be 3-20 characters and can only contain letters, numbers, and underscores",
+                    value: /^[a-zA-Z]+$/,
+                    message: "Username should only contain letters and no spaces or special characters",
+                  },
+                  minLength: {
+                    value: 4,
+                    message: "Username must be more than 3 characters long",
                   },
                 })}
               />
@@ -125,7 +145,7 @@ const SignUp = () => {
 
             <div>
               <input
-                type="text"
+                type="email"
                 placeholder="Email"
                 className={`w-full px-4 py-3 rounded-lg border ${
                   errors.email ? "border-red-500" : "border-gray-300"
@@ -133,8 +153,8 @@ const SignUp = () => {
                 {...register("email", {
                   required: "Email is required",
                   pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: "Invalid email address",
+                    value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
+                    message: "Please enter a valid email address",
                   },
                 })}
               />
@@ -156,7 +176,7 @@ const SignUp = () => {
                   required: "Password is required",
                   minLength: {
                     value: 8,
-                    message: "Password must be at least 8 characters",
+                    message: "Password must be at least 8 characters long",
                   },
                   pattern: {
                     value: /[!@#$%^&*(),.?":{}|<>]/,
@@ -194,23 +214,6 @@ const SignUp = () => {
               )}
             </div>
 
-            <a
-              href="http://localhost:9090/api/users/auth/google"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-            >
-              <FcGoogle className="text-xl" />
-              Sign up with Google
-            </a>
-
-            <div className="flex justify-start text-sm text-gray-600 mt-2">
-              <p>
-                Already have an account?{" "}
-                <a href="/login" className="text-rose-600 hover:underline">
-                  Login
-                </a>
-              </p>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -228,7 +231,31 @@ const SignUp = () => {
                 'Sign Up'
               )}
             </button>
+
+            <div className="flex items-center justify-center">
+              <div className="flex-1 border-t border-gray-300"></div>
+              <span className="px-4 text-gray-500 text-sm">or</span>
+              <div className="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            <a
+              href="http://localhost:9090/api/users/auth/google"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+            >
+              <FcGoogle className="text-xl" />
+              Sign up with Google
+            </a>
+
+            <div className="flex justify-center text-sm text-gray-600 mt-2">
+              <p>
+                Already have an account?{" "}
+                <a href="/login" className="text-rose-600 hover:underline">
+                  Login
+                </a>
+              </p>
+            </div>
           </form>
+
           <p className="text-xs text-gray-400 text-center mt-4">
             By continuing, you agree to our{" "}
             <a href="/terms" className="underline hover:text-rose-600">
@@ -242,6 +269,7 @@ const SignUp = () => {
           </p>
         </div>
       </div>
+      
       <div className="hidden md:block w-1/2 bg-rose-50">
         <img
           src={exclusive}
