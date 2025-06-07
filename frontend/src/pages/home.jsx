@@ -23,9 +23,10 @@ function Home() {
         <Bestsellers />
         <ExclusiveItems />
         <LatestDesigns />
+      </div>
+      <div className="mb-5">
         <OurStores />
       </div>
-
       <Footer />
     </>
   );

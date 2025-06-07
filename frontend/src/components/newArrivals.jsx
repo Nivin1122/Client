@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../utils/axiosInstance"; 
-import exclusive from '../assets/bestseller.png';
+import axiosInstance from "../utils/axiosInstance";
+import exclusive from "../assets/bestseller.png";
 
 const NewArrivals = () => {
   const scrollRef = useRef(null);
@@ -56,7 +56,7 @@ const NewArrivals = () => {
 
   const getLowestPrice = (variants) => {
     if (!variants || variants.length === 0) return "Rs. 0.00";
-    
+
     let lowestPrice = Infinity;
     variants.forEach((variant) => {
       if (variant.sizes && variant.sizes.length > 0) {
@@ -69,7 +69,7 @@ const NewArrivals = () => {
     });
 
     if (lowestPrice === Infinity) return "Rs. 0.00";
-    return `Rs. ${lowestPrice.toLocaleString('en-IN')}`;
+    return `Rs. ${lowestPrice.toLocaleString("en-IN")}`;
   };
 
   if (loading) {
@@ -141,12 +141,14 @@ const NewArrivals = () => {
         <div className="flex gap-4 md:gap-7 min-w-max pb-4">
           {products.map((product) => {
             const mainVariant = product.variants?.[0] || {};
-            const price = getLowestPrice(product.variants);
-            const isNew = new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            const price = product.variants[0].sizes.discountPrice;
+            const isNew =
+              new Date(product.createdAt) >
+              new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
             return (
-              <div 
-                key={product._id} 
+              <div
+                key={product._id}
                 className="relative w-[280px] md:w-[350px] lg:w-[400px]"
                 onMouseEnter={() => handleProductMouseEnter(product._id)}
                 onMouseLeave={handleProductMouseLeave}
@@ -159,64 +161,71 @@ const NewArrivals = () => {
                 <div className="relative cursor-pointer group">
                   <img
                     src={mainVariant.mainImage || exclusive}
-                    alt={product.name} 
+                    alt={product.name}
                     className="w-full h-[350px] md:h-[450px] lg:h-[500px] object-cover"
                     onClick={() => handleProductClick(product._id)}
                   />
-                  
+
                   {/* Navigation arrows on hover */}
-                  {hoveredProductId === product._id && product.variants?.length > 1 && (
-                    <>
-                      <button 
-                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 shadow-md z-20"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Navigate to previous variant functionality would go here
-                        }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className="w-5 h-5"
+                  {hoveredProductId === product._id &&
+                    product.variants?.length > 1 && (
+                      <>
+                        <button
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 shadow-md z-20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Navigate to previous variant functionality would go here
+                          }}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M15.75 19.5L8.25 12l7.5-7.5"
-                          />
-                        </svg>
-                      </button>
-                      <button 
-                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 shadow-md z-20"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Navigate to next variant functionality would go here
-                        }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className="w-5 h-5"
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15.75 19.5L8.25 12l7.5-7.5"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 shadow-md z-20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Navigate to next variant functionality would go here
+                          }}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M8.25 4.5l7.5 7.5-7.5 7.5"
-                          />
-                        </svg>
-                      </button>
-                    </>
-                  )}
-                  
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                            />
+                          </svg>
+                        </button>
+                      </>
+                    )}
+
                   {/* Quick Buy button */}
-                  <div className={`absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${hoveredProductId === product._id ? 'opacity-100' : 'opacity-0'}`}>
-                    <button 
+                  <div
+                    className={`absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
+                      hoveredProductId === product._id
+                        ? "opacity-100"
+                        : "opacity-0"
+                    }`}
+                  >
+                    <button
                       className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase"
                       onClick={() => handleProductClick(product._id)}
                     >
@@ -229,7 +238,9 @@ const NewArrivals = () => {
                     {product.name}
                   </h3>
                   <p className="text-sm">{price}</p>
-                  <p className="text-sm text-gray-500">{mainVariant.color || "Various colors"}</p>
+                  <p className="text-sm text-gray-500">
+                    {mainVariant.color || "Various colors"}
+                  </p>
                 </div>
               </div>
             );

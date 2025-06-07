@@ -3419,7 +3419,7 @@ promzard@^2.0.0:
   dependencies:
     read "^4.0.0"
 
-prop-types@^15.6.2, prop-types@^15.7.2, prop-types@^15.8.1:
+prop-types@^15.5.8, prop-types@^15.6.2, prop-types@^15.7.2, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.npmjs.org/prop-types/-/prop-types-15.8.1.tgz"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -3502,6 +3502,13 @@ rc-util@^5.36.0:
   dependencies:
     scheduler "^0.26.0"
 
+react-easy-swipe@^0.0.21:
+  version "0.0.21"
+  resolved "https://registry.npmjs.org/react-easy-swipe/-/react-easy-swipe-0.0.21.tgz"
+  integrity sha512-OeR2jAxdoqUMHIn/nS9fgreI5hSpgGoL5ezdal4+oO7YSSgJR8ga+PkYGJrSrJ9MKlPcQjMQXnketrD7WNmNsg==
+  dependencies:
+    prop-types "^15.5.8"
+
 react-hook-form@^7.56.3:
   version "7.56.3"
   resolved "https://registry.npmjs.org/react-hook-form/-/react-hook-form-7.56.3.tgz"
@@ -3564,6 +3571,15 @@ react-refresh@^0.17.0:
   version "0.17.0"
   resolved "https://registry.npmjs.org/react-refresh/-/react-refresh-0.17.0.tgz"
   integrity sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==
+
+react-responsive-carousel@^3.2.23:
+  version "3.2.23"
+  resolved "https://registry.npmjs.org/react-responsive-carousel/-/react-responsive-carousel-3.2.23.tgz"
+  integrity sha512-pqJLsBaKHWJhw/ItODgbVoziR2z4lpcJg+YwmRlSk4rKH32VE633mAtZZ9kDXjy4wFO+pgUZmDKPsPe1fPmHCg==
+  dependencies:
+    classnames "^2.2.5"
+    prop-types "^15.5.8"
+    react-easy-swipe "^0.0.21"
 
 react-router-dom@^7.6.0:
   version "7.6.0"

@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchCartItems } from "../redux/slices/cartSlice";
 import { fetchWishlistItems } from "../redux/slices/wishlistSlice";
 import axiosInstance from "../utils/axiosInstance";
+import logo from '../assets/headerlogo.webp'
 
 const Header = ({ onCategorySelect }) => {
   const [categories, setCategories] = useState([]);
@@ -156,15 +157,15 @@ const Header = ({ onCategorySelect }) => {
           </div>
 
           {/* Logo - Uncomment when needed */}
-          {/*<div className="flex-1 flex justify-center">
+          <div className="flex-1 flex justify-center">
             <Link to="/">
               <img
-                src="https://paulsonsonline.com/cdn/shop/files/logo3_2_360x.png?v=1737022438"
+                src={logo}
                 alt="Logo"
                 className="h-12"
               />
             </Link>
-          </div>*/}
+          </div>
 
           {/* Account & Cart */}
           <div className="flex items-center space-x-4">

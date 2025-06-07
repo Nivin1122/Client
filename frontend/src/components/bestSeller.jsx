@@ -113,7 +113,7 @@ const BestSeller = () => {
         <div className="flex gap-4 md:gap-7 min-w-max pb-4">
           {products.map((product) => {
             const variant = product.variants?.[0] || {};
-            const price = getLowestPrice(product.variants);
+            const price = product.variants[0].sizes.discountPrice;
             return (
               <div
                 key={product._id}
