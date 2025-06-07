@@ -48,7 +48,6 @@ const getAllProductsAdmin = asyncHandler(async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .populate("brand", "name")
       .populate("category", "name")
       .populate({
         path: "variants",
@@ -74,14 +73,13 @@ const getAllProductsAdmin = asyncHandler(async (req, res) => {
 
 const addProduct = asyncHandler(async (req, res) => {
   try {
-    const { name, description, category, brand, gender, material, pattern } =
+    const { name, description, category, gender, material, pattern } =
       req.body;
 
     const newProduct = new Product({
       name,
       description,
       category,
-      brand,
       gender,
       material,
       pattern,

@@ -1,111 +1,33 @@
 import React, { useState, useEffect } from "react";
-import {
-  Modal,
-  Box,
-  TextField,
-  Button,
-  Grid,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
-  Typography,
-  Snackbar,
-  Alert,
-  IconButton,
-  Divider,
-  Paper,
-} from "@mui/material";
-import { Controller, useForm } from "react-hook-form";
-import CloseIcon from "@mui/icons-material/Close";
-import { styled } from "@mui/material/styles";
 import axios from "axios";
-import AddVariantModal from "./addVariantModal";
 import axiosInstance from "@/utils/adminAxiosInstance";
 
-// Styled Components
-const StyledModal = styled(Modal)({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-});
-
-const ModalContent = styled(Paper)(({ theme }) => ({
-  width: "90%",
-  maxWidth: "900px",
-  maxHeight: "85vh",
-  overflowY: "auto",
-  padding: theme.spacing(4),
-  borderRadius: "12px",
-  backgroundColor: "#fff",
-  [theme.breakpoints.down("sm")]: {
-    padding: theme.spacing(2),
-  },
-  "&::-webkit-scrollbar": {
-    width: "8px",
-  },
-  "&::-webkit-scrollbar-thumb": {
-    backgroundColor: "#bdbdbd",
-    borderRadius: "4px",
-  },
-}));
-
-const FormSection = styled(Box)({
-  marginBottom: "24px",
-});
-
-const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontSize: "18px",
-  fontWeight: 600,
-  color: theme.palette.primary.main,
-  marginBottom: theme.spacing(2),
-}));
-
 const AddProductModal = ({ open, onClose, onProductAdded }) => {
-  const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [showVariantModal, setShowVariantModal] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
 
-  const handleOpenVariantModal = () => {
-    setShowVariantModal(true);
-  };
-
-  const handleCloseVariantModal = () => {
-    setShowVariantModal(false);
-  };
-
-  const handleSnackbarClose = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    reset,
-  } = useForm();
+  const [formData, setFormData] = useState({
+    productName: "",
+    description: "",
+    category: "",
+    gender: "",
+    pattern: "",
+    material: "",
+  });
 
   useEffect(() => {
-    if (open) {
-      fetchCategories();
-      fetchBrands();
-    }
+    if (open) fetchCategories();
   }, [open]);
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:9090/api/categories");
-      setCategories(response.data.categories);
-    } catch (error) {
+      const res = await axios.get("http://localhost:9090/api/categories");
+      setCategories(res.data.categories);
+    } catch (err) {
       setSnackbar({
         open: true,
         message: "Error fetching categories",
@@ -114,37 +36,24 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
     }
   };
 
-  const fetchBrands = async () => {
-    try {
-      const response = await axios.get("http://localhost:9090/api/brands");
-      setBrands(response.data);
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: "Error fetching brands",
-        severity: "error",
-      });
-    }
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const onSubmit = async (data) => {
-    try {
-      const productPayload = {
-        name: data.productName,
-        description: data.description,
-        brand: brands.find((brand) => brand.name === data.brand)?._id,
-        category: categories.find((category) => category.name === data.category)
-          ?._id,
-        gender: data.gender,
-        pattern: data.pattern,
-        material: data.material,
-      };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-      const response = await axiosInstance.post(
-        "/products/add",
-        productPayload,
-        { headers: { "Content-Type": "application/json" } }
-      );
+    const categoryObj = categories.find((c) => c.name === formData.category);
+
+    try {
+      const response = await axiosInstance.post("/products/add", {
+        name: formData.productName,
+        description: formData.description,
+        category: categoryObj?._id,
+        gender: formData.gender,
+        pattern: formData.pattern,
+        material: formData.material,
+      });
 
       if (response.status === 201) {
         setSnackbar({
@@ -152,270 +61,168 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
           message: "Product added successfully!",
           severity: "success",
         });
-
-        // Call the callback to update parent component
-        if (onProductAdded) {
-          onProductAdded(response.data.product);
-        }
-
-        reset(); // Reset form
-        onClose(); // Close modal
-        setShowVariantModal(true);
+        onProductAdded?.(response.data.product);
+        setFormData({
+          productName: "",
+          description: "",
+          category: "",
+          gender: "",
+          pattern: "",
+          material: "",
+        });
+        onClose();
       }
     } catch (error) {
       setSnackbar({
         open: true,
-        message: "Failed to add product. Please try again.",
+        message: "Failed to add product",
         severity: "error",
       });
     }
   };
 
+  if (!open) return null;
+
   return (
-    <>
-      <StyledModal open={open} onClose={onClose}>
-        <ModalContent elevation={3}>
-          {/* Header */}
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              justifyContent: "space-between",
-              alignItems: { xs: "flex-start", sm: "center" },
-              gap: 2,
-              mb: 3,
-            }}
-          >
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 600, color: "primary.dark" }}
-            >
-              Add New Product
-            </Typography>
-            <IconButton onClick={onClose} size="small">
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          <Divider sx={{ mb: 4 }} />
-
-          <form onSubmit={handleSubmit(onSubmit)}>
-            {/* Basic Information Section */}
-            <FormSection>
-              <SectionTitle>Basic Information</SectionTitle>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <Controller
-                    name="productName"
-                    control={control}
-                    rules={{ required: "Product Name is required" }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        label="Product Name"
-                        fullWidth
-                        error={!!errors.productName}
-                        helperText={errors.productName?.message}
-                        placeholder="Enter product name"
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            "&:hover fieldset": {
-                              borderColor: "#3f51b5",
-                            },
-                          },
-                        }}
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Controller
-                    name="description"
-                    control={control}
-                    rules={{ required: "Description is required" }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        label="Description"
-                        fullWidth
-                        multiline
-                        rows={4}
-                        error={!!errors.description}
-                        helperText={errors.description?.message}
-                        placeholder="Enter product description"
-                      />
-                    )}
-                  />
-                </Grid>
-              </Grid>
-            </FormSection>
-
-            {/* Classification Section */}
-            <FormSection>
-              <SectionTitle>Product Classification</SectionTitle>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <Controller
-                    name="brand"
-                    control={control}
-                    rules={{ required: "Brand is required" }}
-                    render={({ field }) => (
-                      <FormControl fullWidth error={!!errors.brand}>
-                        <InputLabel>Brand</InputLabel>
-                        <Select
-                          {...field}
-                          label="Brand"
-                          sx={{ backgroundColor: "#fff" }}
-                        >
-                          {brands.map((brand) => (
-                            <MenuItem key={brand._id} value={brand.name}>
-                              {brand.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {errors.brand && (
-                          <Typography color="error" variant="caption">
-                            {errors.brand.message}
-                          </Typography>
-                        )}
-                      </FormControl>
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Controller
-                    name="category"
-                    control={control}
-                    rules={{ required: "Category is required" }}
-                    render={({ field }) => (
-                      <FormControl fullWidth error={!!errors.category}>
-                        <InputLabel>Category</InputLabel>
-                        <Select
-                          {...field}
-                          label="Category"
-                          sx={{ backgroundColor: "#fff" }}
-                        >
-                          {categories.map((category) => (
-                            <MenuItem key={category._id} value={category.name}>
-                              {category.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {errors.category && (
-                          <Typography color="error" variant="caption">
-                            {errors.category.message}
-                          </Typography>
-                        )}
-                      </FormControl>
-                    )}
-                  />
-                </Grid>
-              </Grid>
-            </FormSection>
-
-            {/* Details Section */}
-            <FormSection>
-              <SectionTitle>Product Details</SectionTitle>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <Controller
-                    name="gender"
-                    control={control}
-                    rules={{ required: "Gender is required" }}
-                    render={({ field }) => (
-                      <FormControl fullWidth error={!!errors.gender}>
-                        <InputLabel>Gender</InputLabel>
-                        <Select {...field} label="Gender">
-                          <MenuItem value="Men">Men</MenuItem>
-                          <MenuItem value="Women">Women</MenuItem>
-                          <MenuItem value="Unisex">Unisex</MenuItem>
-                        </Select>
-                        {errors.gender && (
-                          <Typography color="error" variant="caption">
-                            {errors.gender.message}
-                          </Typography>
-                        )}
-                      </FormControl>
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Controller
-                    name="pattern"
-                    control={control}
-                    rules={{ required: "Pattern is required" }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        label="Pattern"
-                        fullWidth
-                        error={!!errors.pattern}
-                        helperText={errors.pattern?.message}
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Controller
-                    name="material"
-                    control={control}
-                    rules={{ required: "Material is required" }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        label="Material"
-                        fullWidth
-                        error={!!errors.material}
-                        helperText={errors.material?.message}
-                      />
-                    )}
-                  />
-                </Grid>
-              </Grid>
-            </FormSection>
-
-            {/* Submit Button */}
-            <Box sx={{ mt: 4 }}>
-              <Button
-                variant="contained"
-                type="submit"
-                fullWidth
-                sx={{
-                  py: 1.5,
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  textTransform: "none",
-                  backgroundColor: "primary.main",
-                  "&:hover": {
-                    backgroundColor: "primary.dark",
-                  },
-                }}
-              >
-                Add Product
-              </Button>
-            </Box>
-          </form>
-        </ModalContent>
-      </StyledModal>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          elevation={6}
-          variant="filled"
-          sx={{ width: "100%" }}
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center p-4 overflow-auto">
+      <div className="bg-white w-full max-w-2xl rounded-xl shadow-lg overflow-y-auto max-h-[90vh] p-6 space-y-6 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+          ✕
+        </button>
+
+        <h2 className="text-2xl font-semibold text-blue-700">
+          Add New Product
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Basic Info */}
+          <div>
+            <h3 className="text-lg font-semibold text-blue-600 mb-4">
+              Basic Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Product Name
+                </label>
+                <input
+                  type="text"
+                  name="productName"
+                  value={formData.productName}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                  required
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={4}
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                  required
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          {/* Classification */}
+          <div>
+            <h3 className="text-lg font-semibold text-blue-600 mb-4">
+              Product Classification
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                  required
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Details */}
+          <div>
+            <h3 className="text-lg font-semibold text-blue-600 mb-4">
+              Product Details
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Gender</label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                  required
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Men">Men</option>
+                  <option value="Women">Women</option>
+                  <option value="Unisex">Unisex</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Pattern
+                </label>
+                <input
+                  type="text"
+                  name="pattern"
+                  value={formData.pattern}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Material
+                </label>
+                <input
+                  type="text"
+                  name="material"
+                  value={formData.material}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
+            >
+              Add Product
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 

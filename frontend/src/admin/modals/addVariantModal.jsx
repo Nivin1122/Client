@@ -1,70 +1,5 @@
 import React, { useState } from "react";
-import {
-  Modal,
-  Box,
-  TextField,
-  Button,
-  Grid,
-  Typography,
-  IconButton,
-  Paper,
-  Divider,
-  Alert,
-  Snackbar,
-} from "@mui/material";
-import { styled } from '@mui/material/styles';
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CloseIcon from "@mui/icons-material/Close";
 import axiosInstance from "@/utils/adminAxiosInstance";
-
-// Styled Components
-const StyledModal = styled(Modal)({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-});
-
-const ModalContent = styled(Paper)({
-  width: '70%',
-  maxWidth: '800px',
-  maxHeight: '85vh',
-  overflowY: 'auto',
-  padding: '32px',
-  borderRadius: '12px',
-  backgroundColor: '#fff',
-  '&::-webkit-scrollbar': {
-    width: '8px',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    backgroundColor: '#bdbdbd',
-    borderRadius: '4px',
-  },
-});
-
-const ImagePreviewContainer = styled(Box)({
-  position: 'relative',
-  width: '100%',
-  height: '200px',
-  borderRadius: '8px',
-  overflow: 'hidden',
-  marginTop: '16px',
-  backgroundColor: '#f5f5f5',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  border: '2px dashed #bdbdbd',
-});
-
-const UploadButton = styled(Button)({
-  width: '100%',
-  padding: '12px',
-  backgroundColor: '#f8f9fa',
-  color: '#495057',
-  '&:hover': {
-    backgroundColor: '#e9ecef',
-  },
-});
 
 const AddVariantModal = ({ open, onClose, productId }) => {
   const [color, setColor] = useState("");
@@ -78,17 +13,13 @@ const AddVariantModal = ({ open, onClose, productId }) => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handleImageChange = (event, setImage, isMain = false) => {
+  const handleImageChange = (event, isMain = false) => {
     const file = event.target.files[0];
     if (file) {
-      if (file.size > 5000000) { // 5MB limit
-        setSnackbar({
-          open: true,
-          message: "Image size should be less than 5MB",
-          severity: "error"
-        });
-        return;
+      if (file.size > 5000000) {
+        return setSnackbar({ open: true, message: "Image size should be less than 5MB", severity: "error" });
       }
+
       const previewUrl = URL.createObjectURL(file);
 
       if (isMain) {
@@ -104,12 +35,7 @@ const AddVariantModal = ({ open, onClose, productId }) => {
     const file = event.target.files[0];
     if (file) {
       if (file.size > 5000000) {
-        setSnackbar({
-          open: true,
-          message: "Image size should be less than 5MB",
-          severity: "error"
-        });
-        return;
+        return setSnackbar({ open: true, message: "Image size should be less than 5MB", severity: "error" });
       }
       setColorImage(file);
     }
@@ -127,12 +53,7 @@ const AddVariantModal = ({ open, onClose, productId }) => {
   const handleAddVariant = async () => {
     try {
       if (!color || !colorImage || !mainImage) {
-        setSnackbar({
-          open: true,
-          message: "Please fill all required fields",
-          severity: "error"
-        });
-        return;
+        return setSnackbar({ open: true, message: "Please fill all required fields", severity: "error" });
       }
 
       const formData = new FormData();
@@ -142,226 +63,139 @@ const AddVariantModal = ({ open, onClose, productId }) => {
       formData.append("productId", productId);
       subImages.forEach((img) => formData.append("subImages", img));
 
-      const response = await axiosInstance.post(
-        '/variants/color/add',
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
-
-      setSnackbar({
-        open: true,
-        message: "Variant added successfully",
-        severity: "success"
+      const response = await axiosInstance.post("/variants/color/add", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
+
+      setSnackbar({ open: true, message: "Variant added successfully", severity: "success" });
       setTimeout(() => onClose(), 1000);
     } catch (error) {
       setSnackbar({
         open: true,
         message: error.response?.data?.message || "Error adding variant",
-        severity: "error"
+        severity: "error",
       });
     }
   };
 
+  if (!open) return null;
+
   return (
     <>
-      <StyledModal open={open} onClose={onClose}>
-        <ModalContent elevation={3}>
+      {/* Modal Overlay */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="bg-white w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-xl shadow-lg p-6 relative">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-600 hover:text-red-500"
+          >
+            ✕
+          </button>
+
           {/* Header */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5" sx={{ fontWeight: 600, color: '#1a237e' }}>
-              Add Color Variant
-            </Typography>
-            <IconButton onClick={onClose} size="small">
-              <CloseIcon />
-            </IconButton>
-          </Box>
+          <h2 className="text-2xl font-semibold text-indigo-700 mb-6">Add Color Variant</h2>
 
-          <Divider sx={{ mb: 4 }} />
-
-          <Grid container spacing={3}>
+          {/* Form */}
+          <div className="space-y-5">
             {/* Color Input */}
-            <Grid item xs={12}>
-              <TextField
-                label="Color Name"
-                fullWidth
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Color Name</label>
+              <input
+                type="text"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: '#3f51b5',
-                    },
-                  },
-                }}
               />
-            </Grid>
+            </div>
 
             {/* Color Swatch Upload */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
-                Color Swatch Image
-              </Typography>
-              <UploadButton
-                component="label"
-                startIcon={<CloudUploadIcon />}
-              >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Color Swatch Image</label>
+              <label className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-200">
                 Upload Color Swatch
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleColorImageChange}
-                  hidden
-                />
-              </UploadButton>
+                <input type="file" accept="image/*" hidden onChange={handleColorImageChange} />
+              </label>
               {colorImage && (
-                <ImagePreviewContainer>
+                <div className="mt-3 w-full h-48 flex items-center justify-center border border-gray-300 rounded-lg">
                   <img
                     src={URL.createObjectURL(colorImage)}
                     alt="Color"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      objectFit: 'contain',
-                    }}
+                    className="max-h-full max-w-full object-contain"
                   />
-                </ImagePreviewContainer>
+                </div>
               )}
-            </Grid>
+            </div>
 
             {/* Main Image Upload */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
-                Main Product Image
-              </Typography>
-              <UploadButton
-                component="label"
-                startIcon={<CloudUploadIcon />}
-              >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Main Product Image</label>
+              <label className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-200">
                 Upload Main Image
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageChange(e, setMainImage, true)}
-                  hidden
-                />
-              </UploadButton>
+                <input type="file" accept="image/*" hidden onChange={(e) => handleImageChange(e, true)} />
+              </label>
               {mainImage && (
-                <ImagePreviewContainer>
+                <div className="mt-3 w-full h-48 flex items-center justify-center border border-gray-300 rounded-lg">
                   <img
                     src={URL.createObjectURL(mainImage)}
                     alt="Main"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      objectFit: 'contain',
-                    }}
+                    className="max-h-full max-w-full object-contain"
                   />
-                </ImagePreviewContainer>
+                </div>
               )}
-            </Grid>
+            </div>
 
             {/* Additional Images */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
-                Additional Images
-              </Typography>
-              <UploadButton
-                component="label"
-                startIcon={<CloudUploadIcon />}
-              >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Additional Images</label>
+              <label className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-200">
                 Upload Additional Images
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => handleImageChange(e, setSubImages)}
-                  hidden
-                />
-              </UploadButton>
+                <input type="file" accept="image/*" hidden multiple onChange={(e) => handleImageChange(e)} />
+              </label>
 
-              <Grid container spacing={2} sx={{ mt: 2 }}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
                 {previewImages.map((preview, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    <Box sx={{ 
-                      position: 'relative',
-                      height: '150px',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: '1px solid #e0e0e0'
-                    }}>
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain',
-                        }}
-                      />
-                      <IconButton
-                        onClick={() => handleDeleteSubImage(index)}
-                        sx={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 255, 255, 1)',
-                            color: '#f44336',
-                          },
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  </Grid>
+                  <div key={index} className="relative border rounded-lg overflow-hidden">
+                    <img src={preview} alt={`Preview ${index}`} className="object-contain w-full h-32" />
+                    <button
+                      onClick={() => handleDeleteSubImage(index)}
+                      className="absolute top-1 right-1 bg-white text-red-600 rounded-full p-1 hover:bg-red-100"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 ))}
-              </Grid>
-            </Grid>
+              </div>
+            </div>
 
             {/* Submit Button */}
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                fullWidth
+            <div>
+              <button
                 onClick={handleAddVariant}
-                sx={{
-                  mt: 2,
-                  py: 1.5,
-                  backgroundColor: '#3f51b5',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  '&:hover': {
-                    backgroundColor: '#303f9f',
-                  },
-                }}
+                className="w-full py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition"
               >
                 Add Variant
-              </Button>
-            </Grid>
-          </Grid>
-        </ModalContent>
-      </StyledModal>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert 
-          onClose={handleSnackbarClose} 
-          severity={snackbar.severity}
-          elevation={6}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {/* Snackbar / Alert */}
+      {snackbar.open && (
+        <div className="fixed top-5 right-5 z-50">
+          <div
+            className={`px-4 py-3 rounded shadow-md text-white ${
+              snackbar.severity === "error" ? "bg-red-600" : "bg-green-600"
+            }`}
+          >
+            {snackbar.message}
+            <button onClick={handleSnackbarClose} className="ml-3 font-bold">
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };

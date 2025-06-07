@@ -9,22 +9,12 @@ const ProductSchema = new mongoose.Schema(
       ref: "Category",
       required: true,
     },
-    brand: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Brand",
-      required: true,
-    },
     material: { type: String },
     pattern: { type: String },
     gender: { type: String, required: true },
     variants: [{ type: mongoose.Schema.Types.ObjectId, ref: "Variant" }],
-    activeOffer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Offer",
-    },
     discountedPrice: { type: Number },
     isDeleted: { type: Boolean, default: false },
-    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
   },
   { timestamps: true }
 );

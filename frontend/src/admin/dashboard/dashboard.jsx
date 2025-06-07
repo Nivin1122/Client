@@ -53,7 +53,7 @@ import DashLineChart from "../components/dashboard/dashLineChart";
 import RevenueCard from "../components/dashboard/revenueCard";
 import Users from "../components/users/users";
 import CategoryManagement from "../components/category/category";
-import BrandManagement from "../components/brand/brand";
+// import BrandManagement from "../components/brand/brand";
 // import { useRouter } from "next/router";
 import { useNavigate } from 'react-router-dom';
 import ProductManagement from "../components/products/products";
@@ -99,7 +99,7 @@ const Dashboard = () => {
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
+  // const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [ledgerData, setLedgerData] = useState({
@@ -378,15 +378,15 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [productsRes, categoriesRes, brandsRes] = await Promise.all([
+        const [productsRes, categoriesRes] = await Promise.all([
           axiosInstance.get("/products/get?page=1&limit=10"),
           axiosInstance.get("/categories/get/admin"),
-          axiosInstance.get("/brands/get/admin"),
+          // axiosInstance.get("/brands/get/admin"),
         ]);
 
         setProducts(productsRes.data.products || []);
         setCategories(categoriesRes.data.categories || []);
-        setBrands(brandsRes.data || []);
+        // setBrands(brandsRes.data || []);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -491,7 +491,7 @@ const Dashboard = () => {
                 { text: "Products", icon: ShoppingBag },
                 { text: "Users", icon: Person },
                 { text: "Categories", icon: CategoryIcon },
-                { text: "Brands", icon: LocalOffer },
+                // { text: "Brands", icon: LocalOffer },
                 { text: "Orders", icon: LocalShipping },
                 { text: "Coupons", icon: Discount },
                 { text: "Offers", icon: LocalOffer },
@@ -878,7 +878,7 @@ const Dashboard = () => {
                                   </Typography>
                                   <Typography variant="body2" color="gray">
                                     {product.category.name} |{" "}
-                                    {product.brand.name}
+                                    {/* {product.brand.name} */}
                                   </Typography>
                                   <Typography variant="body2" color="#FF9800">
                                     ₹
@@ -991,7 +991,7 @@ const Dashboard = () => {
                 </Grid>
 
                 {/* Brands Column */}
-                <Grid item xs={12} md={4}>
+                {/* <Grid item xs={12} md={4}>
                   <Card sx={{ backgroundColor: "#333", height: "100%" }}>
                     <CardHeader
                       title={
@@ -1081,7 +1081,7 @@ const Dashboard = () => {
                       </List>
                     </CardContent>
                   </Card>
-                </Grid>
+                </Grid> */}
               </Grid>
 
               {/* Ledger Book Section */}
@@ -1319,7 +1319,7 @@ const Dashboard = () => {
           {selectedTopic === "Products" && <ProductManagement />}
           {selectedTopic === "Users" && <UserManagement />}
           {selectedTopic === "Categories" && <CategoryManagement />}
-          {selectedTopic === "Brands" && <BrandManagement />}
+          {/* {selectedTopic === "Brands" && <BrandManagement />} */}
           {selectedTopic === "Orders" && <OrderManagement />}
           {selectedTopic === "Coupons" && <CouponManagement />}
           {selectedTopic === "Offers" && <OfferManagement />}

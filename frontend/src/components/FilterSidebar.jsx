@@ -8,7 +8,7 @@ import "rc-slider/assets/index.css";
 
 const FilterSidebar = React.memo(({ onApplyFilters }) => {
   const [categories, setCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
+  // const [brands, setBrands] = useState([]);
   const [colors, setColors] = useState([]);
   const [sizes, setSizes] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,7 +17,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
     sortBy: true,
     priceRange: true,
     categories: true,
-    brands: true,
+    // brands: true,
     colors: true,
     sizes: true,
   });
@@ -31,7 +31,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
 
   const [selectedFilters, setSelectedFilters] = useState(() => {
     const categories = searchParams.get("categories")?.split(",") || [];
-    const brands = searchParams.get("brands")?.split(",") || [];
+    // const brands = searchParams.get("brands")?.split(",") || [];
     const colors = searchParams.get("colors")?.split(",") || [];
     const sizes = searchParams.get("sizes")?.split(",") || [];
     const minPrice = Number(searchParams.get("priceRange_min")) || 0;
@@ -40,7 +40,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
 
     return {
       categories,
-      brands,
+      // brands,
       colors,
       sizes,
       priceRange: { min: minPrice, max: maxPrice },
@@ -76,13 +76,13 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
-        const [categoriesRes, brandsRes, filtersRes] = await Promise.all([
+        const [categoriesRes, filtersRes] = await Promise.all([
           axiosInstance.get("/categories"),
-          axiosInstance.get("/brands"),
+          // axiosInstance.get("/brands"),
           axiosInstance.get("/products/filters"),
         ]);
         setCategories(categoriesRes.data.categories || []);
-        setBrands(brandsRes.data || []);
+        // setBrands(brandsRes.data || []);
         setColors(filtersRes.data.colors || []);
         setSizes(filtersRes.data.sizes || []);
       } catch (error) {
@@ -127,7 +127,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
   const handleResetFilters = useCallback(() => {
     const initialFilters = {
       categories: [],
-      brands: [],
+      // brands: [],
       colors: [],
       sizes: [],
       priceRange: { min: 0, max: 10000 },
@@ -320,7 +320,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
       </div>
 
       {/* Brands */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <div
           className="flex justify-between items-center cursor-pointer mb-2"
           onClick={() => toggleAccordion("brands")}
@@ -343,7 +343,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
             ))}
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* Colors */}
       <div className="mb-6">

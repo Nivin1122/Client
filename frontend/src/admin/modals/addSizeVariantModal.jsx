@@ -1,56 +1,5 @@
 import React, { useState } from "react";
-import {
-  Modal,
-  Box,
-  TextField,
-  Button,
-  Grid,
-  Typography,
-  Checkbox,
-  FormControlLabel,
-  Paper,
-  IconButton,
-  Divider,
-  InputAdornment,
-  Alert,
-  Snackbar,
-} from "@mui/material";
-import { styled } from '@mui/material/styles';
-import CloseIcon from "@mui/icons-material/Close";
-import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
-import InventoryIcon from '@mui/icons-material/Inventory';
 import axiosInstance from "@/utils/adminAxiosInstance";
-
-// Styled Components
-const StyledModal = styled(Modal)({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-});
-
-const ModalContent = styled(Paper)({
-  width: '50%',
-  maxWidth: '600px',
-  maxHeight: '85vh',
-  overflowY: 'auto',
-  padding: '32px',
-  borderRadius: '12px',
-  backgroundColor: '#fff',
-  '&::-webkit-scrollbar': {
-    width: '8px',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    backgroundColor: '#bdbdbd',
-    borderRadius: '4px',
-  },
-});
-
-const SectionTitle = styled(Typography)({
-  fontSize: '16px',
-  fontWeight: 600,
-  color: '#2c3e50',
-  marginBottom: '16px',
-});
 
 const AddSizeVariantModal = ({ open, onClose, variantId }) => {
   const [formData, setFormData] = useState({
@@ -70,226 +19,196 @@ const AddSizeVariantModal = ({ open, onClose, variantId }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   const handleAddSizeVariant = async () => {
-    try {
-      if (!formData.size || !formData.price || !formData.stockCount) {
-        setSnackbar({
-          open: true,
-          message: "Please fill all required fields",
-          severity: "error"
-        });
-        return;
-      }
+    if (!formData.size || !formData.price || !formData.stockCount) {
+      return setSnackbar({
+        open: true,
+        message: "Please fill all required fields",
+        severity: "error",
+      });
+    }
 
-      const response = await axiosInstance.post("/sizes/size/add", {
+    try {
+      await axiosInstance.post("/sizes/size/add", {
         variantId,
-        ...formData
+        ...formData,
       });
 
       setSnackbar({
         open: true,
         message: "Size variant added successfully",
-        severity: "success"
+        severity: "success",
       });
 
-      setTimeout(() => {
-        onClose();
-      }, 1000);
-
+      setTimeout(() => onClose(), 1000);
     } catch (error) {
       setSnackbar({
         open: true,
         message: error.response?.data?.message || "Error adding size variant",
-        severity: "error"
+        severity: "error",
       });
     }
   };
 
+  if (!open) return null;
+
   return (
     <>
-      <StyledModal open={open} onClose={onClose}>
-        <ModalContent elevation={3}>
+      {/* Modal Overlay */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="bg-white w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl shadow-lg p-6 relative">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-600 hover:text-red-500 text-xl"
+          >
+            ✕
+          </button>
+
           {/* Header */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            mb: 3 
-          }}>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 600,
-              color: '#1a237e',
-              fontSize: '24px'
-            }}>
-              Add Size Variant
-            </Typography>
-            <IconButton onClick={onClose} size="small">
-              <CloseIcon />
-            </IconButton>
-          </Box>
+          <h2 className="text-2xl font-semibold text-indigo-800 mb-6">
+            Add Size Variant
+          </h2>
 
-          <Divider sx={{ mb: 4 }} />
+          <hr className="mb-6 border-gray-300" />
 
-          <Grid container spacing={3}>
-            {/* Basic Information */}
-            <Grid item xs={12}>
-              <SectionTitle>Basic Information</SectionTitle>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label="Size"
+          <div className="space-y-8">
+            {/* Basic Info */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                Basic Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Size</label>
+                  <input
+                    type="text"
                     name="size"
-                    fullWidth
-                    required
+                    placeholder="e.g. S, M, L, XL"
                     value={formData.size}
                     onChange={handleInputChange}
-                    placeholder="e.g., S, M, L, XL"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&:hover fieldset': {
-                          borderColor: '#3f51b5',
-                        },
-                      },
-                    }}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label="Stock Count"
-                    name="stockCount"
-                    type="number"
-                    fullWidth
-                    required
-                    value={formData.stockCount}
-                    onChange={handleInputChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <InventoryIcon color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Stock Count
+                  </label>
+                  <div className="relative">
+                    <span className="absolute top-2.5 left-3 text-gray-400">📦</span>
+                    <input
+                      type="number"
+                      name="stockCount"
+                      value={formData.stockCount}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Pricing */}
-            <Grid item xs={12}>
-              <SectionTitle>Pricing Details</SectionTitle>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label="Price"
-                    name="price"
-                    type="number"
-                    fullWidth
-                    required
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CurrencyRupeeIcon color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label="Discount Price"
-                    name="discountPrice"
-                    type="number"
-                    fullWidth
-                    value={formData.discountPrice}
-                    onChange={handleInputChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CurrencyRupeeIcon color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                Pricing Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Price</label>
+                  <div className="relative">
+                    <span className="absolute top-2.5 left-3 text-gray-400">₹</span>
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Discount Price
+                  </label>
+                  <div className="relative">
+                    <span className="absolute top-2.5 left-3 text-gray-400">₹</span>
+                    <input
+                      type="number"
+                      name="discountPrice"
+                      value={formData.discountPrice}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Stock Status */}
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.inStock}
-                    onChange={handleInputChange}
-                    name="inStock"
-                    color="primary"
-                  />
-                }
-                label="Available in Stock"
-              />
-            </Grid>
+            <div>
+              <label className="inline-flex items-center">
+                <input
+                  type="checkbox"
+                  name="inStock"
+                  checked={formData.inStock}
+                  onChange={handleInputChange}
+                  className="form-checkbox h-5 w-5 text-indigo-600"
+                />
+                <span className="ml-2 text-sm text-gray-700">Available in Stock</span>
+              </label>
+            </div>
 
             {/* Description */}
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
+            <div>
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <textarea
                 name="description"
-                multiline
-                rows={4}
-                fullWidth
                 value={formData.description}
                 onChange={handleInputChange}
+                rows={4}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="Enter size variant description..."
               />
-            </Grid>
+            </div>
 
             {/* Submit Button */}
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                fullWidth
+            <div>
+              <button
                 onClick={handleAddSizeVariant}
-                sx={{
-                  mt: 2,
-                  py: 1.5,
-                  backgroundColor: '#3f51b5',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  '&:hover': {
-                    backgroundColor: '#303f9f',
-                  },
-                }}
+                className="w-full bg-indigo-600 text-white py-3 rounded-md text-lg font-medium hover:bg-indigo-700 transition"
               >
                 Add Size Variant
-              </Button>
-            </Grid>
-          </Grid>
-        </ModalContent>
-      </StyledModal>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert 
-          onClose={() => setSnackbar({ ...snackbar, open: false })} 
-          severity={snackbar.severity}
-          elevation={6}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {/* Snackbar */}
+      {snackbar.open && (
+        <div className="fixed top-5 right-5 z-50">
+          <div
+            className={`px-4 py-3 rounded shadow-md text-white ${
+              snackbar.severity === "error" ? "bg-red-600" : "bg-green-600"
+            }`}
+          >
+            {snackbar.message}
+            <button
+              onClick={() => setSnackbar({ ...snackbar, open: false })}
+              className="ml-4 font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };

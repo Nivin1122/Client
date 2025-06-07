@@ -353,7 +353,7 @@ const ProductDetail = () => {
               new Date(product.createdAt).getTime() >
                 Date.now() - 20 * 24 * 60 * 60 * 1000
                 ? "New In"
-                : product.brand?.name || "Featured"}
+                : "Featured"}
             </div>
             <h1 className="text-3xl font-medium mb-4">{product.name}</h1>
 
@@ -627,12 +627,6 @@ const ProductDetail = () => {
                 {isDetailsOpen && (
                   <div className="p-4 border-t">
                     <div className="grid grid-cols-2 gap-4 mb-4">
-                      {product.brand && (
-                        <div>
-                          <p className="font-medium">Brand</p>
-                          <p>{product.brand.name}</p>
-                        </div>
-                      )}
                       {product.material && (
                         <div>
                           <p className="font-medium">Material</p>

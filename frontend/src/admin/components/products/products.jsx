@@ -347,10 +347,10 @@ const Product = () => {
                 >
                   {product.name}
                 </Typography>
-                <Typography variant="body1" sx={{ color: "#757575" }}>
+                {/* <Typography variant="body1" sx={{ color: "#757575" }}>
                   Category: {product.category.name} | Brand:{" "}
                   {product.brand.name}
-                </Typography>
+                </Typography> */}
                 <Typography variant="body2" sx={{ color: "#757575" }}>
                   Created: {new Date(product.createdAt).toLocaleString()}
                 </Typography>

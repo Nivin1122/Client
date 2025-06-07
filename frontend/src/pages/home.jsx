@@ -23,8 +23,6 @@ function Home() {
         <Bestsellers />
         <ExclusiveItems />
         <LatestDesigns />
-        <FeaturedCollections />
-        <CustomerReviewCarousel />
         <OurStores />
       </div>
 

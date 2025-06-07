@@ -15,7 +15,6 @@ const getAllProducts = asyncHandler(async (req, res) => {
       colors = [],
       sizes = [],
       categories = [],
-      brands = [],
       minPrice = 0,
       maxPrice = 10000,
       sortBy = 'newest'
@@ -34,7 +33,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
               ? new mongoose.Types.ObjectId(req.query.category)
               : null
           }),
-          ...(brands.length > 0 && { brand: { $in: brands.split(',').map(id => mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null).filter(id => id !== null) } })
+          // ...(brands.length > 0 && { brand: { $in: brands.split(',').map(id => mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null).filter(id => id !== null) } })
         }
       },
       // Lookup and unwind variants
@@ -78,7 +77,6 @@ const getAllProducts = asyncHandler(async (req, res) => {
     name: { $first: "$name" },
     description: { $first: "$description" },
     category: { $first: "$category" },
-    brand: { $first: "$brand" },
     variants: { $push: "$variants" },
     createdAt: { $first: "$createdAt" }
   }
@@ -98,15 +96,7 @@ const sortStage = {
 
     // Add lookups for brand and category
     pipeline.push(
-      {
-        $lookup: {
-          from: 'brands',
-          localField: 'brand',
-          foreignField: '_id',
-          as: 'brand'
-        }
-      },
-      { $unwind: '$brand' },
+      
       {
         $lookup: {
           from: 'categories',
@@ -176,7 +166,6 @@ const getProductDetail = asyncHandler(async (req, res) => {
 
     const product = await Product.findById(id)
       .populate("category", "name")
-      .populate("brand", "name")
       .populate({
         path: "variants",
         populate: {
@@ -274,7 +263,6 @@ const searchProducts = asyncHandler(async (req, res) => {
         { gender: searchRegex },
       ],
     })
-      .populate("brand", "name")
       .populate("category", "name")
       .populate({
         path: "variants",
@@ -350,7 +338,6 @@ const searchAndFetchRelatedProducts = asyncHandler(async (req, res) => {
         { gender: searchRegex },
       ],
     })
-      .populate("brand", "name")
       .populate("category", "name")
       .populate({
         path: "variants",
@@ -405,47 +392,46 @@ const searchAndFetchRelatedProducts = asyncHandler(async (req, res) => {
   }
 });
 
-const getProductsByBrand = asyncHandler(async (req, res) => {
-  try {
-    const { brandId } = req.params;
+// const getProductsByBrand = asyncHandler(async (req, res) => {
+//   try {
+//     const { brandId } = req.params;
 
-    // Check if brandId exists
-    if (!brandId) {
-      return res.status(200).json({
-        success: true,
-        count: 0,
-        products: []
-      });
-    }
+//     // Check if brandId exists
+//     if (!brandId) {
+//       return res.status(200).json({
+//         success: true,
+//         count: 0,
+//         products: []
+//       });
+//     }
 
-    const products = await Product.find({ brand: brandId })
-      .populate("brand", "name")
-      .populate("category", "name")
-      .populate({
-        path: "variants",
-        populate: {
-          path: "sizes",
-          model: "SizeVariant",
-        },
-      });
+//     const products = await Product.find({ brand: brandId })
+//       .populate("category", "name")
+//       .populate({
+//         path: "variants",
+//         populate: {
+//           path: "sizes",
+//           model: "SizeVariant",
+//         },
+//       });
 
-    // Always return 200 status code, even if no products found
-    return res.status(200).json({
-      success: true,
-      count: products.length,
-      products: products || [] // Ensure we always return an array
-    });
+//     // Always return 200 status code, even if no products found
+//     return res.status(200).json({
+//       success: true,
+//       count: products.length,
+//       products: products || [] // Ensure we always return an array
+//     });
 
-  } catch (error) {
-    console.error("Error fetching brand products:", error);
-    // Return empty array even on error to prevent frontend crashes
-    return res.status(200).json({
-      success: true,
-      count: 0,
-      products: []
-    });
-  }
-});
+//   } catch (error) {
+//     console.error("Error fetching brand products:", error);
+//     // Return empty array even on error to prevent frontend crashes
+//     return res.status(200).json({
+//       success: true,
+//       count: 0,
+//       products: []
+//     });
+//   }
+// });
 
 const getProductsByCategory = asyncHandler(async (req, res) => {
   try {
@@ -461,7 +447,6 @@ const getProductsByCategory = asyncHandler(async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .populate("brand", "name")
       .populate("category", "name")
       .populate({
         path: "variants",
@@ -505,7 +490,6 @@ const getProductsByGender = asyncHandler(async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .populate("brand", "name")
       .populate("category", "name")
       .populate({
         path: "variants",
@@ -576,7 +560,7 @@ module.exports = {
   fetchRelatedProducts,
   searchProducts,
   searchAndFetchRelatedProducts,
-  getProductsByBrand,
+  // getProductsByBrand,
   getProductsByCategory,
   getProductsByGender,
   getProductFilters,

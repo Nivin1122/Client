@@ -295,7 +295,7 @@ dropReviewIndex();
 
 const userRoutes = require("./routes/userRoutes");
 const userProductRoutes = require("./routes/product/productRoutes");
-const userBrandRoutes = require("./routes/product/brandRoutes");
+// const userBrandRoutes = require("./routes/product/brandRoutes");
 const userColorVariantRoutes = require("./routes/product/variantRoutes");
 const userCategoryRoutes = require("./routes/product/categoryRoutes");
 const userSizeVariantRoutes = require("./routes/product/sizesRoutes");
@@ -315,7 +315,7 @@ const userChatRoutes = require("./routes/chat/chatRoutes");
 
 const adminRoutes = require("./admin/routes/authentication/AdminRoutes");
 const adminProductRoutes = require("./admin/routes/product/ProductRoutes");
-const adminBrandRoutes = require("./admin/routes/product/BrandRoutes");
+// const adminBrandRoutes = require("./admin/routes/product/BrandRoutes");
 const adminColorVariantRoutes = require("./admin/routes/product/ColorVariantRoutes");
 const adminCategoryRoutes = require("./admin/routes/product/CategoryRoutes");
 const adminSizeVariantRoutes = require("./admin/routes/product/SizeVariantRoutes");
@@ -336,8 +336,8 @@ app.use("/api/admin/", adminRoutes);
 // Product related routes
 app.use("/api/products/", userProductRoutes);
 app.use("/api/admin/products/", adminProductRoutes);
-app.use("/api/brands/", userBrandRoutes);
-app.use("/api/admin/brands/", adminBrandRoutes);
+// app.use("/api/brands/", userBrandRoutes);
+// app.use("/api/admin/brands/", adminBrandRoutes);
 app.use("/api/categories/", userCategoryRoutes);
 app.use("/api/admin/categories/", adminCategoryRoutes);
 app.use("/api/variants/", userColorVariantRoutes);
