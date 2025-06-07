@@ -25,7 +25,14 @@ const transporter = nodemailer.createTransport({
 const registerUser = asyncHandler(async (req, res) => {
   try {
     const { username, email, password, confirmPassword } = req.body;
-    console.log("Email:", email);
+    console.log("Registration attempt for email:", email);
+
+    // Validate required fields
+    if (!username || !email || !password || !confirmPassword) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
+    }
 
     const textRegex = /^[A-Za-z0-9_]+$/;
 
@@ -67,8 +74,6 @@ const registerUser = asyncHandler(async (req, res) => {
       return res.status(400).json({ message: "Passwords do not match" });
     }
 
-    // Rest of the function remains the same...
-
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -77,12 +82,16 @@ const registerUser = asyncHandler(async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      // referredBy: referringUser ? referringUser._id : null
     });
 
     await user.save();
 
-    // Handle referral bonuses...
+    // Create wallet for new user
+    await Wallet.create({
+      userId: user._id,
+      balance: 0,
+      transactions: [],
+    });
 
     const token = Jwt.sign(
       { id: user._id, username, email },
@@ -91,11 +100,8 @@ const registerUser = asyncHandler(async (req, res) => {
     );
 
     res.status(201).json({
-      message: "Register successfully",
-      // ? "Registration successful! Referral bonus credited to your wallet!"
-      // : "Registration successful!",
+      message: "Registration successful!",
       token,
-      // referralBonus: referringUser ? true : false
     });
   } catch (err) {
     console.error("Registration error:", err);
@@ -105,7 +111,6 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   }
 });
-
 const loginUser = asyncHandler(async (req, res) => {
   const JWT_SECRET = process.env.JWT_SECRET || "1921u0030";
   try {

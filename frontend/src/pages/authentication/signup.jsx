@@ -61,42 +61,42 @@ const SignUp = () => {
     }
   };
 
-  const handleOtpVerificationSuccess = async () => {
-    try {
-      setLoading(true);
-      
-      // Create registration payload
-      const registrationData = {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        confirmpassword: formData.confirmPassword
-      };
+const handleOtpVerificationSuccess = async () => {
+  try {
+    setLoading(true);
+    
+    // Create registration payload with consistent naming
+    const registrationData = {
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword  // Use confirmPassword (camelCase) consistently
+    };
 
-      const response = await axiosInstance.post("/users/register", registrationData);
+    const response = await axiosInstance.post("/users/register", registrationData);
 
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-        setSnackbar({
-          open: true,
-          message: "Registration successful!",
-          severity: "success",
-        });
-        setTimeout(() => {
-          navigate("/");
-        }, 2000);
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || "Registration failed";
+    if (response.data.token) {
+      localStorage.setItem("token", response.data.token);
       setSnackbar({
         open: true,
-        message,
-        severity: "error",
+        message: "Registration successful!",
+        severity: "success",
       });
-    } finally {
-      setLoading(false);
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
     }
-  };
+  } catch (error) {
+    const message = error.response?.data?.message || "Registration failed";
+    setSnackbar({
+      open: true,
+      message,
+      severity: "error",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
