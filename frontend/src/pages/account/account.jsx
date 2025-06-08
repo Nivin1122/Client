@@ -12,6 +12,11 @@ import {
   Edit2,
   Mail,
   Phone,
+  Shield,
+  Bell,
+  CreditCard,
+  Star,
+  Award,
 } from "lucide-react";
 
 const Account = () => {
@@ -35,7 +40,6 @@ const Account = () => {
 
   // Form data states
   const [editData, setEditData] = useState({
-    // fullName: "",
     username: "",
     email: "",
   });
@@ -100,7 +104,6 @@ const Account = () => {
       const response = await axiosInstance.get("/users/profile");
       setUserProfile(response.data.user);
       setEditData({
-        // fullName: response.data.user.fullName || "",
         username: response.data.user.username || "",
         email: response.data.user.email || "",
       });
@@ -194,12 +197,11 @@ const Account = () => {
     try {
       await axiosInstance.post("/users/logout");
       localStorage.removeItem("token");
-      toast.success("Successfully logged out!");
       setShowLogoutModal(false);
       navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);
-      toast.error("Logout failed. Please try again.");
+      setError("Logout failed. Please try again.");
     }
   };
 
@@ -209,7 +211,6 @@ const Account = () => {
       const response = await axiosInstance.put(
         `/users/editProfile/${userProfile._id}`,
         {
-          // fullName: editData.fullName,
           username: editData.username,
         }
       );
@@ -239,9 +240,12 @@ const Account = () => {
 
   const handleEmailChange = async () => {
     try {
-      const response = await axiosInstance.post("/users/update-email-send-otp", {
-        email: newEmail,
-      });
+      const response = await axiosInstance.post(
+        "/users/update-email-send-otp",
+        {
+          email: newEmail,
+        }
+      );
       if (response.data) {
         setSuccess("OTP sent to your current email");
         setShowEmailModal(false);
@@ -255,11 +259,14 @@ const Account = () => {
 
   const handleEmailOtpSubmit = async () => {
     try {
-      const response = await axiosInstance.post("/users/verify-update-email-otp", {
-        otp: emailOtp,
-      });
+      const response = await axiosInstance.post(
+        "/users/verify-update-email-otp",
+        {
+          otp: emailOtp,
+        }
+      );
       if (response.data) {
-        await fetchUserProfile(); // Fetch updated profile data immediately
+        await fetchUserProfile();
         setSuccess("Email updated successfully");
         setShowOtpModal(false);
         clearInterval(emailOtpTimerId);
@@ -274,7 +281,9 @@ const Account = () => {
 
   const handleResendEmailOtp = async () => {
     try {
-      const response = await axiosInstance.post("/users/resend-update-email-otp");
+      const response = await axiosInstance.post(
+        "/users/resend-update-email-otp"
+      );
       if (response.data) {
         setSuccess("New OTP sent to your current email");
         startEmailOtpTimer();
@@ -284,111 +293,133 @@ const Account = () => {
     }
   };
 
-  const startOtpTimer = () => {
-    setOtpData((prev) => ({ ...prev, timer: 120, showResend: false }));
-    const interval = setInterval(() => {
-      setOtpData((prev) => {
-        if (prev.timer <= 1) {
-          clearInterval(interval);
-          return { ...prev, timer: 0, showResend: true };
-        }
-        return { ...prev, timer: prev.timer - 1 };
-      });
-    }, 1000);
-  };
-
-  const handleOtpSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axiosInstance.post("/users/verify-forgot-password-otp", {
-        email: editData.email,
-        otp: otpData.otp,
-      });
-      console.log("Edited email: ", editData.email)
-      await axiosInstance.put(`/users/editProfile/${userProfile._id}`, {
-        email: editData.email,
-      });
-      setShowOtpModal(false);
-      fetchUserProfile();
-      setSuccess("Email updated successfully!");
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (error) {
-      console.error("Error verifying OTP:", error);
-      setError(error.response?.data?.message || "Failed to verify OTP");
-    }
-  };
-
-  const handleResendOtp = async () => {
-    try {
-      await axiosInstance.post("/users/resend-forgot-password-otp", {
-        email: editData.email,
-      });
-      startOtpTimer();
-    } catch (error) {
-      console.error("Error resending OTP:", error);
-      setError(error.response?.data?.message || "Failed to resend OTP");
-    }
-  };
-
   const sidebarItems = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "addresses", label: "Addresses", icon: MapPin },
+    {
+      id: "profile",
+      label: "Profile",
+      icon: User,
+      description: "Personal information",
+    },
+    {
+      id: "addresses",
+      label: "Addresses",
+      icon: MapPin,
+      description: "Delivery addresses",
+    },
   ];
+
+  const quickActions = [];
 
   const renderProfileSection = () => (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-serif text-gray-900">
-          Profile Information
-        </h2>
-        <button
-          onClick={() => setShowEditModal(true)}
-          className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          <Edit2 size={16} />
-          Edit Profile
-        </button>
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-yellow-50 to-amber-50 p-4 sm:p-6 md:p-8 border border-yellow-200">
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white font-bold text-xl sm:text-2xl shadow-lg rounded-full">
+              {userProfile?.username?.charAt(0)?.toUpperCase() || "U"}
+            </div>
+            <div className="text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+                Welcome back, {userProfile?.username}
+              </h1>
+              <p className="text-gray-600 flex justify-center sm:justify-start items-center gap-2 text-sm sm:text-base">
+                <Mail size={16} />
+                {userProfile?.email}
+              </p>
+            </div>
+          </div>
+          <div className="w-full sm:w-auto text-center sm:text-right">
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="w-full sm:w-auto mt-4 sm:mt-0 bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-5 py-3 hover:from-yellow-500 hover:to-amber-600 transition-all duration-300 shadow-lg hover:shadow-xl flex justify-center items-center gap-2 font-medium rounded-md"
+            >
+              <Edit2 size={18} />
+              Edit Profile
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <div className="bg-gray-50 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <User className="text-gray-600" size={20} />
-              <h3 className="text-lg font-medium text-gray-900">
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {quickActions.map((action, index) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={index}
+              onClick={action.action}
+              className={`${action.color} p-6  hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md`}
+            >
+              <Icon size={24} className="mx-auto mb-2" />
+              <p className="font-medium text-sm">{action.label}</p>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Profile Information Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        {/* Personal Information */}
+        <div className="bg-white p-4 sm:p-6 md:p-8 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-3 mb-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center rounded-md">
+              <User className="text-blue-600" size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                 Personal Information
               </h3>
+              <p className="text-gray-500 text-sm">Your account details</p>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                  Username
-                </label>
-                <p className="text-gray-900 font-medium">
-                  {userProfile?.username}
-                </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-3 sm:p-4 rounded-md">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Username
+              </label>
+              <p className="text-gray-900 font-semibold text-base sm:text-lg break-words">
+                {userProfile?.username}
+              </p>
+            </div>
+
+            <div className="bg-gray-50 p-3 sm:p-4 rounded-md">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Account Status
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
+                <span className="text-green-700 font-medium text-sm sm:text-base">
+                  Active
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-gray-50 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Mail className="text-gray-600" size={20} />
-              <h3 className="text-lg font-medium text-gray-900">
+        {/* Contact Information */}
+        <div className="bg-white p-4 sm:p-6 md:p-8 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-3 mb-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center rounded-md">
+              <Mail className="text-green-600" size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                 Contact Information
               </h3>
+              <p className="text-gray-500 text-sm">How we reach you</p>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                  Email Address
-                </label>
-                <p className="text-gray-900 font-medium">
-                  {userProfile?.email}
-                </p>
-              </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-3 sm:p-4 rounded-md">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Email Address
+              </label>
+              <p className="text-gray-900 font-semibold text-base sm:text-lg break-words">
+                {userProfile?.email}
+              </p>
             </div>
           </div>
         </div>
@@ -398,23 +429,34 @@ const Account = () => {
 
   const renderAddressesSection = () => (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-serif text-gray-900">My Addresses</h2>
-        <button
-          onClick={() => setShowAddressForm(true)}
-          className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          + Add New Address
-        </button>
+      <div className="bg-gradient-to-r from-yellow-50 to-amber-50  p-8 border border-yellow-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Delivery Addresses
+            </h2>
+            <p className="text-gray-600">
+              Manage your saved delivery locations
+            </p>
+          </div>
+          <button
+            onClick={() => setShowAddressForm(true)}
+            className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-6 py-3  hover:from-yellow-500 hover:to-amber-600 transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
+          >
+            + Add New Address
+          </button>
+        </div>
       </div>
 
       {showAddressForm && (
-        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 mb-6">
-          <h3 className="text-xl font-medium mb-6">Add New Address</h3>
+        <div className="bg-white border-2 border-yellow-200  p-8 shadow-lg">
+          <h3 className="text-2xl font-semibold mb-8 text-gray-900">
+            Add New Address
+          </h3>
           <form onSubmit={handleAddressSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Full Name
                 </label>
                 <input
@@ -424,19 +466,19 @@ const Account = () => {
                   onChange={(e) =>
                     setNewAddress({ ...newAddress, fullName: e.target.value })
                   }
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                    formErrors.fullName ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-4 py-4 border-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300 ${
+                    formErrors.fullName ? "border-red-400" : "border-gray-200"
                   }`}
                 />
                 {formErrors.fullName && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p className="text-red-500 text-sm mt-2">
                     {formErrors.fullName}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Mobile Number
                 </label>
                 <input
@@ -451,14 +493,14 @@ const Account = () => {
                         .slice(0, 10),
                     })
                   }
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
+                  className={`w-full px-4 py-4 border-2  focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300 ${
                     formErrors.mobileNumber
-                      ? "border-red-500"
-                      : "border-gray-300"
+                      ? "border-red-400"
+                      : "border-gray-200"
                   }`}
                 />
                 {formErrors.mobileNumber && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p className="text-red-500 text-sm mt-2">
                     {formErrors.mobileNumber}
                   </p>
                 )}
@@ -466,22 +508,22 @@ const Account = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
                 Address
               </label>
               <textarea
                 placeholder="Enter complete address"
-                rows={3}
+                rows={4}
                 value={newAddress.address}
                 onChange={(e) =>
                   setNewAddress({ ...newAddress, address: e.target.value })
                 }
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                  formErrors.address ? "border-red-500" : "border-gray-300"
+                className={`w-full px-4 py-4 border-2  focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300 ${
+                  formErrors.address ? "border-red-400" : "border-gray-200"
                 }`}
               />
               {formErrors.address && (
-                <p className="text-red-500 text-sm mt-1">
+                <p className="text-red-500 text-sm mt-2">
                   {formErrors.address}
                 </p>
               )}
@@ -489,7 +531,7 @@ const Account = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
                   City
                 </label>
                 <input
@@ -499,17 +541,17 @@ const Account = () => {
                   onChange={(e) =>
                     setNewAddress({ ...newAddress, city: e.target.value })
                   }
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                    formErrors.city ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-4 py-4 border-2  focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300 ${
+                    formErrors.city ? "border-red-400" : "border-gray-200"
                   }`}
                 />
                 {formErrors.city && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.city}</p>
+                  <p className="text-red-500 text-sm mt-2">{formErrors.city}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
                   State
                 </label>
                 <select
@@ -517,8 +559,8 @@ const Account = () => {
                   onChange={(e) =>
                     setNewAddress({ ...newAddress, state: e.target.value })
                   }
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                    formErrors.state ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-4 py-4 border-2  focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300 ${
+                    formErrors.state ? "border-red-400" : "border-gray-200"
                   }`}
                 >
                   <option value="">Select State</option>
@@ -529,14 +571,14 @@ const Account = () => {
                   ))}
                 </select>
                 {formErrors.state && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p className="text-red-500 text-sm mt-2">
                     {formErrors.state}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Pincode
                 </label>
                 <input
@@ -549,12 +591,12 @@ const Account = () => {
                       pincode: e.target.value.replace(/\D/g, "").slice(0, 6),
                     })
                   }
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent ${
-                    formErrors.pincode ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-4 py-4 border-2  focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300 ${
+                    formErrors.pincode ? "border-red-400" : "border-gray-200"
                   }`}
                 />
                 {formErrors.pincode && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p className="text-red-500 text-sm mt-2">
                     {formErrors.pincode}
                   </p>
                 )}
@@ -562,7 +604,7 @@ const Account = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
                 Address Type
               </label>
               <select
@@ -570,22 +612,22 @@ const Account = () => {
                 onChange={(e) =>
                   setNewAddress({ ...newAddress, addressType: e.target.value })
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                className="w-full px-4 py-4 border-2 border-gray-200  focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300"
               >
                 <option value="Home">Home</option>
                 <option value="Work">Work</option>
               </select>
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-4 pt-6">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 bg-black text-white py-3 rounded-lg hover:bg-gray-800 disabled:bg-gray-400 flex items-center justify-center transition-colors"
+                className="flex-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white py-4  hover:from-yellow-500 hover:to-amber-600 disabled:opacity-50 flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="h-5 w-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                    <div className="h-5 w-5 border-t-2 border-b-2 border-white  animate-spin mr-2"></div>
                     Saving...
                   </>
                 ) : (
@@ -607,7 +649,7 @@ const Account = () => {
                     addressType: "Home",
                   });
                 }}
-                className="flex-1 border-2 border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 border-2 border-gray-300 py-4  hover:bg-gray-50 transition-all duration-300 font-medium"
                 disabled={isSubmitting}
               >
                 Cancel
@@ -622,34 +664,38 @@ const Account = () => {
           addresses.map((address) => (
             <div
               key={address._id}
-              className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-colors"
+              className="bg-white border-2 border-gray-100  p-6 hover:border-yellow-300 hover:shadow-lg transition-all duration-300"
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-2">
-                  <MapPin size={18} className="text-gray-600" />
-                  <span className="inline-block text-xs font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200  flex items-center justify-center">
+                    <MapPin size={20} className="text-blue-600" />
+                  </div>
+                  <span className="inline-block text-xs font-semibold text-blue-600 bg-blue-100 px-3 py-1 ">
                     {address.addressType?.toUpperCase()}
                   </span>
                 </div>
                 <button
                   onClick={() => handleDeleteAddress(address._id)}
-                  className="text-red-500 hover:text-red-700 text-sm font-medium"
+                  className="text-red-500 hover:text-red-700 text-sm font-medium hover:bg-red-50 px-3 py-1  transition-all duration-300"
                 >
                   Delete
                 </button>
               </div>
 
-              <div className="space-y-2">
-                <p className="font-semibold text-gray-900">
+              <div className="space-y-3">
+                <p className="font-bold text-gray-900 text-lg">
                   {address.fullName}
                 </p>
-                <p className="text-gray-700">{address.address}</p>
-                <p className="text-gray-700">
+                <p className="text-gray-700 leading-relaxed">
+                  {address.address}
+                </p>
+                <p className="text-gray-700 font-medium">
                   {address.city}, {address.state} - {address.pincode}
                 </p>
-                <div className="flex items-center gap-2 pt-2">
-                  <Phone size={14} className="text-gray-500" />
-                  <p className="text-sm text-gray-600">
+                <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                  <Phone size={16} className="text-gray-500" />
+                  <p className="text-gray-600 font-medium">
                     {address.mobileNumber}
                   </p>
                 </div>
@@ -657,10 +703,16 @@ const Account = () => {
             </div>
           ))
         ) : (
-          <div className="col-span-full text-center py-12 text-gray-500">
-            <MapPin size={48} className="mx-auto mb-4 text-gray-300" />
-            <p className="text-lg">No addresses found</p>
-            <p className="text-sm">Add your first address to get started</p>
+          <div className="col-span-full text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 ">
+            <div className="w-20 h-20 bg-gray-200  flex items-center justify-center mx-auto mb-4">
+              <MapPin size={32} className="text-gray-400" />
+            </div>
+            <p className="text-xl font-semibold text-gray-700 mb-2">
+              No addresses found
+            </p>
+            <p className="text-gray-500">
+              Add your first address to get started with deliveries
+            </p>
           </div>
         )}
       </div>
@@ -670,90 +722,118 @@ const Account = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl">
           {/* Success/Error Messages */}
           {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 mt-10">
-              {success}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 text-green-800 px-6 py-4  mb-6 mt-10 shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-green-500  flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+                {success}
+              </div>
             </div>
           )}
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
-              {error}
+            <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200 text-red-800 px-6 py-4  mb-6 shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-red-500  flex items-center justify-center">
+                  <span className="text-white text-xs">!</span>
+                </div>
+                {error}
+              </div>
             </div>
           )}
 
           <div className="flex flex-col lg:flex-row gap-8 mt-10">
             {/* Sidebar */}
             <div className="w-full lg:w-1/4">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-32">
-                <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
-                  <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-semibold">
-                    {userProfile?.userProfile?.username?.charAt(0) || "U"}
+              <div className="bg-white  shadow-lg border border-gray-100 p-6 sticky top-32">
+                {/* Profile Header */}
+                <div className="text-center mb-8 pb-6 border-b border-gray-100">
+                  <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-500  flex items-center justify-center text-white font-bold text-xl mx-auto mb-4 shadow-lg">
+                    {userProfile?.username?.charAt(0)?.toUpperCase() || "U"}
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      {userProfile?.username}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {userProfile?.email}
-                    </p>
-                  </div>
+                  <h3 className="font-bold text-gray-900 text-lg">
+                    {userProfile?.username}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {userProfile?.email}
+                  </p>
                 </div>
 
-                <nav className="space-y-2 ">
+                {/* Navigation */}
+                <nav className="space-y-2 mb-6">
                   {sidebarItems.map((item) => {
                     const Icon = item.icon;
                     return (
                       <button
                         key={item.id}
                         onClick={() => setActiveTab(item.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                        className={`w-full flex items-center gap-3 px-4 py-3  text-left transition-all duration-300 ${
                           activeTab === item.id
-                            ? "bg-black text-white"
-                            : "text-gray-700 hover:bg-gray-100"
+                            ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-lg"
+                            : "text-gray-700 hover:bg-gray-50"
                         }`}
                       >
-                        <Icon size={18} />
-                        {item.label}
+                        <Icon size={20} />
+                        <div>
+                          <p className="font-medium">{item.label}</p>
+                          <p
+                            className={`text-xs ${
+                              activeTab === item.id
+                                ? "text-yellow-100"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {item.description}
+                          </p>
+                        </div>
                       </button>
                     );
                   })}
+                </nav>
 
+                {/* Quick Links */}
+                <div className="space-y-2 mb-6 pt-6 border-t border-gray-100">
                   <button
                     onClick={() => navigate("/orders")}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3  text-left text-gray-700 hover:bg-gray-50 transition-all duration-300"
                   >
-                    <Package size={18} />
-                    Orders
+                    <Package size={20} />
+                    <span className="font-medium">Orders</span>
                   </button>
 
                   <button
                     onClick={() => navigate("/cart")}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3  text-left text-gray-700 hover:bg-gray-50 transition-all duration-300"
                   >
-                    <ShoppingCart size={18} />
-                    Cart
+                    <ShoppingCart size={20} />
+                    <span className="font-medium">Cart</span>
                   </button>
+                </div>
 
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <LogOut size={18} />
-                    Logout
-                  </button>
-                </nav>
+                {/* Logout Button */}
+                <button
+                  onClick={() => setShowLogoutModal(true)}
+                  className="w-full flex items-center gap-3 px-4 py-3  text-left text-red-600 hover:bg-red-50 transition-all duration-300 border-t border-gray-100 pt-6"
+                >
+                  <LogOut size={20} />
+                  <span className="font-medium">Logout</span>
+                </button>
               </div>
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 mt-10">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div className="flex-1">
+              <div className="bg-white  shadow-lg border border-gray-100 p-8">
                 {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 border-t-2 border-b-2 border-black rounded-full animate-spin"></div>
+                  <div className="flex items-center justify-center py-20">
+                    <div className="relative">
+                      <div className="h-12 w-12 border-4 border-yellow-200  animate-spin"></div>
+                      <div className="h-12 w-12 border-t-4 border-yellow-500  animate-spin absolute top-0"></div>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -769,11 +849,13 @@ const Account = () => {
         {/* Edit Profile Modal */}
         {showEditModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-md w-full p-6">
-              <h3 className="text-xl font-semibold mb-6">Edit Profile</h3>
-              <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="bg-white  max-w-md w-full p-8 shadow-2xl">
+              <h3 className="text-2xl font-bold mb-8 text-gray-900">
+                Edit Profile
+              </h3>
+              <form onSubmit={handleEditSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
                     Username
                   </label>
                   <input
@@ -782,40 +864,40 @@ const Account = () => {
                     onChange={(e) =>
                       setEditData({ ...editData, username: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                    className="w-full px-4 py-4 border-2 border-gray-200  focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
                     Email
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <input
                       type="email"
                       value={userProfile?.email}
                       disabled
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-100"
+                      className="flex-1 px-4 py-4 border-2 border-gray-200  bg-gray-50"
                     />
                     <button
                       type="button"
                       onClick={() => setShowEmailModal(true)}
-                      className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                      className="bg-blue-600 text-white px-6 py-4  hover:bg-blue-700 transition-all duration-300 font-medium"
                     >
                       Change
                     </button>
                   </div>
                 </div>
-                <div className="flex justify-end gap-4 pt-4">
+                <div className="flex justify-end gap-4 pt-6">
                   <button
                     type="button"
                     onClick={() => setShowEditModal(false)}
-                    className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-6 py-3 border-2 border-gray-300  hover:bg-gray-50 transition-all duration-300 font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+                    className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-6 py-3  hover:from-yellow-500 hover:to-amber-600 transition-all duration-300 shadow-lg font-medium"
                   >
                     Save Changes
                   </button>
@@ -828,31 +910,33 @@ const Account = () => {
         {/* Email Change Modal */}
         {showEmailModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-md w-full p-6">
-              <h3 className="text-xl font-semibold mb-6">Change Email</h3>
-              <div className="space-y-4">
+            <div className="bg-white  max-w-md w-full p-8 shadow-2xl">
+              <h3 className="text-2xl font-bold mb-8 text-gray-900">
+                Change Email
+              </h3>
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
                     New Email
                   </label>
                   <input
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                    className="w-full px-4 py-4 border-2 border-gray-200  focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300"
                   />
                 </div>
-                <div className="flex justify-end gap-4 pt-4">
+                <div className="flex justify-end gap-4 pt-6">
                   <button
                     onClick={() => setShowEmailModal(false)}
-                    className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-6 py-3 border-2 border-gray-300  hover:bg-gray-50 transition-all duration-300 font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleEmailChange}
                     disabled={!newEmail}
-                    className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:bg-gray-400"
+                    className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-6 py-3  hover:from-yellow-500 hover:to-amber-600 transition-all duration-300 shadow-lg disabled:opacity-50 font-medium"
                   >
                     Send OTP
                   </button>
@@ -865,56 +949,60 @@ const Account = () => {
         {/* OTP Verification Modal */}
         {showOtpModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-md w-full p-6">
-              <h3 className="text-xl font-semibold mb-6">Verify OTP</h3>
-              <div className="space-y-4">
+            <div className="bg-white  max-w-md w-full p-8 shadow-2xl">
+              <h3 className="text-2xl font-bold mb-8 text-gray-900">
+                Verify OTP
+              </h3>
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
                     Enter OTP sent to your current email ({userProfile?.email})
                   </label>
                   <input
                     type="text"
                     value={emailOtp}
-                    onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onChange={(e) =>
+                      setEmailOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
                     maxLength={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    placeholder="Enter 6-digit OTP"
+                    className="w-full px-4 py-4 border-2 border-gray-200  focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300 text-center text-2xl font-mono"
+                    placeholder="000000"
                   />
                   {emailOtpTimer > 0 && (
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-sm text-gray-500 mt-3 text-center">
                       Time remaining: {Math.floor(emailOtpTimer / 60)}:
-                      {emailOtpTimer % 60 < 10 ? `0${emailOtpTimer % 60}` : emailOtpTimer % 60}
+                      {emailOtpTimer % 60 < 10
+                        ? `0${emailOtpTimer % 60}`
+                        : emailOtpTimer % 60}
                     </p>
                   )}
                 </div>
-                <div className="flex justify-between items-center gap-4 pt-4">
-                  <div>
-                    <button
-                      type="button"
-                      onClick={handleResendEmailOtp}
-                      disabled={emailOtpTimer > 0}
-                      className="text-blue-600 text-sm hover:text-blue-800 disabled:text-gray-400"
-                    >
-                      Resend OTP
-                    </button>
-                  </div>
+                <div className="flex justify-between items-center gap-4 pt-6">
+                  <button
+                    type="button"
+                    onClick={handleResendEmailOtp}
+                    disabled={emailOtpTimer > 0}
+                    className="text-blue-600 text-sm hover:text-blue-800 disabled:text-gray-400 font-medium"
+                  >
+                    Resend OTP
+                  </button>
                   <div className="flex gap-3">
                     <button
                       type="button"
                       onClick={() => {
                         setShowOtpModal(false);
-                        setEmailOtp('');
+                        setEmailOtp("");
                         clearInterval(emailOtpTimerId);
                         setEmailOtpTimer(0);
                       }}
-                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                      className="px-4 py-2 border-2 border-gray-300  hover:bg-gray-50 transition-all duration-300 font-medium"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleEmailOtpSubmit}
                       disabled={!emailOtp || emailOtp.length !== 6}
-                      className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:bg-gray-400"
+                      className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-6 py-2  hover:from-yellow-500 hover:to-amber-600 transition-all duration-300 shadow-lg disabled:opacity-50 font-medium"
                     >
                       Verify OTP
                     </button>
@@ -925,27 +1013,37 @@ const Account = () => {
           </div>
         )}
 
+        {/* Logout Confirmation Modal */}
         {showLogoutModal && (
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg shadow-md w-96">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Confirm Logout
-              </h3>
-              <p className="text-gray-700 mb-6">
-                Are you sure you want to logout?
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white  shadow-2xl w-full max-w-md p-8">
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-200  flex items-center justify-center mx-auto mb-4">
+                  <LogOut size={32} className="text-red-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  Confirm Logout
+                </h3>
+                <p className="text-gray-600">
+                  You will be signed out of your account
+                </p>
+              </div>
+              <p className="text-gray-700 mb-8 text-center">
+                Are you sure you want to logout? You'll need to sign in again to
+                access your account.
               </p>
-              <div className="flex justify-end space-x-4">
+              <div className="flex justify-center gap-4">
                 <button
                   onClick={() => setShowLogoutModal(false)}
-                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  className="px-6 py-3 border-2 border-gray-300  hover:bg-gray-50 transition-all duration-300 font-medium"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => setShowLogoutModal(true)}
-                  className="flex items-center text-red-600 hover:text-red-800"
+                  onClick={handleLogout}
+                  className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white  hover:from-red-600 hover:to-red-700 transition-all duration-300 flex items-center gap-2 shadow-lg font-medium"
                 >
-                  <LogOut size={20} className="mr-2" />
+                  <LogOut size={18} />
                   Logout
                 </button>
               </div>
