@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const SizeVariantSchema = new mongoose.Schema(
   {
     variant: { type: mongoose.Schema.Types.ObjectId, ref: 'Variant', required: true },
-    size: { type: String, required: true },  
+    size: { type: String, required: false },  
     price: { type: Number, required: true },
     discountPrice: { type: Number },
     inStock: { type: Boolean, default: true }, 

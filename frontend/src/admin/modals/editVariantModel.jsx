@@ -1,23 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
   Modal,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Grid,
   IconButton,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
   CircularProgress,
-  Paper,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CloseIcon from "@mui/icons-material/Close"; // Import CloseIcon
-import EditIcon from "@mui/icons-material/Edit"; // Import EditIcon
+import CloseIcon from "@mui/icons-material/Close";
+import EditIcon from "@mui/icons-material/Edit";
 import axios from "axios";
 import EditSizeVariantModal from "./editSizeModal";
 import axiosInstance from "@/utils/adminAxiosInstance";
@@ -49,9 +39,7 @@ const EditVariantModal = ({ open, onClose, variant }) => {
   const fetchSizeVariants = async (variantId) => {
     setIsLoading(true);
     try {
-      const response = await axios.get(
-        `http://localhost:9090/api/sizes/sizes/${variantId}`
-      );
+      const response = await axios.get(`http://localhost:9090/api/sizes/sizes/${variantId}`);
       setFormData((prevData) => ({
         ...prevData,
         sizeVariants: response.data.sizeVariants || [],
@@ -104,20 +92,14 @@ const EditVariantModal = ({ open, onClose, variant }) => {
     updatedData.append("color", formData.color);
     updatedData.append("category", formData.category);
 
-    if (formData.colorImage) {
-      updatedData.append("colorImage", formData.colorImage);
-    }
-    if (formData.mainImage) {
-      updatedData.append("mainImage", formData.mainImage);
-    }
+    if (formData.colorImage) updatedData.append("colorImage", formData.colorImage);
+    if (formData.mainImage) updatedData.append("mainImage", formData.mainImage);
     formData.subImages.forEach((img) => updatedData.append("subImages", img));
 
     try {
-      await axiosInstance.put(
-        `/variants/variant/edit/${variant._id}`,
-        updatedData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      await axiosInstance.put(`/variants/variant/edit/${variant._id}`, updatedData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       onClose();
     } catch (error) {
       console.error("Error updating variant:", error);
@@ -132,9 +114,7 @@ const EditVariantModal = ({ open, onClose, variant }) => {
     setOpenEditModal(true);
   };
 
-  const handleEditModalClose = () => {
-    setOpenEditModal(false);
-  };
+  const handleEditModalClose = () => setOpenEditModal(false);
 
   const handleSaveSizeVariant = (updatedSizeVariant) => {
     const updatedSizeVariants = formData.sizeVariants.map((sv) =>
@@ -149,281 +129,164 @@ const EditVariantModal = ({ open, onClose, variant }) => {
   return (
     <>
       <Modal open={open} onClose={onClose}>
-        <Box
-          sx={{
-            width: "50%",
-            margin: "auto",
-            mt: 5,
-            p: 3,
-            backgroundColor: "white",
-            borderRadius: 2,
-            boxShadow: 24,
-            overflowY: "auto",
-            maxHeight: "90vh",
-            position: "relative",
-          }}
-        >
-          {/* Close Icon */}
-          <IconButton
-            sx={{
-              position: "absolute",
-              top: 10,
-              right: 10,
-              zIndex: 1,
-            }}
-            onClick={() => onClose()}
-          >
+        <div className="w-[90%] md:w-3/4 lg:w-1/2 max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl p-6 mx-auto mt-10 relative">
+          <IconButton className="!absolute top-4 right-4" onClick={onClose}>
             <CloseIcon />
           </IconButton>
 
-          <Typography
-            variant="h5"
-            sx={{ mb: 3, textAlign: "center", fontWeight: "bold" }}
-          >
-            Edit Product Variant
-          </Typography>
+          <h2 className="text-2xl font-bold text-center mb-6">Edit Product Variant</h2>
 
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              {/* Color Field */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="color"
-                  label="Color"
-                  value={formData.color}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Grid>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block mb-1 font-medium">Color</label>
+              <input
+                type="text"
+                name="color"
+                value={formData.color}
+                onChange={handleInputChange}
+                required
+                className="w-full border border-gray-300 p-2 rounded"
+              />
+            </div>
 
-              {/* Color Image Upload */}
-              <Grid item xs={12}>
-                <Button
-                  variant="contained"
-                  component="label"
-                  startIcon={<CloudUploadIcon />}
-                >
-                  Upload Color Image
-                  <input
-                    type="file"
-                    accept="image/*"
-                    name="colorImage"
-                    onChange={handleFileChange}
-                    hidden
+            {/* Color Image Upload */}
+            <div>
+              <label className="block mb-1 font-medium">Color Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                name="colorImage"
+                onChange={handleFileChange}
+                className="mb-2"
+              />
+              {formData.colorImage && (
+                <div className="flex items-center gap-4 mt-2">
+                  <img
+                    src={formData.colorImage instanceof File ? URL.createObjectURL(formData.colorImage) : formData.colorImage}
+                    alt="Color"
+                    className="w-24 h-24 rounded object-cover"
                   />
-                </Button>
-                {formData.colorImage && (
-                  <Box mt={2} display="flex" alignItems="center" gap={2}>
+                  <IconButton onClick={() => setFormData({ ...formData, colorImage: null })}>
+                    <DeleteIcon color="error" />
+                  </IconButton>
+                </div>
+              )}
+            </div>
+
+            {/* Main Image Upload */}
+            <div>
+              <label className="block mb-1 font-medium">Main Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                name="mainImage"
+                onChange={handleFileChange}
+                className="mb-2"
+              />
+              {formData.mainImage && (
+                <div className="flex items-center gap-4 mt-2">
+                  <img
+                    src={formData.mainImage instanceof File ? URL.createObjectURL(formData.mainImage) : formData.mainImage}
+                    alt="Main"
+                    className="w-24 h-24 rounded object-cover"
+                  />
+                  <IconButton onClick={() => setFormData({ ...formData, mainImage: null })}>
+                    <DeleteIcon color="error" />
+                  </IconButton>
+                </div>
+              )}
+            </div>
+
+            {/* Sub Images Upload */}
+            <div>
+              <label className="block mb-1 font-medium">Sub Images</label>
+              <input
+                type="file"
+                name="subImages"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+              />
+              <div className="flex flex-wrap gap-4 mt-2">
+                {formData.subImages.map((img, index) => (
+                  <div key={index} className="relative">
                     <img
-                      src={
-                        formData.colorImage instanceof File
-                          ? URL.createObjectURL(formData.colorImage)
-                          : formData.colorImage
-                      }
-                      alt="Color Preview"
-                      style={{
-                        width: 100,
-                        height: 100,
-                        objectFit: "cover",
-                        borderRadius: 8,
-                      }}
+                      src={img instanceof File ? URL.createObjectURL(img) : img}
+                      alt={`Sub ${index}`}
+                      className="w-24 h-24 object-cover rounded"
                     />
                     <IconButton
-                      onClick={() =>
-                        setFormData({ ...formData, colorImage: null })
-                      }
+                      size="small"
+                      className="!absolute top-0 right-0 bg-white"
+                      onClick={() => handleImageDelete(index, "subImages")}
                     >
-                      <DeleteIcon color="error" />
+                      <DeleteIcon fontSize="small" color="error" />
                     </IconButton>
-                  </Box>
-                )}
-              </Grid>
-
-              {/* Main Image Upload */}
-              <Grid item xs={12}>
-                <Button
-                  variant="contained"
-                  component="label"
-                  startIcon={<CloudUploadIcon />}
-                >
-                  Upload Main Image
-                  <input
-                    type="file"
-                    accept="image/*"
-                    name="mainImage"
-                    onChange={handleFileChange}
-                    hidden
-                  />
-                </Button>
-                {formData.mainImage && (
-                  <Box mt={2} display="flex" alignItems="center" gap={2}>
-                    <img
-                      src={
-                        formData.mainImage instanceof File
-                          ? URL.createObjectURL(formData.mainImage)
-                          : formData.mainImage
-                      }
-                      alt="Main Preview"
-                      style={{
-                        width: 100,
-                        height: 100,
-                        objectFit: "cover",
-                        borderRadius: 8,
-                      }}
-                    />
                     <IconButton
-                      onClick={() =>
-                        setFormData({ ...formData, mainImage: null })
-                      }
+                      size="small"
+                      className="!absolute bottom-0 right-0 bg-white"
+                      onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "image/*";
+                        input.onchange = (e) => {
+                          const newImg = e.target.files[0];
+                          if (newImg) handleImageEdit(index, newImg);
+                        };
+                        input.click();
+                      }}
                     >
-                      <DeleteIcon color="error" />
+                      <EditIcon fontSize="small" color="primary" />
                     </IconButton>
-                  </Box>
-                )}
-              </Grid>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-              {/* Sub Images Upload */}
-              <Grid item xs={12}>
-                <Button
-                  variant="contained"
-                  component="label"
-                  startIcon={<CloudUploadIcon />}
-                >
-                  Upload Sub Images
-                  <input
-                    type="file"
-                    accept="image/*"
-                    name="subImages"
-                    multiple
-                    onChange={handleFileChange}
-                    hidden
-                  />
-                </Button>
-                <Box mt={2} display="flex" flexWrap="wrap" gap={2}>
-                  {formData.subImages.map((image, index) => (
-                    <Box key={index} sx={{ position: "relative" }}>
-                      <img
-                        src={
-                          image instanceof File
-                            ? URL.createObjectURL(image)
-                            : image
-                        }
-                        alt={`Sub Image ${index}`}
-                        style={{
-                          width: 100,
-                          height: 100,
-                          objectFit: "cover",
-                          borderRadius: 8,
-                        }}
-                      />
-                      {/* Delete Icon */}
-                      <IconButton
-                        sx={{
-                          position: "absolute",
-                          top: -10,
-                          right: -10,
-                          background: "white",
-                        }}
-                        onClick={() => handleImageDelete(index, "subImages")}
-                      >
-                        <DeleteIcon color="error" />
-                      </IconButton>
-                      {/* Edit Icon */}
-                      <IconButton
-                        sx={{
-                          position: "absolute",
-                          bottom: -10,
-                          right: -10,
-                          background: "white",
-                        }}
-                        onClick={() => {
-                          const fileInput = document.createElement("input");
-                          fileInput.type = "file";
-                          fileInput.accept = "image/*";
-                          fileInput.onchange = (e) => {
-                            const newImage = e.target.files[0];
-                            if (newImage) {
-                              handleImageEdit(index, newImage);
-                            }
-                          };
-                          fileInput.click();
-                        }}
-                      >
-                        <EditIcon color="primary" />
-                      </IconButton>
-                    </Box>
-                  ))}
-                </Box>
-              </Grid>
-
-              {/* Category Select Field */}
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel id="size-variant-label">Size Variant</InputLabel>
-                  <Select
-                    labelId="size-variant-label"
-                    id="size-variant"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    label="Size Variant"
-                  >
-                    {isLoading ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={24} />
-                      </MenuItem>
-                    ) : formData.sizeVariants.length > 0 ? (
-                      formData.sizeVariants.map((sizeVariant) => (
-                        <MenuItem
-                          key={sizeVariant._id}
-                          value={sizeVariant.size}
+            {/* Size Variants */}
+            <div>
+              <label className="block mb-1 font-medium">Size Variants</label>
+              <div className="space-y-2">
+                {isLoading ? (
+                  <CircularProgress size={24} />
+                ) : formData.sizeVariants.length ? (
+                  formData.sizeVariants.map((sizeVariant) => (
+                    <div
+                      key={sizeVariant._id}
+                      className="flex justify-between items-center border border-gray-200 p-2 rounded"
+                    >
+                      <div>
+                        <p className="font-semibold">{sizeVariant.size}</p>
+                        <p className="text-sm text-gray-500">{sizeVariant.description.slice(0, 50)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600 font-semibold">₹{sizeVariant.price}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleEditButtonClick(sizeVariant)}
+                          className="bg-orange-500 text-white px-3 py-1 rounded text-sm"
                         >
-                          <Grid container alignItems="center" spacing={2}>
-                            <Grid item xs={3}>
-                              <Typography>{sizeVariant.size}</Typography>
-                            </Grid>
-                            <Grid item xs={4}>
-                              <Typography>
-                                {sizeVariant.description.slice(0, 30)}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={2}>
-                              <Typography>{sizeVariant.price} $</Typography>
-                            </Grid>
-                            <Grid item xs={3}>
-                              <Button
-                                variant="filled"
-                                sx={{backgroundColor:'orange', color:"white"}}
-                                onClick={() =>
-                                  handleEditButtonClick(sizeVariant)
-                                }
-                              >
-                                Edit
-                              </Button>
-                            </Grid>
-                          </Grid>
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No size variants available</MenuItem>
-                    )}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
+                          Edit
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm">No size variants available</p>
+                )}
+              </div>
+            </div>
 
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ mt: 4, py: 1.5, backgroundColor: "orange" }}
+            <button
               type="submit"
+              className="w-full py-2 bg-orange-500 text-white font-semibold rounded hover:bg-orange-600"
             >
               Update Variant
-            </Button>
+            </button>
           </form>
-        </Box>
+        </div>
       </Modal>
+
       <EditSizeVariantModal
         open={openEditModal}
         onClose={handleEditModalClose}

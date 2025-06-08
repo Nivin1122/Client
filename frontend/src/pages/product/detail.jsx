@@ -157,29 +157,29 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
-  if (!isAuthenticated) return navigate("/login");
-  if (!selectedSize || !selectedVariant) {
-    toast.error("Please select a size to continue");
-    return;
-  }
+    if (!isAuthenticated) return navigate("/login");
+    if (!selectedSize || !selectedVariant) {
+      toast.error("Please select a size to continue");
+      return;
+    }
 
-  // Create checkout item data
-  const checkoutItem = {
-    product: product,
-    variant: selectedVariant,
-    sizeVariant: selectedSize,
-    quantity: quantity,
-    _id: `direct_${Date.now()}`, // Temporary ID for direct purchase
+    // Create checkout item data
+    const checkoutItem = {
+      product: product,
+      variant: selectedVariant,
+      sizeVariant: selectedSize,
+      quantity: quantity,
+      _id: `direct_${Date.now()}`, // Temporary ID for direct purchase
+    };
+
+    // Navigate to checkout with the product data
+    navigate("/checkout", {
+      state: {
+        directPurchase: true,
+        checkoutItem: checkoutItem,
+      },
+    });
   };
-
-  // Navigate to checkout with the product data
-  navigate("/checkout", { 
-    state: { 
-      directPurchase: true, 
-      checkoutItem: checkoutItem 
-    } 
-  });
-};
 
   // Handle mouse move for zoom effect
   const handleMouseMove = (e) => {
@@ -402,10 +402,6 @@ const ProductDetail = () => {
               <p className="text-2xl mb-2">Select a size to see price</p>
             )}
 
-            <p className="text-sm text-gray-500 mb-6">
-              Tax included. Shipping calculated at checkout.
-            </p>
-
             {/* Color Selector */}
             {variants.length > 0 && (
               <div className="mb-6">
@@ -440,26 +436,32 @@ const ProductDetail = () => {
             {/* Size Selector */}
             {sizes.length > 0 && (
               <div className="mb-6">
-                <p className="font-medium mb-2">Size</p>
+                {sizes[0].size && <p className="font-medium mb-2">Size</p>}
                 <div className="flex flex-wrap gap-2">
-                  {sizes.map((size) => (
-                    <div
-                      key={size._id}
-                      className={`cursor-pointer border-2 rounded-md px-3 py-1.5 ${
-                        selectedSize?._id === size._id
-                          ? "border-black bg-gray-100"
-                          : "border-gray-200"
-                      } hover:border-gray-400 transition-all ${
-                        !size.inStock ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
-                      onClick={() => size.inStock && setSelectedSize(size)}
-                    >
-                      <div className="text-sm">{size.size}</div>
-                      {!size.inStock && (
-                        <div className="text-xs text-red-500">Out of stock</div>
-                      )}
-                    </div>
-                  ))}
+                  {sizes.map((size) =>
+                    size.size ? (
+                      <div
+                        key={size._id}
+                        className={`cursor-pointer border-2 rounded-md px-3 py-1.5 ${
+                          selectedSize?._id === size._id
+                            ? "border-black bg-gray-100"
+                            : "border-gray-200"
+                        } hover:border-gray-400 transition-all ${
+                          !size.inStock ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                        onClick={() => size.inStock && setSelectedSize(size)}
+                      >
+                        <div className="text-sm">{size.size}</div>
+                        {!size.inStock && (
+                          <div className="text-xs text-red-500">
+                            Out of stock
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      ""
+                    )
+                  )}
                 </div>
                 {selectedSize && (
                   <div className="mt-2 text-sm">

@@ -26,7 +26,7 @@ const AddSizeVariantModal = ({ open, onClose, variantId }) => {
   };
 
   const handleAddSizeVariant = async () => {
-    if (!formData.size || !formData.price || !formData.stockCount) {
+    if ( !formData.price || !formData.stockCount) {
       return setSnackbar({
         open: true,
         message: "Please fill all required fields",
