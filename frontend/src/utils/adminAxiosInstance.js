@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:9090/api/admin", 
+  baseURL: "https://client-1-6rax.onrender.com/api/admin", 
   withCredentials: true,  
   headers: {
     'Content-Type': 'application/json'
@@ -14,7 +14,7 @@ const axiosInstance = axios.create({
 //     // Only fetch CSRF token for non-GET requests
 //     if (config.method !== 'get') {
 //       try {
-//         const response = await axios.get("http://localhost:9090/api/csrf-token", {
+//         const response = await axios.get("https://client-1-6rax.onrender.com/api/csrf-token", {
 //           withCredentials: true,
 //         });
 //         config.headers["x-csrf-token"] = response.data.csrfToken;

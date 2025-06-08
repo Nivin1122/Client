@@ -51,13 +51,13 @@ const ProductDetail = () => {
 
         // Fetch product details
         const productResponse = await axios.get(
-          `http://localhost:9090/api/products/${id}/details`
+          `https://client-1-6rax.onrender.com/api/products/${id}/details`
         );
         setProduct(productResponse.data.product);
 
         // Fetch variants
         const variantsResponse = await axios.get(
-          `http://localhost:9090/api/variants/variant/get/${id}`
+          `https://client-1-6rax.onrender.com/api/variants/variant/get/${id}`
         );
         setVariants(variantsResponse.data.variants);
 
@@ -71,7 +71,7 @@ const ProductDetail = () => {
 
           // Fetch sizes for the selected variant
           const sizesResponse = await axios.get(
-            `http://localhost:9090/api/sizes/sizes/${firstVariantWithSizes._id}`
+            `https://client-1-6rax.onrender.com/api/sizes/sizes/${firstVariantWithSizes._id}`
           );
 
           // Ensure we're working with an array
@@ -109,7 +109,7 @@ const ProductDetail = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:9090/api/sizes/sizes/${variant._id}`
+        `https://client-1-6rax.onrender.com/api/sizes/sizes/${variant._id}`
       );
 
       const sizeVariants = Array.isArray(response.data.sizeVariants)
@@ -137,7 +137,7 @@ const ProductDetail = () => {
     const fetchSizes = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:9090/api/sizes/sizes/${variant._id}`
+          `https://client-1-6rax.onrender.com/api/sizes/sizes/${variant._id}`
         );
         const sizeVariants = Array.isArray(response.data.sizeVariants)
           ? response.data.sizeVariants

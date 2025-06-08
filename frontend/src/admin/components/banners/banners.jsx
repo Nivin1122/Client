@@ -43,7 +43,7 @@ const Banners = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:9090/api/banners");
+        const response = await axios.get("https://client-1-6rax.onrender.com/api/banners");
         setBannersData(response.data);
       } catch (err) {
         setError("Failed to fetch banners data");

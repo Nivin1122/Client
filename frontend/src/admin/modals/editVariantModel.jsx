@@ -39,7 +39,7 @@ const EditVariantModal = ({ open, onClose, variant }) => {
   const fetchSizeVariants = async (variantId) => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://localhost:9090/api/sizes/sizes/${variantId}`);
+      const response = await axios.get(`https://client-1-6rax.onrender.com/api/sizes/sizes/${variantId}`);
       setFormData((prevData) => ({
         ...prevData,
         sizeVariants: response.data.sizeVariants || [],

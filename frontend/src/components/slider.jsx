@@ -11,7 +11,7 @@ const Slider = () => {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const response = await axios.get("http://localhost:9090/api/banners");
+        const response = await axios.get("https://client-1-6rax.onrender.com/api/banners");
         setBanners(response.data);
         setLoading(false);
       } catch (error) {

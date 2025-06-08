@@ -97,7 +97,7 @@ const EditProductModal = ({
     setIsLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:9090/api/variants/variant/get/${productId}`
+        `https://client-1-6rax.onrender.com/api/variants/variant/get/${productId}`
       );
       setVariants(response.data.variants || []);
     } catch (error) {

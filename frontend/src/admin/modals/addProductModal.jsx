@@ -25,7 +25,7 @@ const AddProductModal = ({ open, onClose, onProductAdded }) => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get("http://localhost:9090/api/categories");
+      const res = await axios.get("https://client-1-6rax.onrender.com/api/categories");
       setCategories(res.data.categories);
     } catch (err) {
       setSnackbar({

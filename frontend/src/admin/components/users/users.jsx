@@ -360,7 +360,7 @@ export default Users;
 //       try {
 //         setLoading(true);
 //         const response = await axios.get(
-//           "http://localhost:9090/api/admin/userlist"
+//           "https://client-1-6rax.onrender.com/api/admin/userlist"
 //         );
 //         setUsersData(response.data);
 //       } catch (err) {
@@ -384,7 +384,7 @@ export default Users;
 //   const handleBlockUser = async (userId) => {
 //     try {
 //       const response = await axios.put(
-//         `http://localhost:9090/api/admin/block/${userId}`
+//         `https://client-1-6rax.onrender.com/api/admin/block/${userId}`
 //       );
 //       setUsersData((prevUsers) =>
 //         prevUsers.map((user) =>
@@ -403,7 +403,7 @@ export default Users;
 //   const handleUnblockUser = async (userId) => {
 //     try {
 //       const response = await axios.put(
-//         `http://localhost:9090/api/admin/unblock/${userId}`
+//         `https://client-1-6rax.onrender.com/api/admin/unblock/${userId}`
 //       );
 //       setUsersData((prevUsers) =>
 //         prevUsers.map((user) =>

@@ -398,7 +398,7 @@ const Login = () => {
             </div>
 
             <a
-              href="http://localhost:9090/api/users/auth/google"
+              href="https://client-1-6rax.onrender.com/api/users/auth/google"
               className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
             >
               <FcGoogle className="text-xl" />

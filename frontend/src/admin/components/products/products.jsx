@@ -106,7 +106,7 @@ const Product = () => {
   const handleVariantFetch = async (productId) => {
     try {
       const response = await fetch(
-        `http://localhost:9090/api/variants/variant/get/${productId}`
+        `https://client-1-6rax.onrender.com/api/variants/variant/get/${productId}`
       );
       const data = await response.json();
       if (response.ok) {
@@ -132,7 +132,7 @@ const Product = () => {
   const handleSizesFetch = async (variantId) => {
     try {
       const response = await axios.get(
-        `http://localhost:9090/api/sizes/sizes/${variantId}`
+        `https://client-1-6rax.onrender.com/api/sizes/sizes/${variantId}`
       );
       if (response.status === 200) {
         setSizeVariantsData((prev) => ({

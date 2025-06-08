@@ -45,7 +45,7 @@ const AddBanner = ({ open, handleClose, onSuccess }) => {
       formDataToSend.append('discount', formData.discount);
       formDataToSend.append('image', formData.image);
 
-      const response = await axios.post('http://localhost:9090/api/banners/add', formDataToSend, {
+      const response = await axios.post('https://client-1-6rax.onrender.com/api/banners/add', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
