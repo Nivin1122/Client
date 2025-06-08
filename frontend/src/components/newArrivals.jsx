@@ -183,7 +183,7 @@ const NewArrivals = () => {
             </button>
           </div>
         </div>
-        <a href="#" className="text-red-500 text-sm uppercase">
+        <a href="http://localhost:5173/products?page=1&limit=8&sortBy=newest" className="text-red-500 text-sm uppercase">
           VIEW ALL
         </a>
       </div>
