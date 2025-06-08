@@ -33,7 +33,7 @@ const Checkout = () => {
 
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [paymentMethod, setPaymentMethod] = useState("online");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -765,7 +765,7 @@ const Checkout = () => {
                 <div className="mt-6">
                   <h3 className="font-medium mb-3">Payment Method</h3>
                   <div className="space-y-3">
-                    <label className="flex items-center gap-3 p-3 border rounded cursor-pointer">
+                    {/* <label className="flex items-center gap-3 p-3 border rounded cursor-pointer">
                       <input
                         type="radio"
                         value="cod"
@@ -773,7 +773,7 @@ const Checkout = () => {
                         onChange={(e) => setPaymentMethod(e.target.value)}
                       />
                       <span>Cash on Delivery</span>
-                    </label>
+                    </label> */}
                     <label className="flex items-center gap-3 p-3 border rounded cursor-pointer">
                       <input
                         type="radio"

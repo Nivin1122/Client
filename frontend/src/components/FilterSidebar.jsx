@@ -8,18 +8,12 @@ import "rc-slider/assets/index.css";
 
 const FilterSidebar = React.memo(({ onApplyFilters }) => {
   const [categories, setCategories] = useState([]);
-  // const [brands, setBrands] = useState([]);
-  const [colors, setColors] = useState([]);
-  const [sizes, setSizes] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [accordionOpen, setAccordionOpen] = useState({
     sortBy: true,
     priceRange: true,
     categories: true,
-    // brands: true,
-    colors: true,
-    sizes: true,
   });
 
   const toggleAccordion = (section) => {
@@ -30,19 +24,13 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
   };
 
   const [selectedFilters, setSelectedFilters] = useState(() => {
-    const categories = searchParams.get("categories")?.split(",") || [];
-    // const brands = searchParams.get("brands")?.split(",") || [];
-    const colors = searchParams.get("colors")?.split(",") || [];
-    const sizes = searchParams.get("sizes")?.split(",") || [];
-    const minPrice = Number(searchParams.get("priceRange_min")) || 0;
-    const maxPrice = Number(searchParams.get("priceRange_max")) || 10000;
+    const category = searchParams.get("category");
+    const minPrice = Number(searchParams.get("minPrice")) || 0;
+    const maxPrice = Number(searchParams.get("maxPrice")) || 10000;
     const sortBy = searchParams.get("sortBy") || "newest";
 
     return {
-      categories,
-      // brands,
-      colors,
-      sizes,
+      categories: category ? [category] : [],
       priceRange: { min: minPrice, max: maxPrice },
       sortBy,
     };
@@ -57,16 +45,22 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
     () =>
       debounce((filters) => {
         const params = new URLSearchParams();
-        Object.entries(filters).forEach(([key, value]) => {
-          if (Array.isArray(value) && value.length > 0) {
-            params.set(key, value.join(","));
-          } else if (typeof value === "object" && value !== null) {
-            params.set(`${key}_min`, value.min);
-            params.set(`${key}_max`, value.max);
-          } else if (value) {
-            params.set(key, value);
-          }
-        });
+        
+        // Handle categories - use first category as main category
+        if (filters.categories && filters.categories.length > 0) {
+          params.set("category", filters.categories[0]);
+        }
+
+        // Handle price range
+        if (filters.priceRange) {
+          params.set("minPrice", filters.priceRange.min);
+          params.set("maxPrice", filters.priceRange.max);
+        }
+
+        // Handle sort
+        if (filters.sortBy) {
+          params.set("sortBy", filters.sortBy);
+        }
         setSearchParams(params, { replace: true });
         onApplyFilters(filters);
       }, 300),
@@ -76,15 +70,8 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
-        const [categoriesRes, filtersRes] = await Promise.all([
-          axiosInstance.get("/categories"),
-          // axiosInstance.get("/brands"),
-          axiosInstance.get("/products/filters"),
-        ]);
+        const categoriesRes = await axiosInstance.get("/categories");
         setCategories(categoriesRes.data.categories || []);
-        // setBrands(brandsRes.data || []);
-        setColors(filtersRes.data.colors || []);
-        setSizes(filtersRes.data.sizes || []);
       } catch (error) {
         console.error("Error fetching filter options:", error);
       }
@@ -102,15 +89,23 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
   const handleFilterChange = useCallback(
     (filterType, value) => {
       setSelectedFilters((prev) => {
-        const newFilters =
-          filterType === "priceRange"
-            ? { ...prev, [filterType]: value }
-            : {
-                ...prev,
-                [filterType]: prev[filterType].includes(value)
-                  ? prev[filterType].filter((item) => item !== value)
-                  : [...prev[filterType], value],
-              };
+        let newFilters;
+        if (filterType === "priceRange") {
+          newFilters = { ...prev, [filterType]: value };
+        } else if (filterType === "categories") {
+          // For categories, we only want to keep one category selected at a time
+          newFilters = {
+            ...prev,
+            categories: prev.categories.includes(value) ? [] : [value]
+          };
+        } else {
+          newFilters = {
+            ...prev,
+            [filterType]: prev[filterType].includes(value)
+              ? prev[filterType].filter((item) => item !== value)
+              : [...prev[filterType], value],
+          };
+        }
         debouncedApplyFilters(newFilters);
         return newFilters;
       });
@@ -127,9 +122,6 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
   const handleResetFilters = useCallback(() => {
     const initialFilters = {
       categories: [],
-      // brands: [],
-      colors: [],
-      sizes: [],
       priceRange: { min: 0, max: 10000 },
       sortBy: "newest",
     };
@@ -314,88 +306,6 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
                 />
                 {category.name}
               </label>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Brands */}
-      {/* <div className="mb-6">
-        <div
-          className="flex justify-between items-center cursor-pointer mb-2"
-          onClick={() => toggleAccordion("brands")}
-        >
-          <h3 className="text-lg font-semibold">Brands</h3>
-          <span>{accordionOpen.brands ? "−" : "+"}</span>
-        </div>
-        {accordionOpen.brands && (
-          <div className="space-y-2">
-            {brands.map((brand) => (
-              <label key={brand._id} className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="mr-2"
-                  checked={selectedFilters.brands.includes(brand._id)}
-                  onChange={() => handleFilterChange("brands", brand._id)}
-                />
-                {brand.name}
-              </label>
-            ))}
-          </div>
-        )}
-      </div> */}
-
-      {/* Colors */}
-      <div className="mb-6">
-        <div
-          className="flex justify-between items-center cursor-pointer mb-2"
-          onClick={() => toggleAccordion("colors")}
-        >
-          <h3 className="text-lg font-semibold">Colors</h3>
-          <span>{accordionOpen.colors ? "−" : "+"}</span>
-        </div>
-        {accordionOpen.colors && (
-          <div className="flex flex-wrap gap-2">
-            {colors.map((color) => (
-              <button
-                key={color}
-                className={`w-8 h-8 rounded-full border-2 ${
-                  selectedFilters.colors.includes(color)
-                    ? "border-black"
-                    : "border-gray-200"
-                }`}
-                style={{ backgroundColor: color }}
-                onClick={() => handleFilterChange("colors", color)}
-                title={color}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Sizes */}
-      <div className="mb-6">
-        <div
-          className="flex justify-between items-center cursor-pointer mb-2"
-          onClick={() => toggleAccordion("sizes")}
-        >
-          <h3 className="text-lg font-semibold">Sizes</h3>
-          <span>{accordionOpen.sizes ? "−" : "+"}</span>
-        </div>
-        {accordionOpen.sizes && (
-          <div className="flex flex-wrap gap-2">
-            {sizes.map((size) => (
-              <button
-                key={size}
-                className={`px-3 py-1 border rounded ${
-                  selectedFilters.sizes.includes(size)
-                    ? "bg-black text-white"
-                    : "bg-white text-black"
-                }`}
-                onClick={() => handleFilterChange("sizes", size)}
-              >
-                {size}
-              </button>
             ))}
           </div>
         )}

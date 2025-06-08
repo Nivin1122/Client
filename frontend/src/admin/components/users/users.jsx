@@ -193,15 +193,6 @@ const Users = () => {
                   fontWeight: "bold",
                 }}
               >
-                Fullname
-              </TableCell>
-              <TableCell
-                sx={{
-                  backgroundColor: "#212121",
-                  color: "#FF9800",
-                  fontWeight: "bold",
-                }}
-              >
                 Username
               </TableCell>
               <TableCell
@@ -240,9 +231,6 @@ const Users = () => {
                 <TableRow key={user._id}>
                   <TableCell>
                     <Avatar src={user.image} alt={user.firstname} />
-                  </TableCell>
-                  <TableCell sx={{ color: "#ffffff" }}>
-                    {`${user.firstname} ${user.lastname}`}
                   </TableCell>
                   <TableCell sx={{ color: "#ffffff" }}>
                     {user.username}

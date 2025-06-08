@@ -29,20 +29,16 @@ const Products = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [hoveredProductId, setHoveredProductId] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState({});
-  const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.get("category") || null
-  );
-  const [selectedCategoryName, setSelectedCategoryName] = useState("");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [filters, setFilters] = useState({
-    categories: [],
-    brands: [],
-    colors: [],
-    sizes: [],
-    priceRange: { min: 0, max: 10000 },
-    sortBy: "newest",
-  });
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [filters, setFilters] = useState(() => ({
+    category: searchParams.get("category") || "",
+    minPrice: Number(searchParams.get("minPrice")) || 0,
+    maxPrice: Number(searchParams.get("maxPrice")) || 10000,
+    sortBy: searchParams.get("sortBy") || "newest"
+  }));
 
   const dispatch = useDispatch();
 
@@ -92,7 +88,7 @@ const Products = () => {
         fetchProducts(); // Fetch regular products when search is cleared
       }
     }, 500),
-    [filters, selectedCategory, currentPage]
+    [filters, currentPage]
   );
 
   // Handle search input change
@@ -127,14 +123,16 @@ const Products = () => {
     }
   };
 
-  // Handle category selection from Header component
-  const handleCategorySelect = (categoryId, name) => {
-    setSelectedCategory(categoryId);
-    setSelectedCategoryName(name);
-    setCurrentPage(1); // Reset to first page when category changes
-    setIsSearching(false);
-    setSearchQuery("");
-  };
+  // Handle filter updates from FilterSidebar
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters({
+      category: newFilters.categories?.[0] || "",
+      minPrice: newFilters.priceRange?.min || 0,
+      maxPrice: newFilters.priceRange?.max || 10000,
+      sortBy: newFilters.sortBy || "newest"
+    });
+    setCurrentPage(1); // Reset to first page when filters change
+  }, []);
 
   // Fetch products from API based on filters and page
   const fetchProducts = useCallback(async () => {
@@ -147,29 +145,16 @@ const Products = () => {
         limit: "8",
       });
 
-      // Add category filter
-      if (selectedCategory && selectedCategory !== "home") {
-        queryParams.append("category", selectedCategory);
+      // Add filters
+      if (filters.category) {
+        queryParams.append("category", filters.category);
       }
 
-      // Add other filters
-      if (filters.categories.length > 0) {
-        queryParams.append("categories", filters.categories.join(","));
+      if (filters.minPrice > 0 || filters.maxPrice < 10000) {
+        queryParams.append("minPrice", filters.minPrice.toString());
+        queryParams.append("maxPrice", filters.maxPrice.toString());
       }
 
-      if (filters.brands.length > 0) {
-        queryParams.append("brands", filters.brands.join(","));
-      }
-      if (filters.colors.length > 0) {
-        queryParams.append("colors", filters.colors.join(","));
-      }
-      if (filters.sizes.length > 0) {
-        queryParams.append("sizes", filters.sizes.join(","));
-      }
-      if (filters.priceRange.min > 0 || filters.priceRange.max < 10000) {
-        queryParams.append("minPrice", filters.priceRange.min.toString());
-        queryParams.append("maxPrice", filters.priceRange.max.toString());
-      }
       if (filters.sortBy) {
         queryParams.append("sortBy", filters.sortBy);
       }
@@ -198,7 +183,7 @@ const Products = () => {
       setError("Failed to load products. Please try again later.");
       setLoading(false);
     }
-  }, [currentPage, selectedCategory, filters]);
+  }, [currentPage, filters]);
 
   useEffect(() => {
     if (!isSearching) {
@@ -206,12 +191,16 @@ const Products = () => {
     }
   }, [fetchProducts, isSearching]);
 
-  // Update category from URL params when component mounts or URL changes
+  // Update filters from URL params when component mounts
   useEffect(() => {
-    const categoryFromUrl = searchParams.get("category");
-    if (categoryFromUrl) {
-      setSelectedCategory(categoryFromUrl);
-    }
+    const urlFilters = {
+      category: searchParams.get("category") || "",
+      minPrice: Number(searchParams.get("minPrice")) || 0,
+      maxPrice: Number(searchParams.get("maxPrice")) || 10000,
+      sortBy: searchParams.get("sortBy") || "newest"
+    };
+    setFilters(urlFilters);
+
   }, [searchParams]);
 
   const handleApplyFilters = useCallback((newFilters) => {
@@ -219,6 +208,7 @@ const Products = () => {
     setCurrentPage(1); // Reset to first page when filters change
     setIsSearching(false);
     setSearchQuery("");
+    setShowMobileFilters(false); // Close mobile filters after applying
   }, []);
 
   const handlePageChange = useCallback((page) => {
@@ -242,7 +232,6 @@ const Products = () => {
   }, []);
 
   // Get lowest price from all variants with sizes
-  // Updated getLowestPrice function
   const getLowestPrice = useMemo(
     () => (variants) => {
       if (!variants || variants.length === 0) {
@@ -301,7 +290,8 @@ const Products = () => {
           getSelectedVariant,
           getAvailableSizes,
         }) => (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
             {products.map((product) => {
               const currentVariant = getSelectedVariant(product);
               const priceInfo = getLowestPrice(product.variants);
@@ -497,110 +487,140 @@ const Products = () => {
 
   return (
     <>
-      <Header onCategorySelect={handleCategorySelect} />
-      <div className="flex container max-w-screen mx-auto px-4 pt-32 pb-8">
-        <FilterSidebar onApplyFilters={handleApplyFilters} />
-        <div className="flex-1 pl-6" ref={productGridRef}>
-          {/* Search Input at the top right */}
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">
-              {isSearching
-                ? `Search Results for "${searchQuery}"`
-                : `Category: ${selectedCategory}`
-                ? `Products ${
-                    selectedCategoryName.charAt(0).toUpperCase() +
-                    selectedCategoryName.slice(1)
-                  }`
-                : "All Products"}
-            </h2>
-
-            <div className="relative w-64">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Search products..."
-                className="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+      <Header />
+      <div className="container max-w-screen mx-auto px-4 pt-32 pb-8">
+        {/* Mobile filter button */}
+        <div className="lg:hidden mb-4">
+          <button
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                clipRule="evenodd"
               />
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 absolute left-3 top-2.5 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
+            </svg>
+            Filters
+          </button>
+        </div>
+
+        <div className="flex flex-col lg:flex-row">
+          {/* Filter Sidebar - shown on desktop, toggleable on mobile */}
+          <div
+            className={`lg:block ${
+              showMobileFilters ? "block" : "hidden"
+            } w-full lg:w-1/4 lg:pr-6 mb-6 lg:mb-0`}
+          >
+            <FilterSidebar onApplyFilters={handleApplyFilters} />
           </div>
 
-          {loading ? (
-            <div className="flex justify-center items-center min-h-[50vh]">
-              <div className="text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-                <p className="mt-2">Loading products...</p>
+          {/* Main content area */}
+          <div className="flex-1" ref={productGridRef}>
+            {/* Search Input at the top right */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+              <h2 className="text-2xl font-bold">
+                {isSearching
+                  ? `Search Results for "${searchQuery}"`
+                  : filters.category
+                  ? `Products: ${filters.category}`
+                  : "All Products"}
+              </h2>
+
+              <div className="relative w-full md:w-64">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  placeholder="Search products..."
+                  className="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 absolute left-3 top-2.5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
               </div>
             </div>
-          ) : error ? (
-            <div className="text-center py-16">
-              <p className="text-red-500">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-4 bg-black text-white px-4 py-2"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="text-center py-16">
-              <h2 className="text-xl font-medium">No products found</h2>
-              <p className="text-gray-600 mt-2">
-                {isSearching
-                  ? "Try different search terms."
-                  : selectedCategory
-                  ? "No products available in this category."
-                  : "No products available."}
-              </p>
-            </div>
-          ) : (
-            <>
-              <ProductGrid
-                products={products}
-                hoveredProductId={hoveredProductId}
-                selectedVariant={selectedVariant}
-                handleProductMouseEnter={handleProductMouseEnter}
-                handleProductMouseLeave={handleProductMouseLeave}
-                handleVariantChange={handleVariantChange}
-                getLowestPrice={getLowestPrice}
-                getSelectedVariant={getSelectedVariant}
-                getAvailableSizes={getAvailableSizes}
-              />
 
-              {/* Pagination - only show if not searching */}
-              {!isSearching && totalPages > 1 && (
-                <div className="flex justify-center space-x-2 mt-8">
-                  {Array.from({ length: totalPages }, (_, index) => (
-                    <button
-                      key={index + 1}
-                      onClick={() => handlePageChange(index + 1)}
-                      className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
-                        currentPage === index + 1
-                          ? "bg-black text-white"
-                          : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                      }`}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
+            {loading ? (
+              <div className="flex justify-center items-center min-h-[50vh]">
+                <div className="text-center">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                  <p className="mt-2">Loading products...</p>
                 </div>
-              )}
-            </>
-          )}
+              </div>
+            ) : error ? (
+              <div className="text-center py-16">
+                <p className="text-red-500">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-4 bg-black text-white px-4 py-2"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-16">
+                <h2 className="text-xl font-medium">No products found</h2>
+                <p className="text-gray-600 mt-2">
+                  {isSearching
+                    ? "Try different search terms."
+                    : filters.category
+                    ? "No products available in this category."
+                    : "No products available."}
+                </p>
+              </div>
+            ) : (
+              <>
+                <ProductGrid
+                  products={products}
+                  hoveredProductId={hoveredProductId}
+                  selectedVariant={selectedVariant}
+                  handleProductMouseEnter={handleProductMouseEnter}
+                  handleProductMouseLeave={handleProductMouseLeave}
+                  handleVariantChange={handleVariantChange}
+                  getLowestPrice={getLowestPrice}
+                  getSelectedVariant={getSelectedVariant}
+                  getAvailableSizes={getAvailableSizes}
+                />
+
+                {/* Pagination - only show if not searching */}
+                {!isSearching && totalPages > 1 && (
+                  <div className="flex justify-center space-x-2 mt-8">
+                    {Array.from({ length: totalPages }, (_, index) => (
+                      <button
+                        key={index + 1}
+                        onClick={() => handlePageChange(index + 1)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
+                          currentPage === index + 1
+                            ? "bg-black text-white"
+                            : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
       <Footer />

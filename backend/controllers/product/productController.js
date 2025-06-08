@@ -12,31 +12,47 @@ const getAllProducts = asyncHandler(async (req, res) => {
       page = 1,
       limit = 12,
       search = "",
-      colors = [],
-      sizes = [],
-      categories = [],
+      colors = "",
+      sizes = "",
+      categories = "",
       minPrice = 0,
       maxPrice = 10000,
       sortBy = 'newest'
     } = req.query;
+    
     const skip = (page - 1) * limit;
 
-    // Build aggregation pipeline for efficient filtering
+    // Build the base match query
+    let matchQuery = {
+      isDeleted: false,
+    };
+
+    // Add search filter
+    if (search && search.trim()) {
+      matchQuery.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { material: { $regex: search, $options: "i" } },
+        { pattern: { $regex: search, $options: "i" } },
+        { gender: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    // Add category filter from URL params or categories filter
+    if (req.query.category && mongoose.Types.ObjectId.isValid(req.query.category)) {
+      matchQuery.category = new mongoose.Types.ObjectId(req.query.category);
+    } else if (categories && categories.length > 0) {
+      const categoryIds = categories.split(',')
+        .map(id => mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null)
+        .filter(id => id !== null);
+      if (categoryIds.length > 0) {
+        matchQuery.category = { $in: categoryIds };
+      }
+    }
+
+    // Build aggregation pipeline
     const pipeline = [
-      // Match initial criteria
-      {
-        $match: {
-          isDeleted: false,
-          ...(search && { name: { $regex: search, $options: "i" } }),
-          ...(req.query.category && {
-            category: mongoose.Types.ObjectId.isValid(req.query.category) 
-              ? new mongoose.Types.ObjectId(req.query.category)
-              : null
-          }),
-          // ...(brands.length > 0 && { brand: { $in: brands.split(',').map(id => mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null).filter(id => id !== null) } })
-        }
-      },
-      // Lookup and unwind variants
+      { $match: matchQuery },
       {
         $lookup: {
           from: "variants",
@@ -45,72 +61,210 @@ const getAllProducts = asyncHandler(async (req, res) => {
           as: "variants"
         }
       },
-      { $unwind: "$variants" },
-      // Apply color filter if needed
-      ...(colors.length > 0 ? [{
-        $match: {
-          "variants.color": { $in: colors.split(',') }
-        }
-      }] : []),
-      // Lookup and unwind sizes
       {
         $lookup: {
-          from: "sizevariants",
-          localField: "variants.sizes",
+          from: "categories",
+          localField: "category",
           foreignField: "_id",
-          as: "variants.sizes"
+          as: "category"
         }
       },
-      { $unwind: "$variants.sizes" },
-      // Apply size and price filters
+      { $unwind: "$category" },
       {
+        $addFields: {
+          variants: {
+            $map: {
+              input: "$variants",
+              as: "variant",
+              in: {
+                $mergeObjects: [
+                  "$$variant",
+                  {
+                    sizesPopulated: {
+                      $map: {
+                        input: "$$variant.sizes",
+                        as: "sizeId",
+                        in: {
+                          $arrayElemAt: [
+                            {
+                              $filter: {
+                                input: { $literal: [] }, // Will be populated in next stage
+                                cond: { $eq: ["$$this._id", "$$sizeId"] }
+                              }
+                            },
+                            0
+                          ]
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    ];
+
+    // Add lookup for size variants
+    pipeline.push({
+      $lookup: {
+        from: "sizevariants",
+        let: { variantSizes: "$variants.sizes" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $in: ["$_id", { $reduce: {
+                  input: "$$variantSizes",
+                  initialValue: [],
+                  in: { $concatArrays: ["$$value", "$$this"] }
+                }}]
+              }
+            }
+          }
+        ],
+        as: "allSizes"
+      }
+    });
+
+    // Reconstruct variants with populated sizes
+    pipeline.push({
+      $addFields: {
+        variants: {
+          $map: {
+            input: "$variants",
+            as: "variant",
+            in: {
+              $mergeObjects: [
+                "$$variant",
+                {
+                  sizes: {
+                    $map: {
+                      input: "$$variant.sizes",
+                      as: "sizeId",
+                      in: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$allSizes",
+                              cond: { $eq: ["$$this._id", "$$sizeId"] }
+                            }
+                          },
+                          0
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    });
+
+    // Apply color filter if specified
+    if (colors && colors.length > 0) {
+      const colorArray = colors.split(',').map(c => c.trim());
+      pipeline.push({
         $match: {
-          ...(sizes.length > 0 && { "variants.sizes.size": { $in: sizes.split(',') } }),
-          "variants.sizes.price": { $gte: Number(minPrice), $lte: Number(maxPrice) }
+          "variants.color": { $in: colorArray }
         }
-      },
-      // Group back to product level
-// Group back to product level
-{
-  $group: {
-    _id: "$_id",
-    name: { $first: "$name" },
-    description: { $first: "$description" },
-    category: { $first: "$category" },
-    variants: { $push: "$variants" },
-    createdAt: { $first: "$createdAt" }
-  }
-} // <-- THIS NEEDS TO BE FOLLOWED BY:
-]; // <-- ADD THIS LINE TO CLOSE THE ARRAY
+      });
+    }
 
-// Add sorting to pipeline
-const sortStage = {
-  $sort: sortBy === 'price_low_high' 
-    ? { 'variants.sizes.price': 1 }
-    : sortBy === 'price_high_low'
-      ? { 'variants.sizes.price': -1 }
-      : { createdAt: -1 }
-};
-
-    pipeline.push(sortStage);
-
-    // Add lookups for brand and category
-    pipeline.push(
-      
-      {
-        $lookup: {
-          from: 'categories',
-          localField: 'category',
-          foreignField: '_id',
-          as: 'category'
+    // Apply size filter if specified
+    if (sizes && sizes.length > 0) {
+      const sizeArray = sizes.split(',').map(s => s.trim());
+      pipeline.push({
+        $match: {
+          "variants.sizes.size": { $in: sizeArray }
         }
-      },
-      { $unwind: '$category' }
-    );
+      });
+    }
 
-    // Get total count before pagination
+    // Apply price filter
+    const minPriceNum = Number(minPrice);
+    const maxPriceNum = Number(maxPrice);
+    if (minPriceNum > 0 || maxPriceNum < 10000) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { "variants.price": { $gte: minPriceNum, $lte: maxPriceNum } },
+            { "variants.discountPrice": { $gte: minPriceNum, $lte: maxPriceNum } }
+          ]
+        }
+      });
+    }
+
+    // Add sorting
+    let sortStage = {};
+    switch (sortBy) {
+      case 'price_low_high':
+        sortStage = { 
+          $addFields: {
+            minPrice: {
+              $min: {
+                $map: {
+                  input: "$variants",
+                  as: "variant",
+                  in: {
+                    $cond: {
+                      if: { $gt: ["$$variant.discountPrice", 0] },
+                      then: "$$variant.discountPrice",
+                      else: "$$variant.price"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        };
+        pipeline.push(sortStage);
+        pipeline.push({ $sort: { minPrice: 1 } });
+        break;
+      case 'price_high_low':
+        sortStage = { 
+          $addFields: {
+            maxPrice: {
+              $max: {
+                $map: {
+                  input: "$variants",
+                  as: "variant",
+                  in: {
+                    $cond: {
+                      if: { $gt: ["$$variant.discountPrice", 0] },
+                      then: "$$variant.discountPrice",
+                      else: "$$variant.price"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        };
+        pipeline.push(sortStage);
+        pipeline.push({ $sort: { maxPrice: -1 } });
+        break;
+      default:
+        pipeline.push({ $sort: { createdAt: -1 } });
+    }
+
+    // Remove the allSizes field as it's no longer needed
+    pipeline.push({
+      $project: {
+        allSizes: 0,
+        minPrice: 0,
+        maxPrice: 0
+      }
+    });
+
+    // Get total count
     const countPipeline = [...pipeline];
-    const [{ count: totalProducts } = { count: 0 }] = await Product.aggregate([...countPipeline, { $count: 'count' }]);
+    countPipeline.push({ $count: "total" });
+    const countResult = await Product.aggregate(countPipeline);
+    const totalProducts = countResult.length > 0 ? countResult[0].total : 0;
 
     // Add pagination
     pipeline.push(
@@ -118,12 +272,11 @@ const sortStage = {
       { $limit: parseInt(limit) }
     );
 
-    // Execute pipeline
+    // Execute the pipeline
     const products = await Product.aggregate(pipeline);
 
-    // Process products to include availability and reviews
+    // Process products to include reviews and ratings
     const productsWithStatusAndReviews = await Promise.all(products.map(async (product) => {
-      // Get variant-specific reviews and ratings
       if (product.variants && product.variants.length > 0) {
         product.variants = await Promise.all(product.variants.map(async (variant) => {
           const variantReviews = await Review.find({ variant: variant._id });
@@ -151,6 +304,7 @@ const sortStage = {
       totalPages: Math.ceil(totalProducts / limit),
       currentPage: parseInt(page)
     });
+
   } catch (error) {
     console.error("Error in getAllProducts:", error);
     res.status(500).json({
@@ -159,7 +313,6 @@ const sortStage = {
     });
   }
 });
-
 const getProductDetail = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;

@@ -733,7 +733,7 @@ const Orders = () => {
                               {item.size})
                             </TableCell>
                             <TableCell>{item.quantity}</TableCell>
-                            <TableCell>₹{item.price}</TableCell>
+                            <TableCell>₹{order.totalAmount}</TableCell>
                             <TableCell>{item.status || "Pending"}</TableCell>
 
                             <TableCell>

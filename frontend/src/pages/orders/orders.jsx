@@ -218,15 +218,23 @@ const Orders = () => {
                           Cancel Item
                         </button>
                       )}
-                      {item.status === "Delivered" && !item.returnRequested && (
-                        <button
-                          onClick={() =>
-                            openReturnModal(order.orderId, item.itemId)
-                          }
-                          className="text-blue-600 text-sm hover:text-blue-800"
-                        >
-                          Return Item
-                        </button>
+                      {item.status === "Delivered" && (
+                        <>
+                          {!item.returnRequested ? (
+                            <button
+                              onClick={() =>
+                                openReturnModal(order.orderId, item.itemId)
+                              }
+                              className="text-blue-600 text-sm hover:text-blue-800"
+                            >
+                              Return Item
+                            </button>
+                          ) : (
+                            <span className="text-sm text-gray-500">
+                              Return Requested
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

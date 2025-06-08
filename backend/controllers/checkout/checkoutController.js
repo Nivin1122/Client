@@ -58,14 +58,22 @@ const createCheckout = asyncHandler(async (req, res) => {
       !paymentStatus ||
       !finalTotal
     ) {
-      return res.status(400).json({ message: "All required fields must be provided" });
+      return res
+        .status(400)
+        .json({ message: "All required fields must be provided" });
     }
 
     let items = [];
 
     if (directPurchase) {
-      if (!quickBuyItems || !Array.isArray(quickBuyItems) || quickBuyItems.length === 0) {
-        return res.status(400).json({ message: "Items are required for direct purchase" });
+      if (
+        !quickBuyItems ||
+        !Array.isArray(quickBuyItems) ||
+        quickBuyItems.length === 0
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Items are required for direct purchase" });
       }
 
       for (const item of quickBuyItems) {
@@ -205,7 +213,6 @@ const createCheckout = asyncHandler(async (req, res) => {
       message: "Order placed successfully",
       order: completedOrder,
     });
-
   } catch (error) {
     console.error("Checkout Error:", error);
     await session.abortTransaction();
@@ -218,7 +225,6 @@ const createCheckout = asyncHandler(async (req, res) => {
     session.endSession();
   }
 });
-
 
 const returnProduct = asyncHandler(async (req, res) => {
   try {
@@ -345,6 +351,7 @@ const getOrders = asyncHandler(async (req, res) => {
         sizeVariantId: item.sizeVariant?._id, // Add sizeVariantId
         size: item.sizeVariant?.size || "N/A",
         image: item.variant?.mainImage || "N/A",
+        returnRequested: item.returnRequested || false,
       })),
       totalAmount: order.totalAmount,
       deliveryCharge: order.shipping.deliveryCharge,
