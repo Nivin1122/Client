@@ -2,6 +2,7 @@ const Checkout = require("../../models/checkout/checkoutModal");
 const Cart = require("../../models/cart/cartModal");
 const Address = require("../../models/address/addressModal");
 const Size = require("../../models/product/sizesVariantModel");
+const SizeVariant = require("../../models/product/sizesVariantModel");
 const asyncHandler = require("express-async-handler");
 const { mongoose } = require("mongoose");
 const Coupon = require("../../models/coupon/couponModal");
@@ -36,6 +37,7 @@ const createCheckout = asyncHandler(async (req, res) => {
   try {
     const {
       cartId,
+      items: quickBuyItems,
       addressId,
       shippingMethod,
       paymentMethod,
@@ -44,48 +46,109 @@ const createCheckout = asyncHandler(async (req, res) => {
       finalTotal,
       couponCode,
       discountAmount,
+      directPurchase,
     } = req.body;
 
-    if (!cartId || !addressId || !shippingMethod || !paymentMethod || !transactionId || !paymentStatus || !finalTotal) {
-      return res.status(400).json({ message: "All fields are required" });
+    if (
+      (!cartId && !directPurchase) ||
+      !addressId ||
+      !shippingMethod ||
+      !paymentMethod ||
+      !transactionId ||
+      !paymentStatus ||
+      !finalTotal
+    ) {
+      return res.status(400).json({ message: "All required fields must be provided" });
     }
 
-    // Fetch cart with populated fields
-    const cart = await Cart.findById(cartId)
-      .populate('items.product')
-      .populate('items.variant')
-      .populate('items.sizeVariant');
+    let items = [];
 
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
-    }
+    if (directPurchase) {
+      if (!quickBuyItems || !Array.isArray(quickBuyItems) || quickBuyItems.length === 0) {
+        return res.status(400).json({ message: "Items are required for direct purchase" });
+      }
 
-    // Check stock availability and update stock counts
-    for (const item of cart.items) {
-      const sizeVariant = await Size.findById(item.sizeVariant._id);
-      
-      if (!sizeVariant) {
+      for (const item of quickBuyItems) {
+        const sizeVariant = await SizeVariant.findById(item.sizeVariantId);
+        if (!sizeVariant) {
+          await session.abortTransaction();
+          return res.status(404).json({
+            success: false,
+            message: `Size variant not found for item`,
+          });
+        }
+
+        if (sizeVariant.stockCount < item.quantity) {
+          await session.abortTransaction();
+          return res.status(400).json({
+            success: false,
+            message: `Insufficient stock. Available: ${sizeVariant.stockCount}`,
+          });
+        }
+
+        // Deduct stock
+        sizeVariant.stockCount -= item.quantity;
+        sizeVariant.inStock = sizeVariant.stockCount > 0;
+        await sizeVariant.save({ session });
+
+        items.push({
+          product: item.productId,
+          variant: item.variantId,
+          sizeVariant: item.sizeVariantId,
+          quantity: item.quantity,
+          price: item.price,
+          finalPrice: item.price, // Adjust if using discounts
+          status: "pending",
+        });
+      }
+    } else {
+      // Handle normal cart-based checkout
+      const cart = await Cart.findById(cartId)
+        .populate("items.product")
+        .populate("items.variant")
+        .populate("items.sizeVariant");
+
+      if (!cart) {
         await session.abortTransaction();
-        return res.status(404).json({
-          success: false,
-          message: `Size variant not found for product ${item.product.name}`
+        return res.status(404).json({ message: "Cart not found" });
+      }
+
+      for (const item of cart.items) {
+        const sizeVariant = await SizeVariant.findById(item.sizeVariant._id);
+        if (!sizeVariant) {
+          await session.abortTransaction();
+          return res.status(404).json({
+            success: false,
+            message: `Size variant not found for ${item.product.name}`,
+          });
+        }
+
+        if (sizeVariant.stockCount < item.quantity) {
+          await session.abortTransaction();
+          return res.status(400).json({
+            success: false,
+            message: `Not enough stock for ${item.product.name}`,
+          });
+        }
+
+        sizeVariant.stockCount -= item.quantity;
+        sizeVariant.inStock = sizeVariant.stockCount > 0;
+        await sizeVariant.save({ session });
+
+        items.push({
+          product: item.product._id,
+          variant: item.variant._id,
+          sizeVariant: item.sizeVariant._id,
+          quantity: item.quantity,
+          price: item.sizeVariant.price,
+          finalPrice: item.sizeVariant.discountPrice || item.sizeVariant.price,
+          status: "pending",
         });
       }
 
-      if (sizeVariant.stockCount < item.quantity) {
-        await session.abortTransaction();
-        return res.status(400).json({
-          success: false,
-          message: `Not enough stock for ${item.product.name}. Available: ${sizeVariant.stockCount}, Requested: ${item.quantity}`
-        });
-      }
-
-      // Decrease stock count
-      sizeVariant.stockCount -= item.quantity;
-      sizeVariant.inStock = sizeVariant.stockCount > 0;
-      await sizeVariant.save({ session });
-
-      console.log(`Updated stock count for size variant ${sizeVariant._id}: ${sizeVariant.stockCount}`);
+      // Clear cart
+      cart.items = [];
+      await cart.save({ session });
     }
 
     const address = await Address.findById(addressId);
@@ -96,62 +159,51 @@ const createCheckout = asyncHandler(async (req, res) => {
 
     const deliveryCharge = finalTotal < 1000 ? 40 : 0;
 
-    // Create checkout document
     const newCheckout = new Checkout({
       user: req.user.id,
-      cart: cartId,
-      items: cart.items.map(item => ({
-        product: item.product._id,
-        variant: item.variant._id,
-        sizeVariant: item.sizeVariant._id,
-        quantity: item.quantity,
-        price: item.sizeVariant.price,
-        finalPrice: item.sizeVariant.discountPrice || item.sizeVariant.price,
-        status: "pending"
-      })),
+      cart: cartId || null,
+      items,
       shipping: {
         address: addressId,
         shippingMethod,
-        deliveryCharge
+        deliveryCharge,
       },
       payment: {
         method: paymentMethod,
         status: paymentStatus,
         transactionId,
         amount: finalTotal,
-        paymentDate: new Date()
+        paymentDate: new Date(),
       },
       orderStatus: "pending",
       totalAmount: finalTotal,
       couponCode,
-      discountAmount
+      discountAmount,
     });
 
     await newCheckout.save({ session });
 
-    // Handle coupon if used
     if (couponCode) {
       const coupon = await Coupon.findOne({ couponCode });
-      if (coupon) {
+      if (coupon && !coupon.usedBy.includes(req.user.id)) {
         coupon.usedBy.push(req.user.id);
         await coupon.save({ session });
       }
     }
 
-    // Clear the cart
-    cart.items = [];
-    await cart.save({ session });
-
     await session.commitTransaction();
 
-    // Fetch the complete order details
     const completedOrder = await Checkout.findById(newCheckout._id)
-      .populate(orderPopulateConfig);
+      .populate("items.product")
+      .populate("items.variant")
+      .populate("items.sizeVariant")
+      .populate("shipping.address")
+      .populate("user", "name email");
 
     res.status(201).json({
       success: true,
       message: "Order placed successfully",
-      order: completedOrder
+      order: completedOrder,
     });
 
   } catch (error) {
@@ -160,12 +212,13 @@ const createCheckout = asyncHandler(async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error creating checkout",
-      error: error.message
+      error: error.message,
     });
   } finally {
     session.endSession();
   }
 });
+
 
 const returnProduct = asyncHandler(async (req, res) => {
   try {

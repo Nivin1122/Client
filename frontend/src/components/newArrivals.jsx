@@ -1,7 +1,11 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
 import exclusive from "../assets/bestseller.png";
+
+import { useDispatch } from "react-redux";
+import { addToCart } from "../redux/slices/cartSlice";
+import { toast } from "react-toastify";
 
 const NewArrivals = () => {
   const scrollRef = useRef(null);
@@ -10,6 +14,53 @@ const NewArrivals = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [selectedVariant, setSelectedVariant] = useState({});
+
+   const handleAddToCart = (product) => {
+      try {
+        const currentVariant = getSelectedVariant(product);
+  
+        // Get available sizes (handling both array and single object cases)
+        const availableSizes = currentVariant?.sizes
+          ? Array.isArray(currentVariant.sizes)
+            ? currentVariant.sizes
+            : [currentVariant.sizes]
+          : [];
+  
+        // Find the first available size with stock
+        const availableSize = availableSizes.find((size) => size.stockCount > 0);
+  
+        if (!availableSize) {
+          toast.error("This product is currently out of stock");
+          return;
+        }
+  
+        dispatch(
+          addToCart({
+            productId: product._id,
+            variantId: currentVariant._id,
+            sizeVariantId: availableSize._id,
+            quantity: 1,
+          })
+        );
+  
+        toast.success("Product added to cart!");
+      } catch (error) {
+        toast.error("Failed to add product to cart");
+        console.error("Add to cart error:", error);
+      }
+    };
+
+    const getSelectedVariant = useMemo(
+        () => (product) => {
+          const variantId = selectedVariant[product._id];
+          return (
+            product.variants.find((v) => v._id === variantId) || product.variants[0]
+          );
+        },
+        [selectedVariant]
+      );
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -226,10 +277,14 @@ const NewArrivals = () => {
                     }`}
                   >
                     <button
-                      className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase"
-                      onClick={() => handleProductClick(product._id)}
+                      className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase hover:bg-gray-50"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAddToCart(product);
+                      }}
                     >
-                      QUICK BUY
+                      Add To Cart
                     </button>
                   </div>
                 </div>

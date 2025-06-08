@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
@@ -8,12 +8,29 @@ import { clearCart } from "../../redux/slices/cartSlice";
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
+  
+  // Check if this is a direct purchase
+  const isDirectPurchase = location.state?.directPurchase || false;
+  const directPurchaseItem = location.state?.checkoutItem || null;
+  
   const {
     items: cartItems,
-    totalPrice,
+    totalPrice: cartTotalPrice,
     cartId,
   } = useSelector((state) => state.cart);
+
+  // Use direct purchase item or cart items
+  const checkoutItems = isDirectPurchase ? [directPurchaseItem] : cartItems;
+  
+  // Calculate total price for direct purchase
+  const directTotalPrice = isDirectPurchase && directPurchaseItem 
+    ? directPurchaseItem.sizeVariant.discountPrice * directPurchaseItem.quantity
+    : 0;
+  
+  const totalPrice = isDirectPurchase ? directTotalPrice : cartTotalPrice;
+
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("cod");
@@ -33,38 +50,14 @@ const Checkout = () => {
 
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const indianStates = [
-    "Andhra Pradesh",
-    "Arunachal Pradesh",
-    "Assam",
-    "Bihar",
-    "Chhattisgarh",
-    "Goa",
-    "Gujarat",
-    "Haryana",
-    "Himachal Pradesh",
-    "Jharkhand",
-    "Karnataka",
-    "Kerala",
-    "Madhya Pradesh",
-    "Maharashtra",
-    "Manipur",
-    "Meghalaya",
-    "Mizoram",
-    "Nagaland",
-    "Odisha",
-    "Punjab",
-    "Rajasthan",
-    "Sikkim",
-    "Tamil Nadu",
-    "Telangana",
-    "Tripura",
-    "Uttar Pradesh",
-    "Uttarakhand",
-    "West Bengal",
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya",
+    "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim",
+    "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
   ];
 
   // Load Razorpay script
@@ -114,12 +107,20 @@ const Checkout = () => {
   };
 
   useEffect(() => {
-    if (!cartItems.length) {
+    // For direct purchase, don't check cart items
+    if (!isDirectPurchase && !cartItems.length) {
       navigate("/cart");
       return;
     }
+    
+    // For direct purchase, check if we have the item
+    if (isDirectPurchase && !directPurchaseItem) {
+      navigate("/");
+      return;
+    }
+    
     fetchAddresses();
-  }, [cartItems, navigate]);
+  }, [cartItems, navigate, isDirectPurchase, directPurchaseItem]);
 
   const fetchAddresses = async () => {
     try {
@@ -180,9 +181,8 @@ const Checkout = () => {
         );
       }
 
-      // Create payment order with checkoutId
       const response = await axiosInstance.post("/payment/create-order", {
-        amount: Math.round(totalPrice * 100), // Convert to paise
+        amount: Math.round(totalPrice * 100),
         currency: "INR",
         checkoutId: checkoutId,
       });
@@ -193,7 +193,7 @@ const Checkout = () => {
       );
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Use environment variable
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: orderData.currency,
         name: "TrendRove",
@@ -210,9 +210,11 @@ const Checkout = () => {
             });
 
             if (verifyResponse.data.status === "success") {
-              dispatch(clearCart());
+              if (!isDirectPurchase) {
+                dispatch(clearCart());
+              }
               setError("");
-              setShowSuccessModal(true); // ✅ Show modal instead of immediate navigation
+              setShowSuccessModal(true);
             } else {
               throw new Error("Payment verification failed");
             }
@@ -237,7 +239,7 @@ const Checkout = () => {
         prefill: {
           name: selectedAddr?.fullName || "",
           contact: selectedAddr?.mobileNumber || "",
-          email: "", // Add email if available
+          email: "",
         },
         theme: {
           color: "#000000",
@@ -246,7 +248,6 @@ const Checkout = () => {
           ondismiss: async function () {
             try {
               setLoading(true);
-              // Mark order as retry_pending when modal is dismissed
               await axiosInstance.post("/payment/cancel", {
                 orderId: orderData.id,
                 checkoutId: checkoutId,
@@ -257,8 +258,9 @@ const Checkout = () => {
                 "Payment cancelled. Your order has been saved and you can retry payment from the orders page."
               );
 
-              // Clear cart and redirect to orders
-              dispatch(clearCart());
+              if (!isDirectPurchase) {
+                dispatch(clearCart());
+              }
               setTimeout(() => {
                 navigate("/orders");
               }, 2000);
@@ -279,7 +281,6 @@ const Checkout = () => {
           setLoading(true);
           console.error("Payment failed:", response.error);
 
-          // Cancel the payment on backend
           await axiosInstance.post("/payment/cancel", {
             orderId: orderData.id,
             checkoutId: checkoutId,
@@ -291,8 +292,9 @@ const Checkout = () => {
             "Payment failed. Your order has been saved and you can retry payment from the orders page."
           );
 
-          // Clear cart and redirect to orders
-          dispatch(clearCart());
+          if (!isDirectPurchase) {
+            dispatch(clearCart());
+          }
           setTimeout(() => {
             navigate("/orders");
           }, 2000);
@@ -320,8 +322,8 @@ const Checkout = () => {
       return;
     }
 
-    if (!cartItems.length) {
-      setError("Your cart is empty");
+    if (!checkoutItems.length) {
+      setError("No items to checkout");
       return;
     }
 
@@ -329,18 +331,44 @@ const Checkout = () => {
     setError("");
 
     try {
-      const checkoutData = {
-        cartId,
-        addressId: selectedAddress,
-        shippingMethod: "Standard",
-        paymentMethod,
-        transactionId:
-          paymentMethod === "cod"
-            ? `COD_${Date.now()}`
-            : `ONLINE_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-        paymentStatus: paymentMethod === "cod" ? "pending" : "retry_pending",
-        finalTotal: totalPrice,
-      };
+      let checkoutData;
+      
+      if (isDirectPurchase) {
+        // For direct purchase, create checkout data differently
+        checkoutData = {
+          directPurchase: true,
+          items: [{
+            productId: directPurchaseItem.product._id,
+            variantId: directPurchaseItem.variant._id,
+            sizeVariantId: directPurchaseItem.sizeVariant._id,
+            quantity: directPurchaseItem.quantity,
+            price: directPurchaseItem.sizeVariant.discountPrice,
+          }],
+          addressId: selectedAddress,
+          shippingMethod: "Standard",
+          paymentMethod,
+          transactionId:
+            paymentMethod === "cod"
+              ? `COD_${Date.now()}`
+              : `ONLINE_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+          paymentStatus: paymentMethod === "cod" ? "pending" : "retry_pending",
+          finalTotal: totalPrice,
+        };
+      } else {
+        // Original cart-based checkout
+        checkoutData = {
+          cartId,
+          addressId: selectedAddress,
+          shippingMethod: "Standard",
+          paymentMethod,
+          transactionId:
+            paymentMethod === "cod"
+              ? `COD_${Date.now()}`
+              : `ONLINE_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+          paymentStatus: paymentMethod === "cod" ? "pending" : "retry_pending",
+          finalTotal: totalPrice,
+        };
+      }
 
       const response = await axiosInstance.post(
         "/checkout/create-checkout",
@@ -351,11 +379,12 @@ const Checkout = () => {
         const checkoutId = response.data.order._id;
 
         if (paymentMethod === "cod") {
-          dispatch(clearCart());
+          if (!isDirectPurchase) {
+            dispatch(clearCart());
+          }
           navigate("/orders");
         } else if (paymentMethod === "online") {
           await handleOnlinePayment(checkoutId);
-          navigate("/orders");
         }
       } else {
         throw new Error(response.data.message || "Failed to create order");
@@ -371,17 +400,29 @@ const Checkout = () => {
       if (paymentMethod === "cod") {
         setLoading(false);
       }
-      // For online payments, loading is handled in payment handlers
     }
   };
 
-  const calculateSubtotal = () =>
-    cartItems.reduce(
+  const calculateSubtotal = () => {
+    if (isDirectPurchase && directPurchaseItem) {
+      return directPurchaseItem.sizeVariant.discountPrice * directPurchaseItem.quantity;
+    }
+    return cartItems.reduce(
       (total, item) => total + item.sizeVariant.discountPrice * item.quantity,
       0
     );
+  };
 
   const deliveryCharge = totalPrice < 1000 ? 40 : 0;
+
+  // Modal Component
+  const Modal = ({ children, onClose }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+        {children}
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -412,7 +453,9 @@ const Checkout = () => {
       )}
 
       <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl mt-10">
-        <h1 className="text-3xl font-serif text-center mb-10">Checkout</h1>
+        <h1 className="text-3xl font-serif text-center mb-10">
+          {isDirectPurchase ? "Quick Checkout" : "Checkout"}
+        </h1>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -427,7 +470,7 @@ const Checkout = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Address Section */}
+          {/* Address Section - Same as before */}
           <div className="lg:col-span-1">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex justify-between items-center mb-4">
@@ -668,12 +711,12 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* Order Items Section */}
+          {/* Order Items Section - Updated for direct purchase */}
           <div className="lg:col-span-1">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-medium mb-4">Order Items</h2>
               <div className="space-y-4">
-                {cartItems.map((item) => (
+                {checkoutItems.map((item) => (
                   <div key={item._id} className="flex gap-4 border-b pb-4">
                     <img
                       src={item.variant?.mainImage}
@@ -701,7 +744,7 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* Payment Section */}
+          {/* Payment Section - Same logic */}
           <div className="lg:col-span-1">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-medium mb-4">Payment Summary</h2>

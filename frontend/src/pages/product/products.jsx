@@ -6,6 +6,10 @@ import Footer from "../../components/footer";
 import FilterSidebar from "../../components/FilterSidebar";
 import React from "react";
 
+import { useDispatch } from "react-redux";
+import { addToCart } from "../../redux/slices/cartSlice";
+import { toast } from "react-toastify";
+
 // Debounce function for search
 const debounce = (func, delay) => {
   let timer;
@@ -39,6 +43,43 @@ const Products = () => {
     priceRange: { min: 0, max: 10000 },
     sortBy: "newest",
   });
+
+  const dispatch = useDispatch();
+
+  const handleAddToCart = (product) => {
+    try {
+      const currentVariant = getSelectedVariant(product);
+
+      // Get available sizes (handling both array and single object cases)
+      const availableSizes = currentVariant?.sizes
+        ? Array.isArray(currentVariant.sizes)
+          ? currentVariant.sizes
+          : [currentVariant.sizes]
+        : [];
+
+      // Find the first available size with stock
+      const availableSize = availableSizes.find((size) => size.stockCount > 0);
+
+      if (!availableSize) {
+        toast.error("This product is currently out of stock");
+        return;
+      }
+
+      dispatch(
+        addToCart({
+          productId: product._id,
+          variantId: currentVariant._id,
+          sizeVariantId: availableSize._id,
+          quantity: 1,
+        })
+      );
+
+      toast.success("Product added to cart!");
+    } catch (error) {
+      toast.error("Failed to add product to cart");
+      console.error("Add to cart error:", error);
+    }
+  };
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -264,7 +305,7 @@ const Products = () => {
             {products.map((product) => {
               const currentVariant = getSelectedVariant(product);
               const priceInfo = getLowestPrice(product.variants);
-  
+
               return (
                 <div
                   key={product._id}
@@ -278,7 +319,7 @@ const Products = () => {
                       New in
                     </span>
                   )}
-  
+
                   <div className="relative cursor-pointer group">
                     <a href={`/detail/${product._id}`}>
                       <img
@@ -290,7 +331,7 @@ const Products = () => {
                         className="w-full h-[350px] md:h-[400px] lg:h-[420px] object-cover"
                       />
                     </a>
-  
+
                     {hoveredProductId === product._id && (
                       <>
                         <button
@@ -356,7 +397,7 @@ const Products = () => {
                         </button>
                       </>
                     )}
-  
+
                     {hoveredProductId === product._id &&
                       product.variants.length > 1 && (
                         <div className="absolute bottom-16 left-0 right-0 bg-white p-2 transition-opacity duration-300 opacity-100">
@@ -384,7 +425,7 @@ const Products = () => {
                           </div>
                         </div>
                       )}
-  
+
                     <div
                       className={`absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
                         hoveredProductId === product._id
@@ -392,12 +433,19 @@ const Products = () => {
                           : "opacity-0"
                       }`}
                     >
-                      <button className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase">
-                        QUICK BUY
+                      <button
+                        className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase hover:bg-gray-50"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAddToCart(product);
+                        }}
+                      >
+                        Add To Cart
                       </button>
                     </div>
                   </div>
-  
+
                   <div className="mt-4 space-y-2">
                     <h3 className="text-sm font-medium line-clamp-2">
                       {product.name}
@@ -416,7 +464,7 @@ const Products = () => {
                         <p className="text-sm font-medium">{priceInfo.price}</p>
                       )}
                     </div>
-  
+
                     <p className="text-sm text-gray-500">
                       {currentVariant?.color || "Various colors"}
                       {getAvailableSizes(product).length > 0 &&

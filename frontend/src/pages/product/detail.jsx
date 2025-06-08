@@ -156,6 +156,31 @@ const ProductDetail = () => {
     fetchSizes();
   };
 
+  const handleBuyNow = () => {
+  if (!isAuthenticated) return navigate("/login");
+  if (!selectedSize || !selectedVariant) {
+    toast.error("Please select a size to continue");
+    return;
+  }
+
+  // Create checkout item data
+  const checkoutItem = {
+    product: product,
+    variant: selectedVariant,
+    sizeVariant: selectedSize,
+    quantity: quantity,
+    _id: `direct_${Date.now()}`, // Temporary ID for direct purchase
+  };
+
+  // Navigate to checkout with the product data
+  navigate("/checkout", { 
+    state: { 
+      directPurchase: true, 
+      checkoutItem: checkoutItem 
+    } 
+  });
+};
+
   // Handle mouse move for zoom effect
   const handleMouseMove = (e) => {
     const { left, top, width, height } =
@@ -562,10 +587,7 @@ const ProductDetail = () => {
                 <Button
                   className="flex-1 bg-black text-white py-6 text-lg hover:bg-black/90"
                   disabled={!selectedSize?.inStock || !isAuthenticated}
-                  onClick={() => {
-                    if (!isAuthenticated) return navigate("/login");
-                    alert("Proceeding to checkout");
-                  }}
+                  onClick={handleBuyNow} // Updated handler
                 >
                   BUY IT NOW
                 </Button>
