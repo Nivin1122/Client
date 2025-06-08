@@ -58,13 +58,13 @@ import CategoryManagement from "../components/category/category";
 import { useNavigate } from 'react-router-dom';
 import ProductManagement from "../components/products/products";
 import Orders from "../components/orders/orders";
+import autoTable from "jspdf-autotable";
 // import Cookie from "js-cookie";
 import Coupons from "../components/coupons/coupons";
 import Offers from "../components/offers/offfers";
 import axios from "axios";
 import axiosInstance from "../../utils/adminAxiosInstance";
-// import jsPDF from "jspdf";
-// import "jspdf-autotable";
+import jsPDF from "jspdf";
 import Banners from "../components/banners/banners";
 // import Cookies from "js-cookie";
 import UserManagement from "../components/users/users";
@@ -72,7 +72,7 @@ import OrderManagement from "../components/orders/orders";
 import CouponManagement from "../components/coupons/coupons";
 import OfferManagement from "../components/offers/offfers";
 import BannerManagement from "../components/banners/banners";
-// import * as XLSX from "xlsx";
+import * as XLSX from "xlsx";
 // import DisplayChat from "../components/chat/displayChat";
 
 const Dashboard = () => {
@@ -308,71 +308,70 @@ const Dashboard = () => {
   };
 
   const generatePDF = () => {
-    // const doc = new jsPDF();
+  const doc = new jsPDF();
 
-    doc.setFontSize(20);
-    doc.setTextColor(40, 40, 40);
-    doc.text("Order Summary Report", 14, 22);
+  doc.setFontSize(20);
+  doc.setTextColor(40, 40, 40);
+  doc.text("Order Summary Report", 14, 22);
 
-    doc.setFontSize(12);
-    doc.text(
-      `Period: ${filterType.replace(/([A-Z])/g, " $1").toLowerCase()}`,
-      14,
-      32
-    );
+  doc.setFontSize(12);
+  doc.text(
+    `Period: ${filterType.replace(/([A-Z])/g, " $1").toLowerCase()}`,
+    14,
+    32
+  );
 
-    doc.autoTable({
-      startY: 40,
-      head: [["Metric", "Value"]],
-      body: [
-        ["Total Revenue", `₹${stats.totalRevenue.toLocaleString("en-IN")}`],
-        ["Total Orders", stats.totalOrders],
-        ["Pending Orders", stats.pendingOrders],
-        ["Returned Orders", stats.returnedOrders],
-        ["Cancelled Orders", stats.cancelledOrders],
-        ["Total Discount", `₹${stats.totalDiscount.toLocaleString("en-IN")}`],
+  autoTable(doc, {
+    startY: 40,
+    head: [["Metric", "Value"]],
+    body: [
+      ["Total Revenue", `₹${stats.totalRevenue.toLocaleString("en-IN")}`],
+      ["Total Orders", stats.totalOrders],
+      ["Pending Orders", stats.pendingOrders],
+      ["Returned Orders", stats.returnedOrders],
+      ["Cancelled Orders", stats.cancelledOrders],
+      ["Total Discount", `₹${stats.totalDiscount.toLocaleString("en-IN")}`],
+    ],
+    theme: "grid",
+    headStyles: { fillColor: [255, 152, 0] },
+  });
+
+  autoTable(doc, {
+    startY: doc.lastAutoTable.finalY + 10,
+    head: [
+      [
+        "Order ID",
+        "Date",
+        "Customer",
+        "Items",
+        "Amount",
+        "Status",
+        "Payment",
       ],
-      theme: "grid",
-      headStyles: { fillColor: [255, 152, 0] },
-    });
+    ],
+    body: orders.map((order) => [
+      order.orderId,
+      new Date(order.createdAt).toLocaleDateString(),
+      order.customer.email,
+      order.items
+        .map((item) => `${item.productName} x ${item.quantity}`)
+        .join("\n"),
+      `₹${order.totalAmount}`,
+      order.orderStatus,
+      order.payment.method,
+    ]),
+    theme: "grid",
+    headStyles: { fillColor: [255, 152, 0] },
+    styles: { overflow: "linebreak" },
+    columnStyles: {
+      3: { cellWidth: 50 },
+    },
+  });
 
-    doc.autoTable({
-      startY: doc.lastAutoTable.finalY + 10,
-      head: [
-        [
-          "Order ID",
-          "Date",
-          "Customer",
-          "Items",
-          "Amount",
-          "Status",
-          "Payment",
-        ],
-      ],
-      body: orders.map((order) => [
-        order.orderId,
-        new Date(order.createdAt).toLocaleDateString(),
-        order.customer.email,
-        order.items
-          .map((item) => `${item.productName} x ${item.quantity}`)
-          .join("\n"),
-        `₹${order.totalAmount}`,
-        order.orderStatus,
-        order.payment.method,
-      ]),
-      theme: "grid",
-      headStyles: { fillColor: [255, 152, 0] },
-      styles: { overflow: "linebreak" },
-      columnStyles: {
-        3: { cellWidth: 50 },
-      },
-    });
+  const fileName = `order_summary_${new Date().toISOString().split("T")[0]}.pdf`;
+  doc.save(fileName);
+};
 
-    const fileName = `order_summary_${
-      new Date().toISOString().split("T")[0]
-    }.pdf`;
-    doc.save(fileName);
-  };
 
   useEffect(() => {
     const fetchData = async () => {
