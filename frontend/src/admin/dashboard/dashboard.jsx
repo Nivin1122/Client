@@ -491,12 +491,8 @@ const Dashboard = () => {
                 { text: "Products", icon: ShoppingBag },
                 { text: "Users", icon: Person },
                 { text: "Categories", icon: CategoryIcon },
-                // { text: "Brands", icon: LocalOffer },
                 { text: "Orders", icon: LocalShipping },
-                { text: "Coupons", icon: Discount },
-                { text: "Offers", icon: LocalOffer },
                 { text: "Banners", icon: Collections },
-                { text: "Chats", icon: Collections },
               ].map(({ text, icon: Icon }) => (
                 <ListItem
                   button
@@ -1319,12 +1315,8 @@ const Dashboard = () => {
           {selectedTopic === "Products" && <ProductManagement />}
           {selectedTopic === "Users" && <UserManagement />}
           {selectedTopic === "Categories" && <CategoryManagement />}
-          {/* {selectedTopic === "Brands" && <BrandManagement />} */}
           {selectedTopic === "Orders" && <OrderManagement />}
-          {selectedTopic === "Coupons" && <CouponManagement />}
-          {selectedTopic === "Offers" && <OfferManagement />}
           {selectedTopic === "Banners" && <BannerManagement />}
-          {/* {selectedTopic === "Chats" && <DisplayChat />} */}
         </Box>
       </Box>
 

@@ -21,13 +21,10 @@ const connectDb = require("./db/connection");
 const { Server } = require("socket.io");
 
 // Import models
-const Chat = require("./models/chat/chatModel");
 const User = require("./models/userModel");
 const Admin = require("./models/admin/adminModel");
 const Review = require("./models/review/reviewModel");
 
-// Import helpers
-const { updateOfferStatus } = require("./admin/helper/offerHelpers");
 const {
   createInitialAdmin,
 } = require("./admin/controllers/authentication/adminController");
@@ -39,125 +36,13 @@ const server = http.createServer(app);
 
 // Define allowed origins
 const allowedOrigins = [
-  "https://www.trendrove.shop",
-  "https://trendrove.shop",
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://www.api.trendrove.shop",
-  "https://api.trendrove.shop",
-  "https://trend-trove-frontend-git-master-nidhinbabu171gmailcoms-projects.vercel.app",
 ];
 
-// Configure socket.io
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
 
-// Socket.io event handlers
-io.on("connection", (socket) => {
-  console.log("New client connected:", socket.id);
 
-  socket.on("join", async (userId) => {
-    console.log(`User ${userId} joined the chat`);
-    socket.join(userId);
-  });
 
-  socket.on("admin-join", () => {
-    console.log("Admin joined the chat");
-    socket.join("admin-room");
-  });
-
-  socket.on("send-message", async (data) => {
-    try {
-      const { userId, message, senderType } = data;
-
-      let senderId;
-      if (senderType === "Admin") {
-        const admin = await Admin.findOne({ email: "admin@gmail.com" });
-        senderId = admin._id;
-      } else {
-        senderId = userId;
-      }
-
-      const messageObj = {
-        _id: new mongoose.Types.ObjectId(),
-        sender: senderId,
-        senderType,
-        message,
-        timestamp: new Date(),
-        read: false,
-      };
-
-      let chat = await Chat.findOne({ user: userId });
-
-      if (!chat) {
-        chat = new Chat({
-          user: userId,
-          messages: [messageObj],
-          lastMessage: new Date(),
-        });
-      } else {
-        const isDuplicate = chat.messages.some(
-          (msg) =>
-            msg.message === message &&
-            msg.senderType === senderType &&
-            Math.abs(new Date(msg.timestamp) - new Date()) < 1000
-        );
-
-        if (!isDuplicate) {
-          chat.messages.push(messageObj);
-          chat.lastMessage = new Date();
-        }
-      }
-
-      await chat.save();
-
-      if (senderType === "User") {
-        socket.emit("message-sent", { status: "success", message: messageObj });
-        io.to("admin-room").emit("new-message", {
-          chatId: chat._id,
-          message: messageObj,
-        });
-      } else {
-        io.to(userId).emit("new-message", { message: messageObj });
-        socket.emit("message-sent", { status: "success", message: messageObj });
-      }
-    } catch (error) {
-      console.error("Error handling message:", error);
-      socket.emit("error", { message: "Failed to process message" });
-    }
-  });
-
-  socket.on("mark-messages-read", async ({ chatId }) => {
-    try {
-      await Chat.updateMany(
-        { _id: chatId, "messages.read": false },
-        {
-          $set: {
-            "messages.$[elem].read": true,
-            "messages.$[elem].delivered": true,
-          },
-        },
-        {
-          arrayFilters: [{ "elem.senderType": "User", "elem.read": false }],
-          multi: true,
-        }
-      );
-
-      io.to(chatId).emit("messages-read", { chatId });
-    } catch (error) {
-      console.error("Error marking messages as read:", error);
-    }
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-  });
-});
 
 // Configure Passport
 require("./config/passport");
@@ -167,7 +52,6 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "your-secret-key",
@@ -200,84 +84,17 @@ app.use(
     allowedHeaders: [
       "Content-Type",
       "Authorization",
-      // "x-csrf-token",
       "X-Requested-With",
       "Accept",
       "Origin",
     ],
-    // exposedHeaders: ["x-csrf-token"],
   })
 );
 
-// CSRF protection setup
-// const csrfProtection = csrf({
-//   cookie: {
-//     key: "_csrf",
-//     httpOnly: true,
-//     sameSite: "lax",
-//     secure: process.env.NODE_ENV === "production",
-//     path: "/",
-//   },
-// });
 
-// Error handling middleware
-// app.use((err, req, res, next) => {
-//   if (err.code === "EBADCSRFTOKEN") {
-//     return res.status(403).json({
-//       status: "error",
-//       message: "Invalid CSRF token",
-//     });
-//   }
-
-//   console.error(err.stack);
-//   res.status(500).json({
-//     status: "error",
-//     message: "Internal server error",
-//   });
-// });
-
-// CSRF token generation endpoint
-// app.get("/api/csrf-token", (req, res) => {
-//   const token = csrf({
-//     cookie: {
-//       key: "_csrf",
-//       httpOnly: true,
-//       sameSite: "lax",
-//       secure: process.env.NODE_ENV === "production",
-//       path: "/",
-//     },
-//   })(req, res, () => {
-//     res.json({ csrfToken: req.csrfToken() });
-//   });
-// });
-
-// CSRF middleware with path exclusions
-// const csrfMiddleware = (req, res, next) => {
-//   const excludedPaths = [
-//     "/api/csrf-token",
-//     "/api/users/logout",
-//     "/api/admin/adminlogin",
-//     "/api/admin/logout",
-//   ];
-
-//   if (excludedPaths.includes(req.path) || req.method === "GET") {
-//     return next();
-//   }
-
-//   csrfProtection(req, res, next);
-// };
-
-// Apply security middleware
-// app.use(csrfMiddleware);
 app.use(morgan("dev"));
 app.use(helmet());
 
-// Test route for CSRF
-// app.post("/api/protected-route", (req, res) => {
-//   res.send("CSRF token is valid!");
-// });
-
-// Database index management
 async function dropReviewIndex() {
   try {
     await Review.collection.dropIndex(
