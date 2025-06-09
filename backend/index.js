@@ -34,11 +34,11 @@ const cron = require("node-cron");
 const app = express();
 const server = http.createServer(app);
 
+// Define allowed origins
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://client-1-6rax.onrender.com",
-  "https://client-vbn72tybe-nivins-projects-b42ca6e8.vercel.app",
+  process.env.FRONTEND_URL
 ];
 
 
