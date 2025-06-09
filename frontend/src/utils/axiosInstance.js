@@ -22,7 +22,6 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// ✅ Response Interceptor (optional: handle auth errors)
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
