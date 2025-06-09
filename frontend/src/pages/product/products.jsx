@@ -135,55 +135,52 @@ const Products = () => {
   }, []);
 
   // Fetch products from API based on filters and page
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
+ const fetchProducts = useCallback(async () => {
+  try {
+    setLoading(true);
+    
+    // Build query parameters
+    const queryParams = new URLSearchParams({
+      page: currentPage.toString(),
+      limit: "8",
+    });
 
-      // Build the API URL with query parameters
-      const queryParams = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: "8",
-      });
-
-      // Add filters
-      if (filters.category) {
-        queryParams.append("category", filters.category);
-      }
-
-      if (filters.minPrice > 0 || filters.maxPrice < 10000) {
-        queryParams.append("minPrice", filters.minPrice.toString());
-        queryParams.append("maxPrice", filters.maxPrice.toString());
-      }
-
-      if (filters.sortBy) {
-        queryParams.append("sortBy", filters.sortBy);
-      }
-
-      const response = await axiosInstance.get(
-        `/products/get?${queryParams.toString()}`
-      );
-
-      // Update URL without page refresh
-      window.history.pushState({}, "", `?${queryParams.toString()}`);
-      setProducts(response.data.products);
-      setTotalPages(response.data.totalPages);
-
-      // Initialize selectedVariant with first variant of each product
-      const initialVariantSelection = {};
-      response.data.products.forEach((product) => {
-        if (product.variants && product.variants.length > 0) {
-          initialVariantSelection[product._id] = product.variants[0]._id;
-        }
-      });
-      setSelectedVariant(initialVariantSelection);
-
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching products:", err);
-      setError("Failed to load products. Please try again later.");
-      setLoading(false);
+    // Add filters
+    if (filters.category) {
+      queryParams.append("category", filters.category);
     }
-  }, [currentPage, filters]);
+
+    // Always include price range parameters
+    queryParams.append("minPrice", filters.minPrice.toString());
+    queryParams.append("maxPrice", filters.maxPrice.toString());
+
+    if (filters.sortBy) {
+      queryParams.append("sortBy", filters.sortBy);
+    }
+
+    const response = await axiosInstance.get(
+      `/products/get?${queryParams.toString()}`
+    );
+
+    setProducts(response.data.products);
+    setTotalPages(response.data.totalPages);
+
+    // Initialize selected variants
+    const initialVariantSelection = {};
+    response.data.products.forEach((product) => {
+      if (product.variants && product.variants.length > 0) {
+        initialVariantSelection[product._id] = product.variants[0]._id;
+      }
+    });
+    setSelectedVariant(initialVariantSelection);
+
+    setLoading(false);
+  } catch (err) {
+    console.error("Error fetching products:", err);
+    setError("Failed to load products. Please try again later.");
+    setLoading(false);
+  }
+}, [currentPage, filters]);
 
   useEffect(() => {
     if (!isSearching) {
@@ -204,12 +201,17 @@ const Products = () => {
   }, [searchParams]);
 
   const handleApplyFilters = useCallback((newFilters) => {
-    setFilters(newFilters);
-    setCurrentPage(1); // Reset to first page when filters change
-    setIsSearching(false);
-    setSearchQuery("");
-    setShowMobileFilters(false); // Close mobile filters after applying
-  }, []);
+  setFilters({
+    category: newFilters.categories?.[0] || "",
+    minPrice: newFilters.priceRange?.min || 0,
+    maxPrice: newFilters.priceRange?.max || 10000,
+    sortBy: newFilters.sortBy || "newest"
+  });
+  setCurrentPage(1);
+  setIsSearching(false);
+  setSearchQuery("");
+  setShowMobileFilters(false);
+}, []);
 
   const handlePageChange = useCallback((page) => {
     setCurrentPage(page);
@@ -488,7 +490,7 @@ const Products = () => {
   return (
     <>
       <Header />
-      <div className="container max-w-screen mx-auto px-4 pt-32 pb-8">
+      <div className="container max-w-screen mx-auto px-4 pt-32 pb-8 mt-10">
         {/* Mobile filter button */}
         <div className="lg:hidden mb-4">
           <button
@@ -529,7 +531,7 @@ const Products = () => {
                 {isSearching
                   ? `Search Results for "${searchQuery}"`
                   : filters.category
-                  ? `Products: ${filters.category}`
+                  ? `Products`
                   : "All Products"}
               </h2>
 

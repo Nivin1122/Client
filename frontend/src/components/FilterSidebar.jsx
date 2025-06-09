@@ -45,7 +45,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
     () =>
       debounce((filters) => {
         const params = new URLSearchParams();
-        
+
         // Handle categories - use first category as main category
         if (filters.categories && filters.categories.length > 0) {
           params.set("category", filters.categories[0]);
@@ -61,11 +61,21 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
         if (filters.sortBy) {
           params.set("sortBy", filters.sortBy);
         }
-        setSearchParams(params, { replace: true });
-        onApplyFilters(filters);
-      }, 300),
-    [onApplyFilters, setSearchParams]
+
+        // Only update URL if params have changed
+        if (params.toString() !== searchParams.toString()) {
+          setSearchParams(params, { replace: true });
+          onApplyFilters(filters);
+        }
+      }, 500), // Increased debounce time to 500ms for smoother slider experience
+    [onApplyFilters, setSearchParams, searchParams]
   );
+
+  useEffect(() => {
+    return () => {
+      debouncedApplyFilters.cancel();
+    };
+  }, [debouncedApplyFilters]);
 
   useEffect(() => {
     const fetchFilterOptions = async () => {
@@ -96,7 +106,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
           // For categories, we only want to keep one category selected at a time
           newFilters = {
             ...prev,
-            categories: prev.categories.includes(value) ? [] : [value]
+            categories: prev.categories.includes(value) ? [] : [value],
           };
         } else {
           newFilters = {
@@ -113,11 +123,16 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
     [debouncedApplyFilters]
   );
 
-  const handleSortChange = useCallback((sortValue) => {
-    const newFilters = { ...selectedFilters, sortBy: sortValue };
-    setSelectedFilters(newFilters);
-    debouncedApplyFilters(newFilters);
-  });
+  const handleSortChange = useCallback(
+    (sortValue) => {
+      setSelectedFilters((prev) => {
+        const newFilters = { ...prev, sortBy: sortValue };
+        debouncedApplyFilters(newFilters);
+        return newFilters;
+      });
+    },
+    [debouncedApplyFilters]
+  );
 
   const handleResetFilters = useCallback(() => {
     const initialFilters = {
@@ -129,21 +144,27 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
     debouncedApplyFilters(initialFilters);
   });
 
-  const handlePriceSliderChange = useCallback(
-    (value) => {
-      setSelectedFilters((prev) => {
-        const newFilters = {
-          ...prev,
-          priceRange: Array.isArray(value)
-            ? { min: value[0], max: value[1] }
-            : { min: 0, max: value },
-        };
-        debouncedApplyFilters(newFilters);
-        return newFilters;
-      });
-    },
-    [debouncedApplyFilters]
-  );
+  const handlePriceSliderChange = useCallback((value) => {
+    const [min, max] = Array.isArray(value) ? value : [0, value];
+    setSelectedFilters((prev) => ({
+      ...prev,
+      priceRange: { min, max },
+    }));
+    setPriceInputValues({
+      min: min.toString(),
+      max: max.toString(),
+    });
+  }, []);
+
+  // Add this effect to apply filters when price range changes
+  useEffect(() => {
+    if (selectedFilters.priceRange) {
+      const timer = setTimeout(() => {
+        debouncedApplyFilters(selectedFilters);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedFilters.priceRange, debouncedApplyFilters]);
 
   const handlePriceInputChange = useCallback(
     (type, value) => {

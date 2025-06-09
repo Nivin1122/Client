@@ -63,7 +63,7 @@ const Header = ({ onCategorySelect }) => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get("/admin/categories/get/admin");
+        const response = await axiosInstance.get("/categories");
 
         // Filter out deleted categories
         const activeCategories = response.data.categories.filter(
@@ -129,11 +129,11 @@ const Header = ({ onCategorySelect }) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white z-50 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 text-[#FFF5CC] bg-[#010135] z-50 shadow-sm ">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
           {/* Search */}
-          <div className="flex items-center">
+          <div className="flex items-center ">
             <Link
               to="/search"
               className="flex items-center space-x-1 hover:text-red-400"
@@ -226,14 +226,14 @@ const Header = ({ onCategorySelect }) => {
         </div>
 
         {/* Navigation with Dropdown */}
-        <nav className="border-t border-gray-200 overflow-visible relative">
+        <nav className="border-t border-gray-200 overflow-visible relative ">
           {loading ? (
             <div className="flex justify-center py-3">
               <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></div>
             </div>
           ) : (
-            <div className="w-max mx-auto">
-              <ul className="flex items-center justify-center space-x-4 py-3 whitespace-nowrap text-sm">
+            <div className="w-max mx-auto"> 
+              <ul className="flex items-center  justify-center space-x-4 py-3 whitespace-nowrap text-sm">
                 {categories.map((category) => {
                   const isActive = activeTab === category._id;
                   const hasChildren =
@@ -251,7 +251,7 @@ const Header = ({ onCategorySelect }) => {
                         className={`${
                           activeTab === category._id
                             ? "text-red-400 border-red-400"
-                            : "text-gray-600 border-transparent"
+                            : "text-[#FFF5CC] border-transparent"
                         } border-b-2 hover:text-red-400 hover:border-red-400 transition-colors duration-200 flex items-center gap-1`}
                       >
                         {category.name}

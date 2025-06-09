@@ -275,7 +275,7 @@ const ProductDetail = () => {
   return (
     <>
       <Header />
-      <div className="container max-w-screen-xl mx-auto px-4 pt-32 pb-8">
+      <div className="container max-w-screen-xl mx-auto px-4 pt-32 pb-8 mt-10">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm mb-8">
           <a href="/" className="hover:underline">
