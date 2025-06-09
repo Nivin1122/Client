@@ -34,7 +34,6 @@ const cron = require("node-cron");
 const app = express();
 const server = http.createServer(app);
 
-// Define allowed origins
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
