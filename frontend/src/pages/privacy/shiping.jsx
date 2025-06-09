@@ -6,7 +6,7 @@ const Shipping = () => {
   return (
     <>
       <Header />
-      <div className="max-w-4xl mx-auto px-6 py-10 text-gray-800 mt-20">
+      <div className="max-w-4xl mx-auto px-6 py-10 text-gray-800 mt-28">
         <h1 className="text-3xl font-bold mb-4 text-center">Shipping Policy</h1>
         <p className="text-sm text-center text-gray-600 mb-10">Effective Date: 10/01/2025</p>
 

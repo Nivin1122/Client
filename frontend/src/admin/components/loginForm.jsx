@@ -134,7 +134,7 @@ const LoginForm = () => {
                 fontFamily: "'Playfair Display', serif",
               }}
             >
-              TREND TROVE
+              Emirah
             </Typography>
             <Typography
               variant="h6"

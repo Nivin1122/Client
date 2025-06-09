@@ -10,11 +10,11 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  
+
   // Check if this is a direct purchase
   const isDirectPurchase = location.state?.directPurchase || false;
   const directPurchaseItem = location.state?.checkoutItem || null;
-  
+
   const {
     items: cartItems,
     totalPrice: cartTotalPrice,
@@ -23,12 +23,14 @@ const Checkout = () => {
 
   // Use direct purchase item or cart items
   const checkoutItems = isDirectPurchase ? [directPurchaseItem] : cartItems;
-  
+
   // Calculate total price for direct purchase
-  const directTotalPrice = isDirectPurchase && directPurchaseItem 
-    ? directPurchaseItem.sizeVariant.discountPrice * directPurchaseItem.quantity
-    : 0;
-  
+  const directTotalPrice =
+    isDirectPurchase && directPurchaseItem
+      ? directPurchaseItem.sizeVariant.discountPrice *
+        directPurchaseItem.quantity
+      : 0;
+
   const totalPrice = isDirectPurchase ? directTotalPrice : cartTotalPrice;
 
   const [addresses, setAddresses] = useState([]);
@@ -53,11 +55,34 @@ const Checkout = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const indianStates = [
-    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
-    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya",
-    "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim",
-    "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
   ];
 
   // Load Razorpay script
@@ -112,13 +137,13 @@ const Checkout = () => {
       navigate("/cart");
       return;
     }
-    
+
     // For direct purchase, check if we have the item
     if (isDirectPurchase && !directPurchaseItem) {
       navigate("/");
       return;
     }
-    
+
     fetchAddresses();
   }, [cartItems, navigate, isDirectPurchase, directPurchaseItem]);
 
@@ -196,7 +221,7 @@ const Checkout = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "TrendRove",
+        name: "Emirah",
         description: "Payment for your order",
         order_id: orderData.id,
         handler: async function (response) {
@@ -213,8 +238,14 @@ const Checkout = () => {
               if (!isDirectPurchase) {
                 dispatch(clearCart());
               }
+
               setError("");
               setShowSuccessModal(true);
+
+              // ✅ Redirect to orders page after a short delay
+              setTimeout(() => {
+                navigate("/orders");
+              }, 2000); // 2 seconds gives time to see the success message
             } else {
               throw new Error("Payment verification failed");
             }
@@ -332,18 +363,20 @@ const Checkout = () => {
 
     try {
       let checkoutData;
-      
+
       if (isDirectPurchase) {
         // For direct purchase, create checkout data differently
         checkoutData = {
           directPurchase: true,
-          items: [{
-            productId: directPurchaseItem.product._id,
-            variantId: directPurchaseItem.variant._id,
-            sizeVariantId: directPurchaseItem.sizeVariant._id,
-            quantity: directPurchaseItem.quantity,
-            price: directPurchaseItem.sizeVariant.discountPrice,
-          }],
+          items: [
+            {
+              productId: directPurchaseItem.product._id,
+              variantId: directPurchaseItem.variant._id,
+              sizeVariantId: directPurchaseItem.sizeVariant._id,
+              quantity: directPurchaseItem.quantity,
+              price: directPurchaseItem.sizeVariant.discountPrice,
+            },
+          ],
           addressId: selectedAddress,
           shippingMethod: "Standard",
           paymentMethod,
@@ -405,7 +438,10 @@ const Checkout = () => {
 
   const calculateSubtotal = () => {
     if (isDirectPurchase && directPurchaseItem) {
-      return directPurchaseItem.sizeVariant.discountPrice * directPurchaseItem.quantity;
+      return (
+        directPurchaseItem.sizeVariant.discountPrice *
+        directPurchaseItem.quantity
+      );
     }
     return cartItems.reduce(
       (total, item) => total + item.sizeVariant.discountPrice * item.quantity,

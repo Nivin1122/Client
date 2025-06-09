@@ -33,7 +33,7 @@ const AdminFooter = () => {
               letterSpacing: "0.5px",
             }}
           >
-            © {new Date().getFullYear()} TREND TROVE. All Rights Reserved.
+            © {new Date().getFullYear()} Emirah. All Rights Reserved.
           </Typography>
           <Box>
             <Link 

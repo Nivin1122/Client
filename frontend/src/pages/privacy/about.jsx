@@ -9,7 +9,7 @@ const About = () => {
     <>
       <Header />
 
-      <div className="mt-28 px-6 max-w-6xl mx-auto text-gray-800 ">
+      <div className="mt-36 px-6 max-w-6xl mx-auto text-gray-800">
         {/* Intro Section */}
         <section className="text-center mb-16">
           <h1 className="text-3xl font-bold mb-4">Emirah Fashion</h1>

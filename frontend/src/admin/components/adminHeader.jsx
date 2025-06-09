@@ -42,7 +42,7 @@ const AdminHeader = () => {
               }
             }}
           >
-            TREND TROVE
+            EMIRAH
           </Typography>
         </Box>
       </Toolbar>

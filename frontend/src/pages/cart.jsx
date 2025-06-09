@@ -329,11 +329,6 @@ const Cart = () => {
         {cartItems.length > 0 && (
           <div className="mt-10 flex flex-col lg:flex-row justify-between gap-8">
             <div className="w-full lg:w-1/2">
-              <label className="block mb-2 font-medium">Order Note</label>
-              <textarea
-                className="w-full border rounded-md p-3 h-32"
-                placeholder="Notes about your order, e.g. special instructions"
-              />
             </div>
 
             <div className="w-full lg:w-1/2 flex flex-col items-end gap-4">

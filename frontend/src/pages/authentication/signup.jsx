@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import OtpVerificationModal from "../../components/models/verifyOtpModal";
+import logo from "../../assets/logo.webp";
 
 const SignUp = () => {
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,7 @@ const SignUp = () => {
     severity: "success",
   });
   const navigate = useNavigate();
-  
+
   const {
     register,
     handleSubmit,
@@ -34,15 +35,15 @@ const SignUp = () => {
       setLoading(true);
       // First send OTP
       await axiosInstance.post("/otp/send-otp", { email: data.email });
-      
+
       // Store form data for later use after OTP verification
       setFormData({
         username: data.username,
         email: data.email,
         password: data.password,
-        confirmPassword: data.confirmPassword
+        confirmPassword: data.confirmPassword,
       });
-      
+
       setShowOtpModal(true);
       setSnackbar({
         open: true,
@@ -61,61 +62,67 @@ const SignUp = () => {
     }
   };
 
-const handleOtpVerificationSuccess = async () => {
-  try {
-    setLoading(true);
-    
-    // Create registration payload with consistent naming
-    const registrationData = {
-      username: formData.username,
-      email: formData.email,
-      password: formData.password,
-      confirmPassword: formData.confirmPassword  // Use confirmPassword (camelCase) consistently
-    };
+  const handleOtpVerificationSuccess = async () => {
+    try {
+      setLoading(true);
 
-    const response = await axiosInstance.post("/users/register", registrationData);
+      // Create registration payload with consistent naming
+      const registrationData = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword, // Use confirmPassword (camelCase) consistently
+      };
 
-    if (response.data.token) {
-      localStorage.setItem("token", response.data.token);
+      const response = await axiosInstance.post(
+        "/users/register",
+        registrationData
+      );
+
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        setSnackbar({
+          open: true,
+          message: "Registration successful!",
+          severity: "success",
+        });
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || "Registration failed";
       setSnackbar({
         open: true,
-        message: "Registration successful!",
-        severity: "success",
+        message,
+        severity: "error",
       });
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    const message = error.response?.data?.message || "Registration failed";
-    setSnackbar({
-      open: true,
-      message,
-      severity: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <div className="w-full md:w-1/2 p-8 flex items-center justify-center bg-white relative">
         <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-serif font-bold text-rose-600 mb-2">
-              Fashion Hub
-            </h1>
-            <p className="text-gray-600 text-lg">Create your account</p>
+          <div className="flex items-center justify-center">
+            <div className="text-center">
+              <img
+                src={logo}
+                alt="logo"
+                className="h-28 w-28 object-contain mx-auto"
+              />
+              <p className="text-gray-600 text-lg">Create your account</p>
+            </div>
           </div>
-          
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {errors.submit && (
               <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
                 {errors.submit.message}
               </div>
             )}
-
 
             <div>
               <input
@@ -128,7 +135,8 @@ const handleOtpVerificationSuccess = async () => {
                   required: "Username is required",
                   pattern: {
                     value: /^[a-zA-Z]+$/,
-                    message: "Username should only contain letters and no spaces or special characters",
+                    message:
+                      "Username should only contain letters and no spaces or special characters",
                   },
                   minLength: {
                     value: 4,
@@ -180,7 +188,8 @@ const handleOtpVerificationSuccess = async () => {
                   },
                   pattern: {
                     value: /[!@#$%^&*(),.?":{}|<>]/,
-                    message: "Password must contain at least one special character",
+                    message:
+                      "Password must contain at least one special character",
                   },
                 })}
               />
@@ -217,18 +226,36 @@ const handleOtpVerificationSuccess = async () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full px-4 py-3 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors flex items-center justify-center ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`w-full px-4 py-3 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors flex items-center justify-center ${
+                loading ? "opacity-70 cursor-not-allowed" : ""
+              }`}
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Processing...
                 </>
               ) : (
-                'Sign Up'
+                "Sign Up"
               )}
             </button>
 
@@ -258,18 +285,18 @@ const handleOtpVerificationSuccess = async () => {
 
           <p className="text-xs text-gray-400 text-center mt-4">
             By continuing, you agree to our{" "}
-            <a href="/terms" className="underline hover:text-rose-600">
+            <a href="/termsandcondition" className="underline hover:text-rose-600">
               Terms of Service
             </a>{" "}
             and{" "}
-            <a href="/privacy" className="underline hover:text-rose-600">
+            <a href="/privacypolicy" className="underline hover:text-rose-600">
               Privacy Policy
             </a>
             .
           </p>
         </div>
       </div>
-      
+
       <div className="hidden md:block w-1/2 bg-rose-50">
         <img
           src={exclusive}
@@ -293,14 +320,16 @@ const handleOtpVerificationSuccess = async () => {
       {/* Snackbar for notifications */}
       {snackbar.open && (
         <div className="fixed top-4 right-4 z-50">
-          <div className={`p-4 rounded-md shadow-lg ${
-            snackbar.severity === "error" 
-              ? "bg-red-100 text-red-800" 
-              : "bg-green-100 text-green-800"
-          }`}>
+          <div
+            className={`p-4 rounded-md shadow-lg ${
+              snackbar.severity === "error"
+                ? "bg-red-100 text-red-800"
+                : "bg-green-100 text-green-800"
+            }`}
+          >
             <div className="flex justify-between items-center">
               <div>{snackbar.message}</div>
-              <button 
+              <button
                 onClick={handleCloseSnackbar}
                 className="ml-4 text-lg font-bold"
               >
