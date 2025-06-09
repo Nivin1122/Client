@@ -66,7 +66,7 @@ const DisplayChat = () => {
   useEffect(() => {
     loadChats();
 
-    const newSocket = io("http://localhost:5173", {
+    const newSocket = io("https://client-1-6rax.onrender.com", {
       withCredentials: true,
     });
 

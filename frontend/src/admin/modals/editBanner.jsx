@@ -71,7 +71,7 @@ const EditBanner = ({ open, onClose, banner, handleBannerUpdated }) => {
       }
 
       const response = await axios.put(
-        `http://localhost:5173/api/banners/update/${banner._id}`,
+        `https://client-1-6rax.onrender.com/api/banners/update/${banner._id}`,
         formDataToSend,
         {
           headers: {

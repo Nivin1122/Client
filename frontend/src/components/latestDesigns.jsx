@@ -7,7 +7,7 @@ const LatestDesigns = () => {
       <div className="flex flex-col items-center justify-center text-center mb-8 md:mb-5">
         <h2 className="text-2xl md:text-3xl font-medium">Fabrice</h2>
         <a
-          href="http://localhost:5173/products?page=1&limit=8&sortBy=newest"
+          href="https://client-1-6rax.onrender.com/products?page=1&limit=8&sortBy=newest"
           className="text-red-500 text-sm uppercase mt-2 underline"
         >
           VIEW ALL
@@ -28,7 +28,7 @@ const LatestDesigns = () => {
             className="absolute right-6 bottom-6 md:right-10 md:bottom-10 bg-white text-black px-8 py-3 rounded-sm hover:bg-gray-100 transition-colors text-sm tracking-wider font-medium shadow-md"
             onClick={() => {
               window.location.href =
-                "http://localhost:5173/products?page=1&limit=8&category=684110580fa10b2d72ec25c8&sortBy=newest";
+                "https://client-1-6rax.onrender.com/products?page=1&limit=8&category=684110580fa10b2d72ec25c8&sortBy=newest";
             }}
           >
             SHOP NOW

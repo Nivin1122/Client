@@ -152,7 +152,7 @@ const BestSeller = () => {
             </button>
           </div>
         </div>
-        <a href="http://localhost:5173/products?page=1&limit=8&sortBy=newest" className="text-red-500 text-sm uppercase">
+        <a href="https://client-1-6rax.onrender.com/products?page=1&limit=8&sortBy=newest" className="text-red-500 text-sm uppercase">
           View All
         </a>
       </div>

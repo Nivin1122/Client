@@ -24,7 +24,7 @@ const ExclusiveItems = () => {
           className="bg-white text-black px-10 py-4 hover:bg-opacity-90 transition-all uppercase text-sm tracking-[0.2em] font-medium"
           onClick={() => {
             window.location.href =
-              "http://localhost:5173/products?page=1&limit=8&category=684110670fa10b2d72ec25cb&sortBy=newest";
+              "https://client-1-6rax.onrender.com/products?page=1&limit=8&category=684110670fa10b2d72ec25cb&sortBy=newest";
           }}
         >
           SHOP NOW
