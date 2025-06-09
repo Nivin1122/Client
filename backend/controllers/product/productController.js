@@ -12,8 +12,6 @@ const getAllProducts = asyncHandler(async (req, res) => {
       page = 1,
       limit = 12,
       search = "",
-      colors = "",
-      sizes = "",
       categories = "",
       minPrice = 0,
       maxPrice = 10000,
@@ -71,6 +69,26 @@ const getAllProducts = asyncHandler(async (req, res) => {
       },
       { $unwind: "$category" },
       {
+        $lookup: {
+          from: "sizevariants",
+          let: { variantSizes: "$variants.sizes" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $in: ["$_id", { $reduce: {
+                    input: "$$variantSizes",
+                    initialValue: [],
+                    in: { $concatArrays: ["$$value", "$$this"] }
+                  }}]
+                }
+              }
+            }
+          ],
+          as: "allSizes"
+        }
+      },
+      {
         $addFields: {
           variants: {
             $map: {
@@ -80,7 +98,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
                 $mergeObjects: [
                   "$$variant",
                   {
-                    sizesPopulated: {
+                    sizes: {
                       $map: {
                         input: "$$variant.sizes",
                         as: "sizeId",
@@ -88,7 +106,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
                           $arrayElemAt: [
                             {
                               $filter: {
-                                input: { $literal: [] }, // Will be populated in next stage
+                                input: "$allSizes",
                                 cond: { $eq: ["$$this._id", "$$sizeId"] }
                               }
                             },
@@ -106,103 +124,59 @@ const getAllProducts = asyncHandler(async (req, res) => {
       }
     ];
 
-    // Add lookup for size variants
-    pipeline.push({
-      $lookup: {
-        from: "sizevariants",
-        let: { variantSizes: "$variants.sizes" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $in: ["$_id", { $reduce: {
-                  input: "$$variantSizes",
-                  initialValue: [],
-                  in: { $concatArrays: ["$$value", "$$this"] }
-                }}]
-              }
-            }
-          }
-        ],
-        as: "allSizes"
-      }
-    });
-
-    // Reconstruct variants with populated sizes
-    pipeline.push({
-      $addFields: {
-        variants: {
-          $map: {
-            input: "$variants",
-            as: "variant",
-            in: {
-              $mergeObjects: [
-                "$$variant",
-                {
-                  sizes: {
-                    $map: {
-                      input: "$$variant.sizes",
-                      as: "sizeId",
-                      in: {
-                        $arrayElemAt: [
-                          {
-                            $filter: {
-                              input: "$allSizes",
-                              cond: { $eq: ["$$this._id", "$$sizeId"] }
-                            }
-                          },
-                          0
-                        ]
+    // Apply price filter - FIXED LOGIC
+    const minPriceNum = Number(minPrice);
+    const maxPriceNum = Number(maxPrice);
+    
+    // Only apply price filter if it's not the default range (0-10000)
+    if (minPriceNum > 0 || maxPriceNum < 10000) {
+      pipeline.push({
+        $addFields: {
+          hasValidPriceVariant: {
+            $anyElementTrue: {
+              $map: {
+                input: "$variants",
+                as: "variant",
+                in: {
+                  $let: {
+                    vars: {
+                      effectivePrice: {
+                        $cond: {
+                          if: { $and: [
+                            { $ne: ["$$variant.discountPrice", null] },
+                            { $gt: ["$$variant.discountPrice", 0] }
+                          ]},
+                          then: "$$variant.discountPrice",
+                          else: "$$variant.price"
+                        }
                       }
+                    },
+                    in: {
+                      $and: [
+                        { $gte: ["$$effectivePrice", minPriceNum] },
+                        { $lte: ["$$effectivePrice", maxPriceNum] }
+                      ]
                     }
                   }
                 }
-              ]
+              }
             }
           }
         }
-      }
-    });
-
-    // Apply color filter if specified
-    if (colors && colors.length > 0) {
-      const colorArray = colors.split(',').map(c => c.trim());
+      });
+      
       pipeline.push({
         $match: {
-          "variants.color": { $in: colorArray }
+          hasValidPriceVariant: true
         }
       });
     }
 
-    // Apply size filter if specified
-    if (sizes && sizes.length > 0) {
-      const sizeArray = sizes.split(',').map(s => s.trim());
-      pipeline.push({
-        $match: {
-          "variants.sizes.size": { $in: sizeArray }
-        }
-      });
-    }
-
-    // Apply price filter
-    const minPriceNum = Number(minPrice);
-    const maxPriceNum = Number(maxPrice);
-    if (minPriceNum > 0 || maxPriceNum < 10000) {
-      pipeline.push({
-        $match: {
-          $or: [
-            { "variants.price": { $gte: minPriceNum, $lte: maxPriceNum } },
-            { "variants.discountPrice": { $gte: minPriceNum, $lte: maxPriceNum } }
-          ]
-        }
-      });
-    }
-
-    // Add sorting
+    // Add sorting with proper price calculation
     let sortStage = {};
     switch (sortBy) {
       case 'price_low_high':
-        sortStage = { 
+        pipeline.push({
           $addFields: {
             minPrice: {
               $min: {
@@ -211,7 +185,10 @@ const getAllProducts = asyncHandler(async (req, res) => {
                   as: "variant",
                   in: {
                     $cond: {
-                      if: { $gt: ["$$variant.discountPrice", 0] },
+                      if: { $and: [
+                        { $ne: ["$$variant.discountPrice", null] },
+                        { $gt: ["$$variant.discountPrice", 0] }
+                      ]},
                       then: "$$variant.discountPrice",
                       else: "$$variant.price"
                     }
@@ -220,12 +197,12 @@ const getAllProducts = asyncHandler(async (req, res) => {
               }
             }
           }
-        };
-        pipeline.push(sortStage);
+        });
         pipeline.push({ $sort: { minPrice: 1 } });
         break;
+        
       case 'price_high_low':
-        sortStage = { 
+        pipeline.push({
           $addFields: {
             maxPrice: {
               $max: {
@@ -234,7 +211,10 @@ const getAllProducts = asyncHandler(async (req, res) => {
                   as: "variant",
                   in: {
                     $cond: {
-                      if: { $gt: ["$$variant.discountPrice", 0] },
+                      if: { $and: [
+                        { $ne: ["$$variant.discountPrice", null] },
+                        { $gt: ["$$variant.discountPrice", 0] }
+                      ]},
                       then: "$$variant.discountPrice",
                       else: "$$variant.price"
                     }
@@ -243,24 +223,25 @@ const getAllProducts = asyncHandler(async (req, res) => {
               }
             }
           }
-        };
-        pipeline.push(sortStage);
+        });
         pipeline.push({ $sort: { maxPrice: -1 } });
         break;
+        
       default:
         pipeline.push({ $sort: { createdAt: -1 } });
     }
 
-    // Remove the allSizes field as it's no longer needed
+    // Clean up temporary fields
     pipeline.push({
       $project: {
         allSizes: 0,
+        hasValidPriceVariant: 0,
         minPrice: 0,
         maxPrice: 0
       }
     });
 
-    // Get total count
+    // Get total count for pagination
     const countPipeline = [...pipeline];
     countPipeline.push({ $count: "total" });
     const countResult = await Product.aggregate(countPipeline);
