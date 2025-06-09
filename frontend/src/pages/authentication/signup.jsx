@@ -103,8 +103,8 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      <div className="w-full md:w-1/2 p-8 flex items-center justify-center bg-white relative">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#010135] text-[#FFF5CC]">
+      <div className="w-full md:w-1/2 p-8 flex items-center justify-center relative">
         <div className="w-full max-w-md space-y-8">
           <div className="flex items-center justify-center">
             <div className="text-center">
@@ -113,7 +113,7 @@ const SignUp = () => {
                 alt="logo"
                 className="h-28 w-28 object-contain mx-auto"
               />
-              <p className="text-gray-600 text-lg">Create your account</p>
+              <p className="text-lg">Create your account</p>
             </div>
           </div>
 
@@ -129,8 +129,8 @@ const SignUp = () => {
                 type="text"
                 placeholder="Username"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.username ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-rose-500`}
+                  errors.username ? "border-red-500" : "border-[#FFF5CC]"
+                } bg-[#010135] text-[#FFF5CC] focus:outline-none focus:ring-2 focus:ring-rose-500`}
                 {...register("username", {
                   required: "Username is required",
                   pattern: {
@@ -156,8 +156,8 @@ const SignUp = () => {
                 type="email"
                 placeholder="Email"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.email ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-rose-500`}
+                  errors.email ? "border-red-500" : "border-[#FFF5CC]"
+                } bg-[#010135] text-[#FFF5CC] focus:outline-none focus:ring-2 focus:ring-rose-500`}
                 {...register("email", {
                   required: "Email is required",
                   pattern: {
@@ -167,9 +167,7 @@ const SignUp = () => {
                 })}
               />
               {errors.email && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.email.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
               )}
             </div>
 
@@ -178,8 +176,8 @@ const SignUp = () => {
                 type="password"
                 placeholder="Password"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.password ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-rose-500`}
+                  errors.password ? "border-red-500" : "border-[#FFF5CC]"
+                } bg-[#010135] text-[#FFF5CC] focus:outline-none focus:ring-2 focus:ring-rose-500`}
                 {...register("password", {
                   required: "Password is required",
                   minLength: {
@@ -194,9 +192,7 @@ const SignUp = () => {
                 })}
               />
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.password.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
               )}
             </div>
 
@@ -205,8 +201,8 @@ const SignUp = () => {
                 type="password"
                 placeholder="Confirm Password"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-rose-500`}
+                  errors.confirmPassword ? "border-red-500" : "border-[#FFF5CC]"
+                } bg-[#010135] text-[#FFF5CC] focus:outline-none focus:ring-2 focus:ring-rose-500`}
                 {...register("confirmPassword", {
                   required: "Please confirm your password",
                   validate: (val) => {
@@ -260,20 +256,20 @@ const SignUp = () => {
             </button>
 
             <div className="flex items-center justify-center">
-              <div className="flex-1 border-t border-gray-300"></div>
-              <span className="px-4 text-gray-500 text-sm">or</span>
-              <div className="flex-1 border-t border-gray-300"></div>
+              <div className="flex-1 border-t border-[#FFF5CC]"></div>
+              <span className="px-4 text-[#FFF5CC] text-sm">or</span>
+              <div className="flex-1 border-t border-[#FFF5CC]"></div>
             </div>
 
             <a
               href="https://client-1-6rax.onrender.com/api/users/auth/google"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-[#FFF5CC] rounded-lg text-[#010135] bg-[#FFF5CC] hover:bg-gray-200 transition-colors"
             >
               <FcGoogle className="text-xl" />
               Sign up with Google
             </a>
 
-            <div className="flex justify-center text-sm text-gray-600 mt-2">
+            <div className="flex justify-center text-sm mt-2">
               <p>
                 Already have an account?{" "}
                 <a href="/login" className="text-rose-600 hover:underline">
@@ -283,9 +279,12 @@ const SignUp = () => {
             </div>
           </form>
 
-          <p className="text-xs text-gray-400 text-center mt-4">
+          <p className="text-xs text-[#FFF5CC] text-center mt-4">
             By continuing, you agree to our{" "}
-            <a href="/termsandcondition" className="underline hover:text-rose-600">
+            <a
+              href="/termsandcondition"
+              className="underline hover:text-rose-600"
+            >
               Terms of Service
             </a>{" "}
             and{" "}
@@ -297,11 +296,11 @@ const SignUp = () => {
         </div>
       </div>
 
-      <div className="hidden md:block w-1/2 bg-rose-50">
+      <div className="hidden md:block w-1/2 bg-[#010135]">
         <img
           src={exclusive}
           alt="Shopping"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover opacity-70"
         />
       </div>
 

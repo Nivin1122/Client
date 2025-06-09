@@ -708,7 +708,7 @@ const ProductDetail = () => {
                       <p className="mt-2">
                         For more information, please read our{" "}
                         <a
-                          href="/privacy-policy"
+                          href="/privacypolicy"
                           className="text-blue-600 hover:underline"
                         >
                           Privacy Policy

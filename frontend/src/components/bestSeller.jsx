@@ -111,7 +111,7 @@ const BestSeller = () => {
   const handleProductClick = (id) => navigate(`/detail/${id}`);
 
   return (
-    <div className="mx-auto px-4 py-8">
+    <div className="mx-auto px-4 py-4 sm:py-1 md:py-1">
       <div className="flex justify-between items-center mb-6">
         <div className="flex-1 flex justify-center">
           <div className="flex items-center gap-5">
@@ -228,7 +228,7 @@ const BestSeller = () => {
                     }`}
                   >
                     <button
-                      className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase hover:bg-gray-50"
+                      className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();

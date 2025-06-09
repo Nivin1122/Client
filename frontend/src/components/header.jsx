@@ -4,7 +4,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchCartItems } from "../redux/slices/cartSlice";
 import { fetchWishlistItems } from "../redux/slices/wishlistSlice";
 import axiosInstance from "../utils/axiosInstance";
-import logo from '../assets/headerlogo.webp'
+import logo from "../assets/headerlogo.webp";
+import Announcement from "./anouncement";
 
 const Header = ({ onCategorySelect }) => {
   const [categories, setCategories] = useState([]);
@@ -159,11 +160,7 @@ const Header = ({ onCategorySelect }) => {
           {/* Logo - Uncomment when needed */}
           <div className="flex-1 flex justify-center">
             <Link to="/">
-              <img
-                src={logo}
-                alt="Logo"
-                className="h-12"
-              />
+              <img src={logo} alt="Logo" className="h-12" />
             </Link>
           </div>
 
@@ -190,7 +187,7 @@ const Header = ({ onCategorySelect }) => {
                     />
                   </svg>
                   {wishlistCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-2 -right-2 bg-[#FFF5CC] text-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {wishlistCount}
                     </span>
                   )}
@@ -211,7 +208,7 @@ const Header = ({ onCategorySelect }) => {
                     />
                   </svg>
                   {totalItems > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-2 -right-2 bg-[#FFF5CC] text-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {totalItems}
                     </span>
                   )}
@@ -226,18 +223,16 @@ const Header = ({ onCategorySelect }) => {
         </div>
 
         {/* Navigation with Dropdown */}
-        <nav className="border-t border-gray-200 overflow-visible relative ">
+        <nav className="border-t border-gray-200 relative">
           {loading ? (
             <div className="flex justify-center py-3">
               <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></div>
             </div>
           ) : (
-            <div className="w-max mx-auto"> 
-              <ul className="flex items-center  justify-center space-x-4 py-3 whitespace-nowrap text-sm">
+            <div className="w-full overflow-x-auto scrollbar-hide">
+              <ul className="flex items-center justify-start md:justify-center space-x-4 py-3 whitespace-nowrap text-sm px-4">
                 {categories.map((category) => {
                   const isActive = activeTab === category._id;
-                  const hasChildren =
-                    category.children && category.children.length > 0;
 
                   return (
                     <li
@@ -249,7 +244,7 @@ const Header = ({ onCategorySelect }) => {
                       <button
                         onClick={() => handleCategoryClick(category)}
                         className={`${
-                          activeTab === category._id
+                          isActive
                             ? "text-red-400 border-red-400"
                             : "text-[#FFF5CC] border-transparent"
                         } border-b-2 hover:text-red-400 hover:border-red-400 transition-colors duration-200 flex items-center gap-1`}

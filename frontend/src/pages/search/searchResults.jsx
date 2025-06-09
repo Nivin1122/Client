@@ -116,7 +116,7 @@ const SearchResults = () => {
   return (
     <>
       <Header />
-      <div className="container max-w-screen mx-auto px-4 pt-32 pb-8">
+      <div className="container max-w-screen mx-auto px-4 pt-32 pb-8 mt-10">
         {/* Real-time Search Input */}
         <div className="max-w-2xl mx-auto mb-8">
           <input

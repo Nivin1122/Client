@@ -161,7 +161,7 @@ const Wishlist = () => {
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       onClick={() => confirmAddToCart(item)}
-                      className="bg-black text-white px-4 py-2 rounded text-sm hover:bg-gray-800"
+                      className="bg-[#010135] text-[#FFF5CC] px-4 py-2 rounded text-sm hover:bg-gray-800"
                       disabled={!item.sizeVariant?.stockCount}
                     >
                       Add to Cart

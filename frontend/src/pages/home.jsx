@@ -9,6 +9,7 @@ import FeaturedCollections from "../components/featuredCollections";
 import CustomerReviewCarousel from "../components/customerReviews";
 import OurStores from "../components/stores";
 import Footer from "../components/footer";
+import Announcement from "../components/anouncement";
 
 function Home() {
   return (

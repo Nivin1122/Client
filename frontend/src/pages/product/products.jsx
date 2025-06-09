@@ -1,14 +1,18 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { useSearchParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../../redux/slices/cartSlice";
+import { toast } from "react-toastify";
 import axiosInstance from "../../utils/axiosInstance";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import FilterSidebar from "../../components/FilterSidebar";
-import React from "react";
-
-import { useDispatch } from "react-redux";
-import { addToCart } from "../../redux/slices/cartSlice";
-import { toast } from "react-toastify";
 
 // Debounce function for search
 const debounce = (func, delay) => {
@@ -22,6 +26,9 @@ const debounce = (func, delay) => {
 const Products = () => {
   const productGridRef = useRef(null);
   const [searchParams] = useSearchParams();
+  const dispatch = useDispatch();
+
+  // State management
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,24 +36,24 @@ const Products = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [hoveredProductId, setHoveredProductId] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState({});
-
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  // Filters state
   const [filters, setFilters] = useState(() => ({
     category: searchParams.get("category") || "",
     minPrice: Number(searchParams.get("minPrice")) || 0,
     maxPrice: Number(searchParams.get("maxPrice")) || 10000,
-    sortBy: searchParams.get("sortBy") || "newest"
+    sortBy: searchParams.get("sortBy") || "newest",
   }));
 
-  const dispatch = useDispatch();
-
+  // Add to cart handler
   const handleAddToCart = (product) => {
     try {
       const currentVariant = getSelectedVariant(product);
 
-      // Get available sizes (handling both array and single object cases)
+      // Get available sizes
       const availableSizes = currentVariant?.sizes
         ? Array.isArray(currentVariant.sizes)
           ? currentVariant.sizes
@@ -85,7 +92,7 @@ const Products = () => {
         searchProducts(query);
       } else {
         setIsSearching(false);
-        fetchProducts(); // Fetch regular products when search is cleared
+        fetchProducts();
       }
     }, 500),
     [filters, currentPage]
@@ -105,7 +112,7 @@ const Products = () => {
         `/products/product/search?query=${query}`
       );
       setProducts(response.data.products);
-      setTotalPages(1); // Search results typically don't have pagination
+      setTotalPages(1);
       setLoading(false);
 
       // Initialize selected variants
@@ -123,95 +130,83 @@ const Products = () => {
     }
   };
 
-  // Handle filter updates from FilterSidebar
-  const handleFilterChange = useCallback((newFilters) => {
-    setFilters({
-      category: newFilters.categories?.[0] || "",
-      minPrice: newFilters.priceRange?.min || 0,
-      maxPrice: newFilters.priceRange?.max || 10000,
-      sortBy: newFilters.sortBy || "newest"
-    });
-    setCurrentPage(1); // Reset to first page when filters change
-  }, []);
-
   // Fetch products from API based on filters and page
- const fetchProducts = useCallback(async () => {
-  try {
-    setLoading(true);
-    
-    // Build query parameters
-    const queryParams = new URLSearchParams({
-      page: currentPage.toString(),
-      limit: "8",
-    });
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
 
-    // Add filters
-    if (filters.category) {
-      queryParams.append("category", filters.category);
-    }
+      // Build query parameters
+      const queryParams = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: "12",
+      });
 
-    // Always include price range parameters
-    queryParams.append("minPrice", filters.minPrice.toString());
-    queryParams.append("maxPrice", filters.maxPrice.toString());
-
-    if (filters.sortBy) {
-      queryParams.append("sortBy", filters.sortBy);
-    }
-
-    const response = await axiosInstance.get(
-      `/products/get?${queryParams.toString()}`
-    );
-
-    setProducts(response.data.products);
-    setTotalPages(response.data.totalPages);
-
-    // Initialize selected variants
-    const initialVariantSelection = {};
-    response.data.products.forEach((product) => {
-      if (product.variants && product.variants.length > 0) {
-        initialVariantSelection[product._id] = product.variants[0]._id;
+      // Add filters
+      if (filters.category) {
+        queryParams.append("category", filters.category);
       }
-    });
-    setSelectedVariant(initialVariantSelection);
 
-    setLoading(false);
-  } catch (err) {
-    console.error("Error fetching products:", err);
-    setError("Failed to load products. Please try again later.");
-    setLoading(false);
-  }
-}, [currentPage, filters]);
+      queryParams.append("minPrice", filters.minPrice.toString());
+      queryParams.append("maxPrice", filters.maxPrice.toString());
 
+      if (filters.sortBy) {
+        queryParams.append("sortBy", filters.sortBy);
+      }
+
+      const response = await axiosInstance.get(
+        `/products/get?${queryParams.toString()}`
+      );
+
+      setProducts(response.data.products);
+      setTotalPages(response.data.totalPages);
+
+      // Initialize selected variants
+      const initialVariantSelection = {};
+      response.data.products.forEach((product) => {
+        if (product.variants && product.variants.length > 0) {
+          initialVariantSelection[product._id] = product.variants[0]._id;
+        }
+      });
+      setSelectedVariant(initialVariantSelection);
+
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      setError("Failed to load products. Please try again later.");
+      setLoading(false);
+    }
+  }, [currentPage, filters]);
+
+  // Effects
   useEffect(() => {
     if (!isSearching) {
       fetchProducts();
     }
   }, [fetchProducts, isSearching]);
 
-  // Update filters from URL params when component mounts
   useEffect(() => {
     const urlFilters = {
       category: searchParams.get("category") || "",
       minPrice: Number(searchParams.get("minPrice")) || 0,
       maxPrice: Number(searchParams.get("maxPrice")) || 10000,
-      sortBy: searchParams.get("sortBy") || "newest"
+      sortBy: searchParams.get("sortBy") || "newest",
     };
     setFilters(urlFilters);
-
   }, [searchParams]);
 
+  // Handler functions
   const handleApplyFilters = useCallback((newFilters) => {
-  setFilters({
-    category: newFilters.categories?.[0] || "",
-    minPrice: newFilters.priceRange?.min || 0,
-    maxPrice: newFilters.priceRange?.max || 10000,
-    sortBy: newFilters.sortBy || "newest"
-  });
-  setCurrentPage(1);
-  setIsSearching(false);
-  setSearchQuery("");
-  setShowMobileFilters(false);
-}, []);
+    setFilters({
+      category: newFilters.categories?.[0] || "",
+      minPrice: newFilters.priceRange?.min || 0,
+      maxPrice: newFilters.priceRange?.max || 10000,
+      sortBy: newFilters.sortBy || "newest",
+    });
+    setCurrentPage(1);
+    setIsSearching(false);
+    setSearchQuery("");
+    setShowMobileFilters(false);
+  }, []);
 
   const handlePageChange = useCallback((page) => {
     setCurrentPage(page);
@@ -233,32 +228,35 @@ const Products = () => {
     }));
   }, []);
 
-  // Get lowest price from all variants with sizes
+  // Utility functions
   const getLowestPrice = useMemo(
     () => (variants) => {
-      if (!variants || variants.length === 0) {
+      let lowestPrice = Infinity;
+      let discountPrice = null;
+
+      variants.forEach((variant) => {
+        if (variant.sizes?.length) {
+          variant.sizes.forEach((size) => {
+            if (size.price < lowestPrice) {
+              lowestPrice = size.price;
+              discountPrice = size.discountPrice;
+            }
+          });
+        }
+      });
+
+      if (lowestPrice === Infinity) {
         return { price: "Price not available", discountPrice: null };
       }
 
-      // Find the variant with the lowest price (considering discount if available)
-      const variantWithLowestPrice = variants.reduce((lowest, variant) => {
-        const currentPrice = variant.discountPrice || variant.price;
-        const lowestPrice = lowest.discountPrice || lowest.price;
-        return currentPrice < lowestPrice ? variant : lowest;
-      }, variants[0]);
-
-      const price = variantWithLowestPrice.price;
-      const discountPrice = variantWithLowestPrice.discountPrice;
-
       return {
-        price: price ? `Rs. ${price.toFixed(2)}` : "Price not available",
+        price: `Rs. ${lowestPrice.toFixed(2)}`,
         discountPrice: discountPrice ? `Rs. ${discountPrice.toFixed(2)}` : null,
       };
     },
     []
   );
 
-  // Get currently selected variant object
   const getSelectedVariant = useMemo(
     () => (product) => {
       const variantId = selectedVariant[product._id];
@@ -269,7 +267,6 @@ const Products = () => {
     [selectedVariant]
   );
 
-  // Get sizes for selected variant
   const getAvailableSizes = useMemo(
     () => (product) => {
       const variant = getSelectedVariant(product);
@@ -278,214 +275,44 @@ const Products = () => {
     [getSelectedVariant]
   );
 
-  const ProductGrid = useMemo(
-    () =>
-      React.memo(
-        ({
-          products,
-          hoveredProductId,
-          selectedVariant,
-          handleProductMouseEnter,
-          handleProductMouseLeave,
-          handleVariantChange,
-          getLowestPrice,
-          getSelectedVariant,
-          getAvailableSizes,
-        }) => (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
-            {products.map((product) => {
-              const currentVariant = getSelectedVariant(product);
-              const priceInfo = getLowestPrice(product.variants);
-
-              return (
-                <div
-                  key={product._id}
-                  className="relative w-full aspect-[4/5] flex flex-col bg-white"
-                  onMouseEnter={() => handleProductMouseEnter(product._id)}
-                  onMouseLeave={handleProductMouseLeave}
-                >
-                  {new Date(product.createdAt) >
-                    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
-                    <span className="absolute top-2 left-2 bg-green-500 text-white px-3 py-1 text-xs z-10">
-                      New in
-                    </span>
-                  )}
-
-                  <div className="relative cursor-pointer group">
-                    <a href={`/detail/${product._id}`}>
-                      <img
-                        src={
-                          currentVariant?.mainImage ||
-                          "/placeholder-product.jpg"
-                        }
-                        alt={product.name}
-                        className="w-full h-[350px] md:h-[400px] lg:h-[420px] object-cover"
-                      />
-                    </a>
-
-                    {hoveredProductId === product._id && (
-                      <>
-                        <button
-                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 shadow-md z-20"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const currentIndex = product.variants.findIndex(
-                              (v) => v._id === selectedVariant[product._id]
-                            );
-                            const prevIndex =
-                              (currentIndex - 1 + product.variants.length) %
-                              product.variants.length;
-                            handleVariantChange(
-                              product._id,
-                              product.variants[prevIndex]._id
-                            );
-                          }}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            className="w-5 h-5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15.75 19.5L8.25 12l7.5-7.5"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 shadow-md z-20"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const currentIndex = product.variants.findIndex(
-                              (v) => v._id === selectedVariant[product._id]
-                            );
-                            const nextIndex =
-                              (currentIndex + 1) % product.variants.length;
-                            handleVariantChange(
-                              product._id,
-                              product.variants[nextIndex]._id
-                            );
-                          }}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            className="w-5 h-5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M8.25 4.5l7.5 7.5-7.5 7.5"
-                            />
-                          </svg>
-                        </button>
-                      </>
-                    )}
-
-                    {hoveredProductId === product._id &&
-                      product.variants.length > 1 && (
-                        <div className="absolute bottom-16 left-0 right-0 bg-white p-2 transition-opacity duration-300 opacity-100">
-                          <div className="flex flex-wrap justify-center gap-2">
-                            {product.variants.map((variant) => (
-                              <button
-                                key={variant._id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleVariantChange(product._id, variant._id);
-                                }}
-                                className={`w-6 h-6 rounded-full border ${
-                                  selectedVariant[product._id] === variant._id
-                                    ? "border-black border-2"
-                                    : "border-gray-300"
-                                }`}
-                                style={{
-                                  backgroundImage: `url(${variant.colorImage})`,
-                                  backgroundSize: "cover",
-                                  backgroundPosition: "center",
-                                }}
-                                aria-label={`Select ${variant.color} color`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                    <div
-                      className={`absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
-                        hoveredProductId === product._id
-                          ? "opacity-100"
-                          : "opacity-0"
-                      }`}
-                    >
-                      <button
-                        className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase hover:bg-gray-50"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAddToCart(product);
-                        }}
-                      >
-                        Add To Cart
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    <h3 className="text-sm font-medium line-clamp-2">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      {priceInfo.discountPrice ? (
-                        <>
-                          <p className="text-sm text-gray-500 line-through">
-                            {priceInfo.price}
-                          </p>
-                          <p className="text-sm font-medium text-red-600">
-                            {priceInfo.discountPrice}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-sm font-medium">{priceInfo.price}</p>
-                      )}
-                    </div>
-
-                    <p className="text-sm text-gray-500">
-                      {currentVariant?.color || "Various colors"}
-                      {getAvailableSizes(product).length > 0 &&
-                        ` • ${getAvailableSizes(product).length} sizes`}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )
-      ),
-    []
-  );
-
-  if (error)
+  // Loading state
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 pt-32 pb-8 flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <p className="text-red-500">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 bg-black text-white px-4 py-2"
-          >
-            Try Again
-          </button>
+      <>
+        <Header />
+        <div className="container max-w-screen mx-auto px-4 pt-32 pb-8 mt-10">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+              <p className="mt-2">Loading products...</p>
+            </div>
+          </div>
         </div>
-      </div>
+        <Footer />
+      </>
     );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <>
+        <Header />
+        <div className="container max-w-screen mx-auto px-4 pt-32 pb-8 mt-10">
+          <div className="text-center py-16">
+            <p className="text-red-500">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 bg-black text-white px-4 py-2 rounded"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
@@ -495,7 +322,7 @@ const Products = () => {
         <div className="lg:hidden mb-4">
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded"
+            className="flex items-center gap-2 bg-[#010135] text-[#FFF5CC] px-4 py-2 rounded"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -514,7 +341,7 @@ const Products = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row">
-          {/* Filter Sidebar - shown on desktop, toggleable on mobile */}
+          {/* Filter Sidebar */}
           <div
             className={`lg:block ${
               showMobileFilters ? "block" : "hidden"
@@ -525,7 +352,7 @@ const Products = () => {
 
           {/* Main content area */}
           <div className="flex-1" ref={productGridRef}>
-            {/* Search Input at the top right */}
+            {/* Header with search */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
               <h2 className="text-2xl font-bold">
                 {isSearching
@@ -560,24 +387,8 @@ const Products = () => {
               </div>
             </div>
 
-            {loading ? (
-              <div className="flex justify-center items-center min-h-[50vh]">
-                <div className="text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-                  <p className="mt-2">Loading products...</p>
-                </div>
-              </div>
-            ) : error ? (
-              <div className="text-center py-16">
-                <p className="text-red-500">{error}</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-4 bg-black text-white px-4 py-2"
-                >
-                  Try Again
-                </button>
-              </div>
-            ) : products.length === 0 ? (
+            {/* Products Grid */}
+            {products.length === 0 ? (
               <div className="text-center py-16">
                 <h2 className="text-xl font-medium">No products found</h2>
                 <p className="text-gray-600 mt-2">
@@ -590,17 +401,212 @@ const Products = () => {
               </div>
             ) : (
               <>
-                <ProductGrid
-                  products={products}
-                  hoveredProductId={hoveredProductId}
-                  selectedVariant={selectedVariant}
-                  handleProductMouseEnter={handleProductMouseEnter}
-                  handleProductMouseLeave={handleProductMouseLeave}
-                  handleVariantChange={handleVariantChange}
-                  getLowestPrice={getLowestPrice}
-                  getSelectedVariant={getSelectedVariant}
-                  getAvailableSizes={getAvailableSizes}
-                />
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                  {products.map((product) => {
+                    const currentVariant = getSelectedVariant(product);
+                    const priceInfo = getLowestPrice(product.variants);
+
+                    return (
+                      <div
+                        key={product._id}
+                        className="relative w-full"
+                        onMouseEnter={() =>
+                          handleProductMouseEnter(product._id)
+                        }
+                        onMouseLeave={handleProductMouseLeave}
+                      >
+                        {/* New badge */}
+                        {new Date(product.createdAt) >
+                          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
+                          <span className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 text-xs z-10 rounded">
+                            New
+                          </span>
+                        )}
+
+                        <div className="relative cursor-pointer group">
+                          <a href={`/detail/${product._id}`}>
+                            <img
+                              src={
+                                currentVariant?.mainImage ||
+                                "/placeholder-product.jpg"
+                              }
+                              alt={product.name}
+                              className="w-full h-[300px] sm:h-[280px] md:h-[350px] lg:h-[400px] object-cover"
+                            />
+                          </a>
+
+                          {/* Navigation arrows - hidden on mobile */}
+                          {hoveredProductId === product._id &&
+                            product.variants.length > 1 && (
+                              <>
+                                <button
+                                  className="hidden md:block absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 shadow-md z-20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const currentIndex =
+                                      product.variants.findIndex(
+                                        (v) =>
+                                          v._id === selectedVariant[product._id]
+                                      );
+                                    const prevIndex =
+                                      (currentIndex -
+                                        1 +
+                                        product.variants.length) %
+                                      product.variants.length;
+                                    handleVariantChange(
+                                      product._id,
+                                      product.variants[prevIndex]._id
+                                    );
+                                  }}
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={1.5}
+                                    stroke="currentColor"
+                                    className="w-4 h-4"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M15.75 19.5L8.25 12l7.5-7.5"
+                                    />
+                                  </svg>
+                                </button>
+                                <button
+                                  className="hidden md:block absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 shadow-md z-20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const currentIndex =
+                                      product.variants.findIndex(
+                                        (v) =>
+                                          v._id === selectedVariant[product._id]
+                                      );
+                                    const nextIndex =
+                                      (currentIndex + 1) %
+                                      product.variants.length;
+                                    handleVariantChange(
+                                      product._id,
+                                      product.variants[nextIndex]._id
+                                    );
+                                  }}
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={1.5}
+                                    stroke="currentColor"
+                                    className="w-4 h-4"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                                    />
+                                  </svg>
+                                </button>
+                              </>
+                            )}
+
+                          {/* Color variants - only on desktop hover */}
+                          {hoveredProductId === product._id &&
+                            product.variants.length > 1 && (
+                              <div className="hidden md:block absolute bottom-16 left-0 right-0 bg-white p-2 transition-opacity duration-300 opacity-100">
+                                <div className="flex flex-wrap justify-center gap-2">
+                                  {product.variants.map((variant) => (
+                                    <button
+                                      key={variant._id}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleVariantChange(
+                                          product._id,
+                                          variant._id
+                                        );
+                                      }}
+                                      className={`w-5 h-5 rounded-full border ${
+                                        selectedVariant[product._id] ===
+                                        variant._id
+                                          ? "border-black border-2"
+                                          : "border-gray-300"
+                                      }`}
+                                      style={{
+                                        backgroundImage: `url(${variant.colorImage})`,
+                                        backgroundSize: "cover",
+                                        backgroundPosition: "center",
+                                      }}
+                                      aria-label={`Select ${variant.color} color`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                          {/* Add to cart button - only on desktop hover */}
+                          <div
+                            className={`hidden md:block absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
+                              hoveredProductId === product._id
+                                ? "opacity-100"
+                                : "opacity-0"
+                            }`}
+                          >
+                            <button
+                              className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 font-medium uppercase text-sm hover:bg-[#010135] hover:text-[#FFF5CC]"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleAddToCart(product);
+                              }}
+                            >
+                              Add To Cart
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Product info */}
+                        <div className="mt-3 space-y-1">
+                          <h3 className="text-sm font-medium line-clamp-2 leading-tight">
+                            {product.name}
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            {priceInfo.discountPrice ? (
+                              <>
+                                <p className="text-sm font-medium text-red-600">
+                                  {priceInfo.discountPrice}
+                                </p>
+                                <p className="text-sm text-gray-500 line-through">
+                                  {priceInfo.price}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="text-sm font-medium">
+                                {priceInfo.price}
+                              </p>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {currentVariant?.color || "Various colors"}
+                            {getAvailableSizes(product).length > 0 &&
+                              ` • ${getAvailableSizes(product).length} sizes`}
+                          </p>
+                        </div>
+
+                        {/* Mobile add to cart button */}
+                        <button
+                          className="w-full bg-white text-[#FFF5CC] border mt-5 border-gray-300 text-gray-700 py-2 px-3 font-medium uppercase text-sm hover:bg-[#010135] hover:text-[#FFF5CC] block md:hidden"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAddToCart(product);
+                          }}
+                        >
+                          Add To Cart
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
 
                 {/* Pagination - only show if not searching */}
                 {!isSearching && totalPages > 1 && (

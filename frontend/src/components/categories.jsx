@@ -48,9 +48,8 @@ const Categories = () => {
 
     fetchCategories();
   }, []);
-
   return (
-    <div className="mx-auto px-4 py-10 md:py-10">
+    <div className="mx-auto px-4 py-1 md:py-1">
       <div className="text-center mb-8 md:mb-12">
         <h3 className="text-sm font-normal italic mb-0.5">
           Celebrating Womanhood
@@ -78,7 +77,7 @@ const Categories = () => {
                 onClick={() => {
                   navigate(`/products?category=${category._id}`);
                 }}
-                className="bg-white text-black px-5 md:px-7 py-1.5 md:py-2 text-xs md:text-sm font-medium tracking-wide hover:bg-opacity-95 transition-colors duration-300"
+                className="bg-[#010135] text-[#FFF5CC] px-5 md:px-7 py-1.5 md:py-2 text-xs md:text-sm font-medium tracking-wide hover:bg-opacity-95 transition-colors duration-300"
               >
                 SHOP NOW
               </button>

@@ -11,7 +11,9 @@ const Slider = () => {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const response = await axios.get("https://client-1-6rax.onrender.com/api/banners");
+        const response = await axios.get(
+          "https://client-1-6rax.onrender.com/api/banners"
+        );
         setBanners(response.data);
         setLoading(false);
       } catch (error) {
@@ -84,7 +86,7 @@ const Slider = () => {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden mt-36">
+    <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[75vh] lg:h-screen overflow-hidden mt-24 mt-[10rem]">
       {/* Slider Container */}
       <div className="relative h-full overflow-hidden">
         {banners.map((banner, index) => {
@@ -134,7 +136,7 @@ const Slider = () => {
                   <p className="text-xs sm:text-sm md:text-base font-light leading-relaxed opacity-90 max-w-xs sm:max-w-sm">
                     {banner.description}
                   </p>
-                  <button className="bg-white text-black px-4 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm font-medium tracking-wider hover:bg-gray-100 transition-colors duration-300 mt-3 sm:mt-4">
+                  <button className="bg-[#010135] text-[#FFF5CC] px-4 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm font-medium tracking-wider hover:bg-gray-100 transition-colors duration-300 mt-3 sm:mt-4">
                     SHOP NOW
                   </button>
                 </div>
