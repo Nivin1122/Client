@@ -116,13 +116,7 @@ const loginUser = asyncHandler(async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // if (!validateEmail(email)) {
-    //   return res
-    //     .status(400)
-    //     .json({
-    //       message: "Email must have at least 3 characters before @gmail.com",
-    //     });
-    // }
+  
 
     const existUser = await User.findOne({ email });
     if (!existUser) {
