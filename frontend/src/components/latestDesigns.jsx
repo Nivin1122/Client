@@ -5,10 +5,10 @@ const LatestDesigns = () => {
   return (
     <div className="mx-auto py-10 md:py-10">
       <div className="flex flex-col items-center justify-center text-center mb-8 md:mb-5">
-        <h2 className="text-2xl md:text-3xl font-medium">Fabrics</h2>
+        <h2 className="text-2xl md:text-3xl font-medium text-[#010135]">Fabrics</h2>
         <a
           href="https://client-1-6rax.onrender.com/products?page=1&limit=8&sortBy=newest"
-          className="text-red-500 text-sm uppercase mt-2 underline"
+          className="text-[#010135] text-sm uppercase mt-2 underline"
         >
           VIEW ALL
         </a>

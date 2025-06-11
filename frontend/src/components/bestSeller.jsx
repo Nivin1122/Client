@@ -111,7 +111,7 @@ const BestSeller = () => {
   const handleProductClick = (id) => navigate(`/detail/${id}`);
 
   return (
-    <div className="mx-auto px-4 py-4 sm:py-1 md:py-1">
+    <div className="mx-auto px-4 py-4 sm:py-1 md:py-1 text-[#010135]">
       <div className="flex justify-between items-center mb-6">
         <div className="flex-1 flex justify-center">
           <div className="flex items-center gap-5">
@@ -152,8 +152,11 @@ const BestSeller = () => {
             </button>
           </div>
         </div>
-        <a href="https://client-1-6rax.onrender.com/products?page=1&limit=8&sortBy=newest" className="text-red-500 text-sm uppercase">
-          View All
+        <a
+          href="/products?minPrice=0&maxPrice=10000&sortBy=newest"
+          className="bg-[#010135] text-[#FFF5CC] text-sm uppercase px-4 py-2 rounded-md hover:bg-[#020250] transition-colors"
+        >
+          VIEW ALL
         </a>
       </div>
 
@@ -169,7 +172,7 @@ const BestSeller = () => {
                 onMouseEnter={() => setHoveredProductId(product._id)}
                 onMouseLeave={() => setHoveredProductId(null)}
               >
-                <span className="absolute top-2 left-2 bg-red-500 text-white px-3 py-1 text-xs z-10">
+                <span className="absolute top-2 left-2 bg-[#010135] text-[#FFF5CC] px-3 py-1 text-xs z-10">
                   Best Seller
                 </span>
 

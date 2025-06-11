@@ -49,13 +49,13 @@ const Categories = () => {
     fetchCategories();
   }, []);
   return (
-    <div className="mx-auto px-4 py-1 md:py-1">
+    <div className="mx-auto px-4 py-1 md:py-1 text-[#010135]">
       <div className="text-center mb-8 md:mb-12">
-        <h3 className="text-sm font-normal italic mb-0.5">
+        <h3 className="text-sm font-medium mb-0.5 text-[#010135]">
           Celebrating Womanhood
         </h3>
-        <h4 className="text-sm font-normal italic mb-5">Since 1984</h4>
-        <h2 className="text-2xl md:text-3xl font-medium">Our Categories</h2>
+        <h4 className="text-sm font-normal italic mb-5 text-[#010135]">Since 1984</h4>
+        <h2 className="text-2xl md:text-3xl font-medium text-[#010135]">Our Categories</h2>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-5">

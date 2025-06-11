@@ -17,50 +17,50 @@ const NewArrivals = () => {
   const dispatch = useDispatch();
   const [selectedVariant, setSelectedVariant] = useState({});
 
-   const handleAddToCart = (product) => {
-      try {
-        const currentVariant = getSelectedVariant(product);
-  
-        // Get available sizes (handling both array and single object cases)
-        const availableSizes = currentVariant?.sizes
-          ? Array.isArray(currentVariant.sizes)
-            ? currentVariant.sizes
-            : [currentVariant.sizes]
-          : [];
-  
-        // Find the first available size with stock
-        const availableSize = availableSizes.find((size) => size.stockCount > 0);
-  
-        if (!availableSize) {
-          toast.error("This product is currently out of stock");
-          return;
-        }
-  
-        dispatch(
-          addToCart({
-            productId: product._id,
-            variantId: currentVariant._id,
-            sizeVariantId: availableSize._id,
-            quantity: 1,
-          })
-        );
-  
-        toast.success("Product added to cart!");
-      } catch (error) {
-        toast.error("Failed to add product to cart");
-        console.error("Add to cart error:", error);
-      }
-    };
+  const handleAddToCart = (product) => {
+    try {
+      const currentVariant = getSelectedVariant(product);
 
-    const getSelectedVariant = useMemo(
-        () => (product) => {
-          const variantId = selectedVariant[product._id];
-          return (
-            product.variants.find((v) => v._id === variantId) || product.variants[0]
-          );
-        },
-        [selectedVariant]
+      // Get available sizes (handling both array and single object cases)
+      const availableSizes = currentVariant?.sizes
+        ? Array.isArray(currentVariant.sizes)
+          ? currentVariant.sizes
+          : [currentVariant.sizes]
+        : [];
+
+      // Find the first available size with stock
+      const availableSize = availableSizes.find((size) => size.stockCount > 0);
+
+      if (!availableSize) {
+        toast.error("This product is currently out of stock");
+        return;
+      }
+
+      dispatch(
+        addToCart({
+          productId: product._id,
+          variantId: currentVariant._id,
+          sizeVariantId: availableSize._id,
+          quantity: 1,
+        })
       );
+
+      toast.success("Product added to cart!");
+    } catch (error) {
+      toast.error("Failed to add product to cart");
+      console.error("Add to cart error:", error);
+    }
+  };
+
+  const getSelectedVariant = useMemo(
+    () => (product) => {
+      const variantId = selectedVariant[product._id];
+      return (
+        product.variants.find((v) => v._id === variantId) || product.variants[0]
+      );
+    },
+    [selectedVariant]
+  );
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -142,7 +142,7 @@ const NewArrivals = () => {
   }
 
   return (
-     <div className="mx-auto px-4 py-4 sm:py-1 md:py-1">
+    <div className="mx-auto px-4 py-4 sm:py-1 md:py-1 text-[#010135]">
       <div className="flex justify-between items-center mb-6">
         <div className="flex-1 flex justify-center">
           <div className="flex items-center gap-5">
@@ -162,10 +162,10 @@ const NewArrivals = () => {
                 />
               </svg>
             </button>
-            <h2 className="text-xl font-medium text-center">
+            <h2 className="text-xl font-medium text-center text-[#010135]">
               New Arrivals - Unstitched Suits
             </h2>
-            <button className="text-gray-400" onClick={scrollRight}>
+            <button className="text-[#010135]" onClick={scrollRight}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -183,7 +183,10 @@ const NewArrivals = () => {
             </button>
           </div>
         </div>
-        <a href="https://client-1-6rax.onrender.com/products?page=1&limit=8&sortBy=newest" className="text-red-500 text-sm uppercase">
+        <a
+          href="/products?minPrice=0&maxPrice=10000&sortBy=newest"
+          className="bg-[#010135] text-[#FFF5CC] text-sm uppercase px-4 py-2 rounded-md hover:bg-[#020250] transition-colors"
+        >
           VIEW ALL
         </a>
       </div>
@@ -277,7 +280,7 @@ const NewArrivals = () => {
                     }`}
                   >
                     <button
-                      className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
+                      className="w-full bg-white border border-gray-300 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -293,7 +296,7 @@ const NewArrivals = () => {
                     {product.name}
                   </h3>
                   <p className="text-sm">{price}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[#010135]">
                     {mainVariant.color || "Various colors"}
                   </p>
                 </div>

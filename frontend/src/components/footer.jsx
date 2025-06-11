@@ -16,6 +16,7 @@ const Footer = () => {
             <p>Email: info@emirah.in</p>
             <p>Phone: 9947066664</p>
           </div>
+          
           <div className="space-y-2">
             <h4 className="text-sm font-semibold mt-4 text-[#E7C873]">Follow Us On</h4>
             <div className="flex space-x-4 text-[#FFF5CC]">
