@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Apply Inter globally */
 body {
-  font-family: inherit;
+  @apply font-sans;
 }
