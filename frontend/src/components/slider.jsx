@@ -86,7 +86,7 @@ const Slider = () => {
   }
 
   return (
-    <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[75vh] lg:h-screen overflow-hidden mt-24 mt-[10rem]">
+    <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[75vh] lg:h-screen overflow-hidden mt-24 mt-[8rem]">
       {/* Slider Container */}
       <div className="relative h-full overflow-hidden">
         {banners.map((banner, index) => {
