@@ -10,85 +10,179 @@ import {
   Box,
   Snackbar,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "axios";
 import { useNavigate } from 'react-router-dom';
-// import { useRouter } from "next/router";
-// import Cookies from "js-cookie";
-// import axiosInstance from "@/utils/adminAxiosInstance";
-// import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 const LoginForm = () => {
-  // const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const navigate = useNavigate();
 
-  // const getCsrfToken = async () => {
-  //   try {
-  //     const response = await axios.get("https://client-1-6rax.onrender.com/api/csrf-token", {
-  //       withCredentials: true,
-  //     });
-  //     return response.data.csrfToken;
-  //   } catch (error) {
-  //     console.error("Error fetching CSRF token:", error);
-  //     setError("Failed to initialize secure connection. Please try again.");
-  //     return null;
-  //   }
-  // };
+  // Configure axios defaults
+  axios.defaults.withCredentials = true;
 
+  // Function to check if admin is already authenticated
+  const checkAuthStatus = async () => {
+    try {
+      const response = await axios.get(
+        "https://client-1-6rax.onrender.com/api/admin/verify-session",
+        {
+          withCredentials: true,
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          }
+        }
+      );
+
+      if (response.data.success) {
+        // Admin is authenticated, redirect to dashboard
+        navigate("/admin/dashboard", { replace: true });
+        return true;
+      }
+    } catch (error) {
+      // Not authenticated or error occurred
+      console.log("Not authenticated:", error.response?.data?.message);
+      // Clear any stale data
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('admin-logged');
+    }
+    return false;
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate inputs
     if (!email.trim() || !password.trim()) {
       setError("Email and password are required.");
       return;
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     setLoading(true);
+    setError("");
+
     try {
-      // const csrfToken = await getCsrfToken();
-      // if (!csrfToken) {
-      //   setLoading(false);
-      //   return; // Stop if we couldn't get CSRF token
-      // }
-      
       const response = await axios.post(
         "https://client-1-6rax.onrender.com/api/admin/adminlogin",
-        { email, password },
+        { 
+          email: email.trim(), 
+          password: password.trim() 
+        },
         {
           headers: {
             "Content-Type": "application/json",
-            // "x-csrf-token": csrfToken,
           },
           withCredentials: true,
         }
       );
-      console.log(response);
-      
 
-      if (response.data.message === "Login successful") {
-        localStorage.setItem("admin-logged", true);
-        navigate("/admin/dashboard");
+      console.log("Login response:", response.data);
+
+      // Check for successful response
+      if (response.status === 200 && response.data) {
+        // Store token in localStorage as backup
+        if (response.data.token) {
+          localStorage.setItem("adminToken", response.data.token);
+          console.log("Token stored:", response.data.token);
+        }
+        
+        // Store admin logged status
+        localStorage.setItem("admin-logged", "true");
+        
+        // Store admin info
+        if (response.data.admin) {
+          localStorage.setItem("adminInfo", JSON.stringify(response.data.admin));
+        }
+
+        console.log("Login successful, navigating to dashboard...");
+        setSuccess("Login successful! Redirecting to dashboard...");
+        
+        // Small delay to show success message and ensure localStorage is set
+        setTimeout(() => {
+          navigate("/admin/dashboard", { replace: true });
+        }, 1000);
+        
+      } else {
+        setError(response.data?.message || "Login failed!");
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.response?.data?.message || "Login failed!");
+      console.error("Error response:", err.response);
+      
+      // Handle different error scenarios
+      if (err.response?.status === 401) {
+        setError("Invalid email or password.");
+      } else if (err.response?.status === 403) {
+        setError("Your account has been deactivated.");
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.code === 'NETWORK_ERROR') {
+        setError("Network error. Please check your connection.");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // Check authentication status on component mount
   useEffect(() => {
-    let admin_logged = localStorage.getItem("admin-logged");
-    if (admin_logged) {
-      navigate("/admin/dashboard");
-    } else {
-      navigate("/admin");
-    }
+    const initializeAuth = async () => {
+      setCheckingAuth(true);
+      
+      // Check if there's a stored token
+      const storedToken = localStorage.getItem('adminToken');
+      const adminLogged = localStorage.getItem('admin-logged');
+      
+      if (storedToken && adminLogged === 'true') {
+        // Verify the token with backend
+        const isAuthenticated = await checkAuthStatus();
+        if (!isAuthenticated) {
+          // Token is invalid, clear localStorage
+          localStorage.removeItem('adminToken');
+          localStorage.removeItem('admin-logged');
+          localStorage.removeItem('adminInfo');
+        }
+      }
+      
+      setCheckingAuth(false);
+    };
+
+    initializeAuth();
   }, []);
+
+  // Show loading spinner while checking authentication
+  if (checkingAuth) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "85vh",
+          background: "linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)",
+        }}
+      >
+        <CircularProgress size={50} sx={{ color: "#000000" }} />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -157,22 +251,6 @@ const LoginForm = () => {
             </Typography>
           </Box>
 
-          {error && (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "#d32f2f",
-                textAlign: "center",
-                p: 1,
-                mb: 2,
-                backgroundColor: "rgba(211, 47, 47, 0.1)",
-                borderRadius: "4px",
-              }}
-            >
-              {error}
-            </Typography>
-          )}
-
           <form onSubmit={handleSubmit}>
             <TextField
               label="Email Address"
@@ -180,7 +258,11 @@ const LoginForm = () => {
               variant="outlined"
               fullWidth
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(""); // Clear error when user types
+                if (success) setSuccess(""); // Clear success when user types
+              }}
               sx={{
                 mb: 3,
                 "& .MuiOutlinedInput-root": {
@@ -194,6 +276,7 @@ const LoginForm = () => {
                   },
               }}
               required
+              disabled={loading}
             />
 
             <TextField
@@ -202,7 +285,11 @@ const LoginForm = () => {
               variant="outlined"
               fullWidth
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError(""); // Clear error when user types
+                if (success) setSuccess(""); // Clear success when user types
+              }}
               sx={{
                 mb: 3,
                 "& .MuiOutlinedInput-root": {
@@ -216,10 +303,14 @@ const LoginForm = () => {
                   },
               }}
               required
+              disabled={loading}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)}>
+                    <IconButton 
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={loading}
+                    >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -242,21 +333,68 @@ const LoginForm = () => {
                 "&:hover": {
                   backgroundColor: "#333333",
                 },
+                "&:disabled": {
+                  backgroundColor: "#cccccc",
+                },
                 transition: "all 0.3s ease",
+                position: "relative",
               }}
             >
-              {loading ? "Authenticating..." : "Sign In"}
+              {loading ? (
+                <>
+                  <CircularProgress size={20} sx={{ mr: 1, color: "white" }} />
+                  Authenticating...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
+
+          {/* Default credentials info for development */}
+          <Box sx={{ mt: 3, p: 2, backgroundColor: "#f5f5f5", borderRadius: 1 }}>
+            <Typography variant="caption" sx={{ color: "#666", display: "block" }}>
+              Default Credentials:
+            </Typography>
+            <Typography variant="caption" sx={{ color: "#666", display: "block" }}>
+              Email: admin@gmail.com
+            </Typography>
+            <Typography variant="caption" sx={{ color: "#666" }}>
+              Password: admin@123
+            </Typography>
+          </Box>
         </CardContent>
       </Card>
+      
+      {/* Error Notification */}
       <Snackbar
         open={!!error}
         autoHideDuration={6000}
         onClose={() => setError("")}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={() => setError("")} severity="error">
+        <Alert 
+          onClose={() => setError("")} 
+          severity="error"
+          sx={{ width: '100%' }}
+        >
           {error}
+        </Alert>
+      </Snackbar>
+
+      {/* Success Notification */}
+      <Snackbar
+        open={!!success}
+        autoHideDuration={3000}
+        onClose={() => setSuccess("")}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setSuccess("")} 
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {success}
         </Alert>
       </Snackbar>
     </Box>
