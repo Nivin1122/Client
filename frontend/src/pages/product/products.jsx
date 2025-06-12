@@ -39,6 +39,12 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    let token = localStorage.getItem("token");
+    setToken(token);
+  }, []);
 
   // Filters state
   const [filters, setFilters] = useState(() => ({
@@ -544,24 +550,26 @@ const Products = () => {
                             )}
 
                           {/* Add to cart button - only on desktop hover */}
-                          <div
-                            className={`hidden md:block absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
-                              hoveredProductId === product._id
-                                ? "opacity-100"
-                                : "opacity-0"
-                            }`}
-                          >
-                            <button
-                              className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 font-medium uppercase text-sm hover:bg-[#010135] hover:text-[#FFF5CC]"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleAddToCart(product);
-                              }}
+                          {token !== null && (
+                            <div
+                              className={`hidden md:block absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
+                                hoveredProductId === product._id
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              }`}
                             >
-                              Add To Cart
-                            </button>
-                          </div>
+                              <button
+                                className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 font-medium uppercase text-sm hover:bg-[#010135] hover:text-[#FFF5CC]"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleAddToCart(product);
+                                }}
+                              >
+                                Add To Cart
+                              </button>
+                            </div>
+                          )}
                         </div>
 
                         {/* Product info */}
@@ -593,16 +601,18 @@ const Products = () => {
                         </div>
 
                         {/* Mobile add to cart button */}
-                        <button
-                          className="w-full bg-white text-[#FFF5CC] border mt-5 border-gray-300 text-gray-700 py-2 px-3 font-medium uppercase text-sm hover:bg-[#010135] hover:text-[#FFF5CC] block md:hidden"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAddToCart(product);
-                          }}
-                        >
-                          Add To Cart
-                        </button>
+                        {token !== null && (
+                          <button
+                            className="w-full bg-white text-[#FFF5CC] border mt-5 border-gray-300 text-gray-700 py-2 px-3 font-medium uppercase text-sm hover:bg-[#010135] hover:text-[#FFF5CC] block md:hidden"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleAddToCart(product);
+                            }}
+                          >
+                            Add To Cart
+                          </button>
+                        )}
                       </div>
                     );
                   })}

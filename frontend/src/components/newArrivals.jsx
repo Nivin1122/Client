@@ -16,6 +16,11 @@ const NewArrivals = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [selectedVariant, setSelectedVariant] = useState({});
+  const [token, setToken] = useState(null)
+  useEffect(() => {
+    let token = localStorage.getItem("token");
+    setToken(token);
+  }, []);
 
   const handleAddToCart = (product) => {
     try {
@@ -272,24 +277,26 @@ const NewArrivals = () => {
                     )}
 
                   {/* Quick Buy button */}
-                  <div
-                    className={`absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
-                      hoveredProductId === product._id
-                        ? "opacity-100"
-                        : "opacity-0"
-                    }`}
-                  >
-                    <button
-                      className="w-full bg-white border border-gray-300 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleAddToCart(product);
-                      }}
+                  {token !== null && (
+                    <div
+                      className={`absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
+                        hoveredProductId === product._id
+                          ? "opacity-100"
+                          : "opacity-0"
+                      }`}
                     >
-                      Add To Cart
-                    </button>
-                  </div>
+                      <button
+                        className="w-full bg-white border border-gray-300 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAddToCart(product);
+                        }}
+                      >
+                        Add To Cart
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4 space-y-2">
                   <h3 className="text-sm font-medium line-clamp-2">

@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
-import fallbackImage from "../assets/banner.png"; 
+import fallbackImage from "../assets/banner.png";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/slices/cartSlice";
 import { toast } from "react-toastify";
@@ -13,39 +13,46 @@ const BestSeller = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [selectedVariant, setSelectedVariant] = useState({});
+  const [token, setToken] = useState(null);
+  useEffect(() => {
+    let token = localStorage.getItem("token");
+    setToken(token);
+  }, []);
 
   const handleAddToCart = (product) => {
-  try {
-    const currentVariant = getSelectedVariant(product);
-    
-    // Get available sizes (handling both array and single object cases)
-    const availableSizes = currentVariant?.sizes 
-      ? Array.isArray(currentVariant.sizes) 
-        ? currentVariant.sizes 
-        : [currentVariant.sizes]
-      : [];
+    try {
+      const currentVariant = getSelectedVariant(product);
 
-    // Find the first available size with stock
-    const availableSize = availableSizes.find(size => size.stockCount > 0);
+      // Get available sizes (handling both array and single object cases)
+      const availableSizes = currentVariant?.sizes
+        ? Array.isArray(currentVariant.sizes)
+          ? currentVariant.sizes
+          : [currentVariant.sizes]
+        : [];
 
-    if (!availableSize) {
-      toast.error("This product is currently out of stock");
-      return;
+      // Find the first available size with stock
+      const availableSize = availableSizes.find((size) => size.stockCount > 0);
+
+      if (!availableSize) {
+        toast.error("This product is currently out of stock");
+        return;
+      }
+
+      dispatch(
+        addToCart({
+          productId: product._id,
+          variantId: currentVariant._id,
+          sizeVariantId: availableSize._id,
+          quantity: 1,
+        })
+      );
+
+      toast.success("Product added to cart!");
+    } catch (error) {
+      toast.error("Failed to add product to cart");
+      console.error("Add to cart error:", error);
     }
-
-    dispatch(addToCart({
-      productId: product._id,
-      variantId: currentVariant._id,
-      sizeVariantId: availableSize._id,
-      quantity: 1
-    }));
-
-    toast.success("Product added to cart!");
-  } catch (error) {
-    toast.error("Failed to add product to cart");
-    console.error("Add to cart error:", error);
-  }
-};
+  };
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -99,14 +106,14 @@ const BestSeller = () => {
   };
 
   const getSelectedVariant = useMemo(
-      () => (product) => {
-        const variantId = selectedVariant[product._id];
-        return (
-          product.variants.find((v) => v._id === variantId) || product.variants[0]
-        );
-      },
-      [selectedVariant]
-    );
+    () => (product) => {
+      const variantId = selectedVariant[product._id];
+      return (
+        product.variants.find((v) => v._id === variantId) || product.variants[0]
+      );
+    },
+    [selectedVariant]
+  );
 
   const handleProductClick = (id) => navigate(`/detail/${id}`);
 
@@ -223,24 +230,26 @@ const BestSeller = () => {
                       </>
                     )}
 
-                  <div
-                    className={`absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
-                      hoveredProductId === product._id
-                        ? "opacity-100"
-                        : "opacity-0"
-                    }`}
-                  >
-                    <button
-                      className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleAddToCart(product);
-                      }}
+                  {token !== null && (
+                    <div
+                      className={`absolute bottom-0 left-0 right-0 bg-white p-2 transition-opacity duration-300 ${
+                        hoveredProductId === product._id
+                          ? "opacity-100"
+                          : "opacity-0"
+                      }`}
                     >
-                      Add To Cart
-                    </button>
-                  </div>
+                      <button
+                        className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAddToCart(product);
+                        }}
+                      >
+                        Add To Cart
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 space-y-2">
