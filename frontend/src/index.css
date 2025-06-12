@@ -2,7 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Apply Inter globally */
+/* Apply Montserrat globally with correct weight, color, and spacing */
 body {
-  @apply font-sans;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 20px;
+  color: rgb(92, 92, 92);
 }

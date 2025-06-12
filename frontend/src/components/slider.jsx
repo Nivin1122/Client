@@ -86,7 +86,7 @@ const Slider = () => {
   }
 
   return (
-    <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[75vh] lg:h-screen overflow-hidden mt-24 mt-[8rem]">
+    <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[75vh] lg:h-screen overflow-hidden mt-24 sm:mt-[6rem]">
       {/* Slider Container */}
       <div className="relative h-full overflow-hidden">
         {banners.map((banner, index) => {
@@ -136,8 +136,8 @@ const Slider = () => {
                   <p className="text-xs sm:text-sm md:text-base font-light leading-relaxed opacity-90 max-w-xs sm:max-w-sm">
                     {banner.description}
                   </p>
-                  <button className="bg-[#010135] text-[#FFF5CC] px-4 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm font-medium tracking-wider transition-colors duration-300 mt-3 sm:mt-4">
-                    <a href="/products">SHOP NOW</a>
+                  <button className="bg-[#010135] text-[#FFF5CC] px-4 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm font-medium tracking-wider hover:bg-gray-100 transition-colors duration-300 mt-3 sm:mt-4">
+                    SHOP NOW
                   </button>
                 </div>
               </div>

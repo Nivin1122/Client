@@ -569,10 +569,10 @@ const Products = () => {
                           <h3 className="text-sm font-medium line-clamp-2 leading-tight">
                             {product.name}
                           </h3>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 font-Arbutus Slab">
                             {priceInfo.discountPrice ? (
                               <>
-                                <p className="text-sm font-medium text-red-600">
+                                <p className="text-sm font-medium text-red-black">
                                   {priceInfo.discountPrice}
                                 </p>
                                 <p className="text-sm text-gray-500 line-through">
