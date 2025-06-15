@@ -252,12 +252,24 @@ const Products = () => {
       });
 
       if (lowestPrice === Infinity) {
-        return { price: "Price not available", discountPrice: null };
+        return {
+          price: "Price not available",
+          discountPrice: null,
+          offerPercent: null,
+        };
+      }
+
+      let offerPercent = null;
+      if (discountPrice && discountPrice < lowestPrice) {
+        offerPercent = Math.round(
+          ((lowestPrice - discountPrice) / lowestPrice) * 100
+        );
       }
 
       return {
         price: `Rs. ${lowestPrice.toFixed(2)}`,
         discountPrice: discountPrice ? `Rs. ${discountPrice.toFixed(2)}` : null,
+        offerPercent,
       };
     },
     []
@@ -593,6 +605,12 @@ const Products = () => {
                               </p>
                             )}
                           </div>
+                          {priceInfo.offerPercent && (
+                            <div className="inline-block mt-1 bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                              {priceInfo.offerPercent}% OFF
+                            </div>
+                          )}
+
                           <p className="text-xs text-gray-500">
                             {currentVariant?.color || "Various colors"}
                             {getAvailableSizes(product).length > 0 &&
