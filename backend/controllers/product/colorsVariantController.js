@@ -3,6 +3,27 @@ const Product = require("../../models/product/productModel")
 const cloudinary = require("../../config/cloudinary");
 const asyncHandler = require("express-async-handler");
 
+const uploadToCloudinary = async (file, isVideo = false) => {
+  try {
+    const options = isVideo ? {
+      resource_type: 'video',
+      chunk_size: 6000000,
+      eager: [
+        { format: 'mp4', duration: 60 }
+      ],
+      eager_async: true,
+      transformation: [
+        { duration: 60 }
+      ]
+    } : {};
+
+    const result = await cloudinary.uploader.upload(file.path, options);
+    return result.secure_url;
+  } catch (error) {
+    throw new Error(`Error uploading to Cloudinary: ${error.message}`);
+  }
+};
+
 const getProductVariants = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
@@ -22,4 +43,4 @@ const getProductVariants = asyncHandler(async (req, res) => {
     }
 });
 
-module.exports = {getProductVariants};
+module.exports = {getProductVariants, uploadToCloudinary};

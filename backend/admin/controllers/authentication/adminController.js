@@ -27,27 +27,47 @@ const adminLogin = asyncHandler(async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Email and password are required" 
+      });
+    }
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid email format" 
+      });
     }
 
     // Find admin by email
     const admin = await Admin.findOne({ email });
     if (!admin) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid credentials" 
+      });
     }
 
     // Check if admin is active
     if (!admin.isActive) {
-      return res.status(403).json({ message: "Account is deactivated" });
+      return res.status(403).json({ 
+        success: false,
+        message: "Account is deactivated" 
+      });
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, admin.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid credentials" 
+      });
     }
 
     // Generate JWT token
@@ -66,47 +86,142 @@ const adminLogin = asyncHandler(async (req, res) => {
       lastLogin: new Date()
     });
 
-    // Set cookie
+    // Set secure cookie with proper options
     res.cookie("adminToken", token, {
       httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: process.env.NODE_ENV === 'production', // true in production
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      path: '/'
     });
 
+    // Send success response with token (for localStorage backup)
     res.status(200).json({ 
+      success: true,
       message: "Login successful",
+      token: token, // Include token for localStorage
       admin: {
+        id: admin._id,
         email: admin.email,
         role: admin.role
       }
     });
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ 
+      success: false,
+      message: "Internal server error" 
+    });
+  }
+});
+
+// Add middleware to verify admin token
+const verifyAdminToken = asyncHandler(async (req, res, next) => {
+  try {
+    // Get token from cookie or authorization header
+    let token = req.cookies.adminToken;
+    
+    if (!token && req.headers.authorization) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Access denied. No token provided." 
+      });
+    }
+
+    // Verify token
+    const decoded = Jwt.verify(token, process.env.JWT_SECRET || "1921u0030");
+    
+    // Find admin
+    const admin = await Admin.findById(decoded.id).select('-password');
+    if (!admin || !admin.isActive) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid token or admin deactivated" 
+      });
+    }
+
+    req.admin = admin;
+    next();
+  } catch (error) {
+    console.error("Token verification error:", error);
+    res.status(401).json({ 
+      success: false,
+      message: "Invalid token" 
+    });
+  }
+});
+
+// Add route to verify current admin session
+const verifyAdminSession = asyncHandler(async (req, res) => {
+  try {
+    // Get token from cookie or authorization header
+    let token = req.cookies.adminToken;
+    
+    if (!token && req.headers.authorization) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      return res.status(401).json({ 
+        success: false,
+        message: "No active session" 
+      });
+    }
+
+    // Verify token
+    const decoded = Jwt.verify(token, process.env.JWT_SECRET || "1921u0030");
+    
+    // Find admin
+    const admin = await Admin.findById(decoded.id).select('-password');
+    if (!admin || !admin.isActive) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid session" 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Valid session",
+      admin: {
+        id: admin._id,
+        email: admin.email,
+        role: admin.role
+      }
+    });
+  } catch (error) {
+    console.error("Session verification error:", error);
+    res.status(401).json({ 
+      success: false,
+      message: "Invalid session" 
+    });
   }
 });
 
 const logoutAdmin = asyncHandler(async (req, res) => {
   try {
+    // Clear all admin-related cookies
     res.clearCookie('adminToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/'
     });
 
-    res.clearCookie('_csrf', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/'
+    res.status(200).json({ 
+      success: true,
+      message: 'Logout successful' 
     });
-
-    res.status(200).json({ message: 'Logout successful' });
   } catch (error) {
     console.error('Logout error:', error);
-    res.status(500).json({ message: 'Error during logout' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error during logout' 
+    });
   }
 });
 
@@ -121,17 +236,25 @@ const blockUser = asyncHandler(async (req, res) => {
     );
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "User not found" 
+      });
     }
 
-    res.status(200).json({ message: "User blocked successfully", user });
+    res.status(200).json({ 
+      success: true,
+      message: "User blocked successfully", 
+      user 
+    });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Something went wrong while blocking user." });
+    console.error("Block user error:", err);
+    res.status(500).json({ 
+      success: false,
+      message: "Something went wrong while blocking user." 
+    });
   }
 });
-
 
 const unblockUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
@@ -144,28 +267,42 @@ const unblockUser = asyncHandler(async (req, res) => {
     );
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "User not found" 
+      });
     }
 
-    res.status(200).json({ message: "User unblocked successfully", user });
+    res.status(200).json({ 
+      success: true,
+      message: "User unblocked successfully", 
+      user 
+    });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Something went wrong while unblocking user." });
+    console.error("Unblock user error:", err);
+    res.status(500).json({ 
+      success: false,
+      message: "Something went wrong while unblocking user." 
+    });
   }
 });
 
 const userList = asyncHandler(async (req, res) => {
   try {
     let users = await User.find({}).select("-password").sort({createdAt:-1}); 
-    if (users.length === 0) {
-      return res.status(404).json({ message: "No users found." });
-    }
-    res.status(200).json(users);
+    
+    res.status(200).json({
+      success: true,
+      message: "Users fetched successfully",
+      users: users,
+      count: users.length
+    });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Something went wrong while fetching users." });
+    console.error("User list error:", err);
+    res.status(500).json({ 
+      success: false,
+      message: "Something went wrong while fetching users." 
+    });
   }
 });
 
@@ -175,5 +312,7 @@ module.exports = {
   blockUser, 
   unblockUser, 
   logoutAdmin,
-  createInitialAdmin  
+  createInitialAdmin,
+  verifyAdminToken,
+  verifyAdminSession
 };
