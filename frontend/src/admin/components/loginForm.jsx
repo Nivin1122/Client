@@ -30,32 +30,33 @@ const LoginForm = () => {
   axios.defaults.withCredentials = true;
 
   // Function to check if admin is already authenticated
-  const checkAuthStatus = async () => {
-    try {
-      const response = await axios.get(
-        "https://client-1-6rax.onrender.com/api/admin/verify-session",
-        {
-          withCredentials: true,
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-          }
-        }
-      );
+  // const checkAuthStatus = async () => {
+  //   try {
+  //     const response = await axios.get(
+  //       // "https://client-1-6rax.onrender.com/api/admin/verify-session",
+  //       "http://localhost:9090/api/admin/verify-session",
+  //       {
+  //         withCredentials: true,
+  //         headers: {
+  //           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+  //         }
+  //       }
+  //     );
 
-      if (response.data.success) {
-        // Admin is authenticated, redirect to dashboard
-        navigate("/admin/dashboard", { replace: true });
-        return true;
-      }
-    } catch (error) {
-      // Not authenticated or error occurred
-      console.log("Not authenticated:", error.response?.data?.message);
-      // Clear any stale data
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('admin-logged');
-    }
-    return false;
-  };
+  //     if (response.data.success) {
+  //       // Admin is authenticated, redirect to dashboard
+  //       navigate("/admin/dashboard", { replace: true });
+  //       return true;
+  //     }
+  //   } catch (error) {
+  //     // Not authenticated or error occurred
+  //     console.log("Not authenticated:", error.response?.data?.message);
+  //     // Clear any stale data
+  //     localStorage.removeItem('adminToken');
+  //     localStorage.removeItem('admin-logged');
+  //   }
+  //   return false;
+  // };
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -78,7 +79,8 @@ const LoginForm = () => {
 
     try {
       const response = await axios.post(
-        "https://client-1-6rax.onrender.com/api/admin/adminlogin",
+        // "https://client-1-6rax.onrender.com/api/admin/adminlogin",
+        "http://localhost:9090/api/admin/adminlogin",
         { 
           email: email.trim(), 
           password: password.trim() 
@@ -146,26 +148,42 @@ const LoginForm = () => {
     const initializeAuth = async () => {
       setCheckingAuth(true);
       
-      // Check if there's a stored token
-      const storedToken = localStorage.getItem('adminToken');
-      const adminLogged = localStorage.getItem('admin-logged');
-      
-      if (storedToken && adminLogged === 'true') {
-        // Verify the token with backend
-        const isAuthenticated = await checkAuthStatus();
-        if (!isAuthenticated) {
+      // Check if we're already on the login page
+      if (window.location.pathname === '/admin') {
+        setCheckingAuth(false);
+        return;
+      }
+
+      try {
+        // Verify token with backend
+        const response = await axios.get(
+          'http://localhost:9090/api/admin/check-auth',
+          { withCredentials: true }
+        );
+        
+        if (!response.data.success) {
           // Token is invalid, clear localStorage
           localStorage.removeItem('adminToken');
           localStorage.removeItem('admin-logged');
           localStorage.removeItem('adminInfo');
+          navigate('/admin');
         }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        // Only clear localStorage if we get an auth error
+        if (error.response?.status === 401) {
+          localStorage.removeItem('adminToken');
+          localStorage.removeItem('admin-logged');
+          localStorage.removeItem('adminInfo');
+          navigate('/admin');
+        }
+      } finally {
+        setCheckingAuth(false);
       }
-      
-      setCheckingAuth(false);
     };
 
     initializeAuth();
-  }, []);
+  }, [navigate]);
 
   // Show loading spinner while checking authentication
   if (checkingAuth) {

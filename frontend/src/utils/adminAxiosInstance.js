@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "https://client-1-6rax.onrender.com/api/admin", 
-  withCredentials: true,  
+  baseURL: "http://localhost:9090/api/admin",
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -34,7 +34,10 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // Redirect to admin login page if unauthorized
+      // Clear localStorage and redirect to admin login page if unauthorized
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('admin-logged');
+      localStorage.removeItem('adminInfo');
       window.location.href = '/admin';
       return Promise.reject(error);
     }
@@ -45,8 +48,8 @@ axiosInstance.interceptors.response.use(
 // Add a method to check if admin is authenticated
 axiosInstance.isAuthenticated = async () => {
   try {
-    await axiosInstance.get('/check-auth');
-    return true;
+    const response = await axiosInstance.get('/check-auth');
+    return response.data.success === true;
   } catch (error) {
     return false;
   }

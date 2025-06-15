@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "../../components/ui/button";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/slices/cartSlice";
@@ -16,6 +16,7 @@ import Footer from "../../components/footer";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { Play, Pause, Volume2, VolumeX, Maximize2 } from "lucide-react";
 
 const ProductDetail = () => {
   const dispatch = useDispatch();
@@ -32,9 +33,19 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isReturnOpen, setIsReturnOpen] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState({ type: 'image', index: 0 });
   const [error, setError] = useState(null);
   const [sizes, setSizes] = useState([]);
   const navigate = useNavigate();
+
+  // Video controls state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [showVideoControls, setShowVideoControls] = useState(false);
+  const videoRef = useRef(null);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -42,6 +53,27 @@ const ProductDetail = () => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
   }, []);
+
+  // Video event handlers
+  useEffect(() => {
+    if (videoRef.current && selectedMedia.type === 'video') {
+      const video = videoRef.current;
+      
+      const updateTime = () => setCurrentTime(video.currentTime);
+      const updateDuration = () => setDuration(video.duration);
+      const handleEnd = () => setIsPlaying(false);
+      
+      video.addEventListener('timeupdate', updateTime);
+      video.addEventListener('loadedmetadata', updateDuration);
+      video.addEventListener('ended', handleEnd);
+      
+      return () => {
+        video.removeEventListener('timeupdate', updateTime);
+        video.removeEventListener('loadedmetadata', updateDuration);
+        video.removeEventListener('ended', handleEnd);
+      };
+    }
+  }, [selectedMedia]);
 
   // Fetch product details and variants
   useEffect(() => {
@@ -106,6 +138,8 @@ const ProductDetail = () => {
     setSelectedVariant(variant);
     setSelectedImage(0);
     setSelectedSize(null);
+    setSelectedMedia({ type: 'image', index: 0 });
+    setIsPlaying(false);
 
     try {
       const response = await axios.get(
@@ -132,6 +166,8 @@ const ProductDetail = () => {
     setSelectedVariant(variant);
     setSelectedImage(0);
     setSelectedSize(null);
+    setSelectedMedia({ type: 'image', index: 0 });
+    setIsPlaying(false);
 
     // Fetch sizes for the selected variant
     const fetchSizes = async () => {
@@ -181,6 +217,47 @@ const ProductDetail = () => {
     });
   };
 
+  // Video control handlers
+  const handlePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleMuteToggle = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+    }
+  };
+
+  const handleProgressChange = (e) => {
+    const newTime = (parseFloat(e.target.value) / 100) * duration;
+    if (videoRef.current) {
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  };
+
+  const formatVideoTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   // Handle mouse move for zoom effect
   const handleMouseMove = (e) => {
     const { left, top, width, height } =
@@ -188,6 +265,15 @@ const ProductDetail = () => {
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
     setZoomPosition({ x, y });
+  };
+
+  // Handle media selection
+  const handleMediaSelect = (media, index) => {
+    setSelectedMedia({ type: media.type, index });
+    if (media.type === 'video') {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    }
   };
 
   // Quantity handlers
@@ -256,10 +342,20 @@ const ProductDetail = () => {
     );
   }
 
-  // Get current variant's images
-  const currentVariantImages = selectedVariant
-    ? [selectedVariant.mainImage, ...selectedVariant.subImages]
+  // Get current variant's media (images and videos)
+  const currentVariantMedia = selectedVariant
+    ? [
+        { type: 'image', url: selectedVariant.mainImage },
+        ...selectedVariant.subImages.map(url => ({ type: 'image', url })),
+        ...(selectedVariant.videos && selectedVariant.videos.length > 0 
+            ? selectedVariant.videos.map(video => ({ type: 'video', url: video.url, thumbnail: video.thumbnail }))
+            : []
+        )
+      ]
     : [];
+
+  // Get current media item
+  const currentMediaItem = currentVariantMedia[selectedMedia.index];
 
   // Get formatted price
   const formatPrice = (price) => {
@@ -293,37 +389,128 @@ const ProductDetail = () => {
         </nav>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Product Images */}
+          {/* Product Images & Videos */}
           <div className="relative">
             {selectedVariant && (
               <>
+                {/* Main Media Display */}
                 <div
-                  className="relative w-full h-[500px] overflow-hidden cursor-crosshair"
-                  onMouseEnter={() => setShowZoom(true)}
-                  onMouseLeave={() => setShowZoom(false)}
+                  className="relative w-full h-[500px] overflow-hidden bg-gray-50 rounded-lg"
+                  onMouseEnter={() => currentMediaItem?.type === 'image' && setShowZoom(true)}
+                  onMouseLeave={() => {
+                    setShowZoom(false);
+                    setShowVideoControls(false);
+                  }}
                   onMouseMove={handleMouseMove}
                 >
-                  <img
-                    src={
-                      currentVariantImages[selectedImage] ||
-                      "/placeholder-image.jpg"
-                    }
-                    alt={product.name}
-                    className="w-full h-full object-contain"
-                  />
-                  {showZoom && (
-                    <div
-                      className="absolute right-0 top-0 w-[500px] h-[500px] border border-gray-200 overflow-hidden bg-white"
-                      style={{
-                        backgroundImage: `url(${
-                          currentVariantImages[selectedImage] ||
-                          "/placeholder-image.jpg"
-                        })`,
-                        backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                        backgroundSize: "200%",
-                        backgroundRepeat: "no-repeat",
-                      }}
-                    />
+                  {currentMediaItem?.type === 'image' ? (
+                    <>
+                      <img
+                        src={currentMediaItem.url || "/placeholder-image.jpg"}
+                        alt={product.name}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.target.src = "/placeholder-image.jpg";
+                        }}
+                      />
+                      {showZoom && (
+                        <div
+                          className="absolute right-0 top-0 w-[500px] h-[500px] border border-gray-200 overflow-hidden bg-white z-10 shadow-lg"
+                          style={{
+                            backgroundImage: `url(${currentMediaItem.url || "/placeholder-image.jpg"})`,
+                            backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                            backgroundSize: "200%",
+                            backgroundRepeat: "no-repeat",
+                          }}
+                        />
+                      )}
+                    </>
+                  ) : currentMediaItem?.type === 'video' ? (
+                    <div 
+                      className="relative w-full h-full bg-black rounded-lg overflow-hidden"
+                      onMouseEnter={() => setShowVideoControls(true)}
+                      onMouseLeave={() => setShowVideoControls(false)}
+                    >
+                      <video
+                        ref={videoRef}
+                        src={currentMediaItem.url}
+                        className="w-full h-full object-contain"
+                        muted={isMuted}
+                        poster={currentMediaItem.thumbnail}
+                        onError={(e) => {
+                          console.error('Video load error:', e);
+                        }}
+                        onClick={handlePlayPause}
+                      />
+                      
+                      {/* Video Controls Overlay */}
+                      <div className={`absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center ${showVideoControls ? 'opacity-100' : 'opacity-0'}`}>
+                        <button
+                          onClick={handlePlayPause}
+                          className="bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-4 shadow-lg transform transition-all duration-300"
+                        >
+                          {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
+                        </button>
+                      </div>
+
+                      {/* Video Controls Bar */}
+                      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 transition-all duration-300 ${showVideoControls ? 'opacity-100' : 'opacity-0'}`}>
+                        <div className="flex items-center space-x-3 text-white">
+                          <button onClick={handlePlayPause} className="hover:text-blue-400 transition-colors">
+                            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                          </button>
+                          
+                          <div className="flex-1">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={duration ? (currentTime / duration) * 100 : 0}
+                              onChange={handleProgressChange}
+                              className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                              style={{
+                                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${duration ? (currentTime / duration) * 100 : 0}%, #4b5563 ${duration ? (currentTime / duration) * 100 : 0}%, #4b5563 100%)`
+                              }}
+                            />
+                          </div>
+                          
+                          <span className="text-sm min-w-[80px] text-center">
+                            {formatVideoTime(currentTime)} / {formatVideoTime(duration)}
+                          </span>
+                          
+                          <button onClick={handleMuteToggle} className="hover:text-blue-400 transition-colors">
+                            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                          </button>
+                          
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.1"
+                            value={volume}
+                            onChange={handleVolumeChange}
+                            className="w-20 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                          />
+                          
+                          <button 
+                            className="hover:text-blue-400 transition-colors"
+                            onClick={() => {
+                              if (videoRef.current) {
+                                if (videoRef.current.requestFullscreen) {
+                                  videoRef.current.requestFullscreen();
+                                }
+                              }
+                            }}
+                          >
+                            <Maximize2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-lg">
+                      <span className="text-gray-500">No media available</span>
+                    </div>
                   )}
                 </div>
 
@@ -338,27 +525,48 @@ const ProductDetail = () => {
                       containScroll: "trimSnaps",
                       slidesToScroll: 1,
                     }}
-                    className="w-full max-w-[300px] mx-auto"
+                    className="w-full max-w-[400px] mx-auto"
                   >
-                    <CarouselContent className="gap-1 transition-transform duration-0 ease-in-out">
-                      {currentVariantImages.map((image, index) => (
+                    <CarouselContent className="gap-2 transition-transform duration-0 ease-in-out justify-center">
+
+                      {currentVariantMedia.map((media, index) => (
                         <CarouselItem
-                          key={index}
+                          key={`${media.type}-${index}`}
                           className="basis-1/5 min-w-[80px]"
                         >
                           <div
-                            className={`w-20 h-20 cursor-pointer border-2 ${
-                              selectedImage === index
-                                ? "border-black shadow-lg"
-                                : "border-transparent"
-                            } hover:border-gray-300 transition-colors rounded-sm overflow-hidden`}
-                            onClick={() => setSelectedImage(index)}
+                            className={`w-20 h-20 cursor-pointer border-2 relative rounded-lg overflow-hidden ${
+                              selectedMedia.index === index
+                                ? "border-black shadow-lg ring-2 ring-blue-200"
+                                : "border-gray-200"
+                            } hover:border-gray-400 transition-all duration-200`}
+                            onClick={() => handleMediaSelect(media, index)}
                           >
-                            <img
-                              src={image}
-                              alt={`Product view ${index + 1}`}
-                              className="w-20 h-20 object-contain"
-                            />
+                            {media.type === 'image' ? (
+                              <img
+                                src={media.url}
+                                alt={`Product view ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.src = "/placeholder-image.jpg";
+                                }}
+                              />
+                            ) : (
+                              <div className="relative w-full h-full bg-gray-800">
+                                <video
+                                  src={media.url}
+                                  className="w-full h-full object-cover"
+                                  muted
+                                  poster={media.thumbnail}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                                  <Play className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="absolute top-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
+                                  VIDEO
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </CarouselItem>
                       ))}
@@ -414,7 +622,7 @@ const ProductDetail = () => {
                       key={variant._id}
                       className={`cursor-pointer border-2 rounded-md p-1 ${
                         selectedVariant?._id === variant._id
-                          ? "border-black"
+                          ? "border-black ring-2 ring-blue-200"
                           : "border-gray-200"
                       } hover:border-gray-400 transition-all`}
                       onClick={() => handleVariantSelect(variant)}
@@ -422,7 +630,10 @@ const ProductDetail = () => {
                       <img
                         src={variant.colorImage}
                         alt={variant.color}
-                        className="w-14 h-14 object-cover"
+                        className="w-14 h-14 object-cover rounded"
+                        onError={(e) => {
+                          e.target.src = "/placeholder-image.jpg";
+                        }}
                       />
                       <div className="text-center text-xs mt-1">
                         {variant.color}
@@ -509,16 +720,15 @@ const ProductDetail = () => {
             )}
 
             {/* Quantity Selector */}
-            {/* Quantity Selector */}
             <div className="flex items-center gap-4 mb-6">
               <label className="text-sm">Quantity</label>
-              <div className="flex items-center border border-gray-300">
+              <div className="flex items-center border border-gray-300 rounded">
                 <button
                   onClick={() => {
                     if (!isAuthenticated) return navigate("/login");
                     decreaseQuantity();
                   }}
-                  className="px-3 py-2 hover:bg-gray-100"
+                  className="px-3 py-2 hover:bg-gray-100 transition-colors"
                   disabled={!selectedSize?.inStock || !isAuthenticated}
                 >
                   -
@@ -532,7 +742,7 @@ const ProductDetail = () => {
                     if (!isAuthenticated) return navigate("/login");
                     setQuantity(parseInt(e.target.value) || 1);
                   }}
-                  className="w-12 text-center border-x border-gray-300"
+                  className="w-12 text-center border-x border-gray-300 py-2"
                   disabled={!selectedSize?.inStock || !isAuthenticated}
                 />
                 <button
@@ -540,7 +750,7 @@ const ProductDetail = () => {
                     if (!isAuthenticated) return navigate("/login");
                     increaseQuantity();
                   }}
-                  className="px-3 py-2 hover:bg-gray-100"
+                  className="px-3 py-2 hover:bg-gray-100 transition-colors"
                   disabled={
                     !selectedSize?.inStock ||
                     quantity >= (selectedSize?.stockCount || 1) ||
@@ -551,8 +761,6 @@ const ProductDetail = () => {
                 </button>
               </div>
             </div>
-
-            {/* Action Buttons */}
             {/* Action Buttons */}
             <div className="space-y-4">
               <Button

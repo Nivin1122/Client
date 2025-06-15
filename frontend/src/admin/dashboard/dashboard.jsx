@@ -281,7 +281,7 @@ const Dashboard = () => {
     try {
       await axiosInstance.post("/adminlogout");
 
-      localStorage.removeItem("admin-logged");
+      localStorage.removeItem("admin-loggeds");
       Cookies.remove("adminToken");
 
       navigate("/admin");
