@@ -119,7 +119,7 @@ const Wishlist = () => {
   return (
     <>
       <Header />
-      <div className="container mx-auto px-4 pt-28 pb-8 max-w-7xl mt-10">
+      <div className="container mx-auto px-4 pt-28 pb-8 max-w-7xl mt-20">
         <h1 className="text-3xl font-serif text-center mb-8">Your Wishlist</h1>
 
         {wishlistData.length === 0 ? (

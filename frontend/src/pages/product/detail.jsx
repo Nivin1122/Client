@@ -371,7 +371,7 @@ const ProductDetail = () => {
   return (
     <>
       <Header />
-      <div className="container max-w-screen-xl mx-auto px-4 pt-32 pb-8 mt-10">
+      <div className="container max-w-screen-xl mx-auto px-4 pt-32 pb-8 mt-32">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm mb-8">
           <a href="/" className="hover:underline">
@@ -395,7 +395,7 @@ const ProductDetail = () => {
               <>
                 {/* Main Media Display */}
                 <div
-                  className="relative w-full h-[500px] overflow-hidden bg-gray-50 rounded-lg"
+                  className="relative w-full h-[700px] overflow-hidden bg-gray-50 rounded-lg"
                   onMouseEnter={() => currentMediaItem?.type === 'image' && setShowZoom(true)}
                   onMouseLeave={() => {
                     setShowZoom(false);
@@ -408,7 +408,7 @@ const ProductDetail = () => {
                       <img
                         src={currentMediaItem.url || "/placeholder-image.jpg"}
                         alt={product.name}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.src = "/placeholder-image.jpg";
                         }}

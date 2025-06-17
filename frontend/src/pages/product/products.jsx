@@ -335,7 +335,7 @@ const Products = () => {
   return (
     <>
       <Header />
-      <div className="container max-w-screen mx-auto px-4 pt-32 pb-8 mt-10">
+      <div className="container max-w-screen mx-auto px-4 pt-32 pb-8 mt-24">
         {/* Mobile filter button */}
         <div className="lg:hidden mb-4">
           <button

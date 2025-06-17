@@ -99,7 +99,7 @@ const Cart = () => {
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl">
-        <h1 className="text-3xl font-serif text-center mt-10 mb-10">
+        <h1 className="text-3xl font-serif text-center mt-20 mb-10">
           Your Cart
         </h1>
 
