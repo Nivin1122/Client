@@ -440,7 +440,6 @@ const Header = ({ onCategorySelect }) => {
                       <div className="text-gray-600">
                         ({totalItems} item{totalItems !== 1 ? "s" : ""})
                       </div>
-                      <div className="font-semibold">₹369.99</div>
                     </div>
                   </div>
                   {totalItems > 0 && (
