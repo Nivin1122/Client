@@ -9,7 +9,7 @@ const Slider = () => {
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [direction, setDirection] = useState(0); // 1 for right, -1 for left
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -130,7 +130,7 @@ const Slider = () => {
   }
 
   return (
-    <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[75vh] lg:h-screen overflow-hidden mt-24 sm:mt-[11rem]">
+    <div className="relative w-full h-[45vh] sm:h-[60vh] md:h-[75vh] lg:h-screen overflow-hidden mt-24 sm:mt-[11rem]">
       {/* Slider Container */}
       <div className="relative h-full overflow-hidden">
         <AnimatePresence initial={false} custom={direction}>
@@ -145,15 +145,12 @@ const Slider = () => {
             className="absolute inset-0 w-full h-full"
           >
             {/* Background Image */}
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 flex items-center justify-center">
               <img
                 src={banners[currentSlide]?.image}
                 alt={`Banner ${currentSlide + 1}`}
-                className="w-full h-full object-cover"
-                loading={currentSlide === 0 ? "eager" : "lazy"}
+                className="w-full h-full object-contain sm:object-cover"
               />
-              {/* Overlay for better text readability */}
-              <div className="absolute inset-0 bg-black bg-opacity-20" />
             </div>
 
             {/* Centered Content */}
@@ -293,7 +290,7 @@ const Slider = () => {
                 onClick={() => goToSlide(index)}
                 className={`w-3 h-3 rounded-full transition-all duration-300 ${
                   index === currentSlide
-                    ? "bg-yellow-400 shadow-lg scale-125"
+                    ? "bg-yellow-500 shadow-lg scale-125"
                     : "bg-white bg-opacity-50 hover:bg-opacity-75"
                 }`}
                 whileHover={{ scale: 1.2 }}
@@ -301,7 +298,7 @@ const Slider = () => {
                 style={{
                   boxShadow:
                     index === currentSlide
-                      ? "0 0 15px rgba(255,215,0,0.6)"
+                      ? "0 0 15px rgba(87, 75, 3, 0.6)"
                       : "none",
                 }}
               />
