@@ -219,12 +219,9 @@ const Products = () => {
     productGridRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  const handleProductMouseEnter = useCallback((id) => {
-    setHoveredProductId(id);
-  }, []);
-
   const handleProductMouseLeave = useCallback(() => {
     setHoveredProductId(null);
+    // No need to clear intervals if we're not using them
   }, []);
 
   const handleVariantChange = useCallback((productId, variantId) => {
@@ -292,6 +289,26 @@ const Products = () => {
     },
     [getSelectedVariant]
   );
+
+  const getDisplayImage = useCallback(
+    (product) => {
+      const currentVariant = getSelectedVariant(product);
+      const isHovered = hoveredProductId === product._id;
+
+      // If hovered and there are at least 2 subImages, show the second subImage (index 1)
+      if (isHovered && currentVariant?.subImages?.length > 1) {
+        return currentVariant.subImages[1]; // Show second subImage on hover
+      }
+
+      // Default to main image
+      return currentVariant?.mainImage || "/placeholder-product.jpg";
+    },
+    [selectedVariant, hoveredProductId, getSelectedVariant]
+  );
+  const handleProductMouseEnter = useCallback((id) => {
+    setHoveredProductId(id);
+    // No need for interval cycling if we just want to show the first subImage
+  }, []);
 
   // Loading state
   if (loading) {
@@ -372,7 +389,7 @@ const Products = () => {
           <div className="flex-1" ref={productGridRef}>
             {/* Header with search */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-              <h2 className="text-2xl font-bold">
+              <h2 className="text-2xl font-bold text-[#001F3F]">
                 {isSearching
                   ? `Search Results for "${searchQuery}"`
                   : filters.category
@@ -380,13 +397,13 @@ const Products = () => {
                   : "All Products"}
               </h2>
 
-              <div className="relative w-full md:w-64">
+              <div className="relative w-full md:w-64 ">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={handleSearchChange}
                   placeholder="Search products..."
-                  className="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-[#001F3F]"
                 />
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -441,16 +458,40 @@ const Products = () => {
                           </span>
                         )}
 
-                        <div className="relative cursor-pointer group">
-                          <a href={`/detail/${product._id}`}>
+                        <div
+                          className="relative cursor-pointer group"
+                          style={{ height: "400px" }}
+                        >
+                          <a
+                            href={`/detail/${product._id}`}
+                            className="relative block w-full h-full"
+                          >
+                            {/* Main image (shown by default) */}
                             <img
                               src={
                                 currentVariant?.mainImage ||
                                 "/placeholder-product.jpg"
                               }
                               alt={product.name}
-                              className="w-full h-[300px] sm:h-[280px] md:h-[350px] lg:h-[400px] object-cover"
+                              className={`absolute w-full h-full object-cover rounded-2xl transition-opacity duration-300 ${
+                                hoveredProductId === product._id
+                                  ? "opacity-0"
+                                  : "opacity-100"
+                              }`}
                             />
+
+                            {/* Second subimage (shown on hover) */}
+                            {currentVariant?.subImages?.length > 1 && (
+                              <img
+                                src={currentVariant.subImages[1]}
+                                alt={product.name}
+                                className={`absolute w-full h-full object-cover rounded-2xl transition-opacity duration-300 ${
+                                  hoveredProductId === product._id
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                }`}
+                              />
+                            )}
                           </a>
 
                           {/* Navigation arrows - hidden on mobile */}
@@ -571,7 +612,7 @@ const Products = () => {
                               }`}
                             >
                               <button
-                                className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 font-medium uppercase text-sm hover:bg-[#010135] hover:text-[#FFF5CC]"
+                                className="w-full font-semibold bg-white border border-gray-300 text-gray-700 py-2 px-3 font-medium uppercase text-sm hover:bg-[#010135] hover:text-[#FFF5CC]"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -586,7 +627,7 @@ const Products = () => {
 
                         {/* Product info */}
                         <div className="mt-3 space-y-1">
-                          <h3 className="text-sm font-medium line-clamp-2 leading-tight">
+                          <h3 className="text-sm font-medium line-clamp-2 leading-tight font-semibold">
                             {product.name}
                           </h3>
                           <div className="flex items-center gap-2 font-Arbutus Slab">

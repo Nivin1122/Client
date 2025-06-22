@@ -140,8 +140,8 @@ const Orders = () => {
   return (
     <>
       <Header />
-      <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl mt-10">
-        <h1 className="text-3xl font-serif text-center mb-10">My Orders</h1>
+      <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl mt-28">
+        <h1 className="text-3xl text-[#001F3F] font-semibold text-center mb-10">My Orders</h1>
 
         {loading && <p className="text-center">Loading orders...</p>}
         {error && (
@@ -151,7 +151,7 @@ const Orders = () => {
         )}
 
         {!loading && !error && orders.length === 0 && (
-          <p className="text-center text-gray-500">No orders found</p>
+          <p className="text-center text-[#001F3F] font-semibold">No orders found</p>
         )}
 
         <div className="space-y-8">
@@ -163,16 +163,16 @@ const Orders = () => {
               <div className="p-6 border-b">
                 <div className="flex flex-wrap justify-between items-start gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-[#001F3F] font-semibold">
                       Order ID: {order.orderId}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-[#001F3F] font-semibold">
                       Ordered on:{" "}
                       {new Date(order.orderDate).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">
+                    <p className="text-[#001F3F] text-sm font-semibold">
                       Total: Rs. {order.totalAmount}
                     </p>
                   </div>
@@ -190,8 +190,8 @@ const Orders = () => {
                       />
                     </div>
                     <div className="flex-1 min-w-[200px]">
-                      <h3 className="font-medium">{item.productName}</h3>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <h3 className="text-[#001F3F] text-sm font-semibold">{item.productName}</h3>
+                      <p className="text-[#001F3F] text-sm font-semibold mt-1">
                         Size: {item.size} • Color: {item.color}
                       </p>
                       <p className="text-sm text-gray-600">
@@ -244,7 +244,7 @@ const Orders = () => {
               <div className="p-6 bg-gray-50">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-medium mb-2">Shipping Address</h4>
+                    <h4 className="text-[#001F3F] text-sm font-semibold mb-2">Shipping Address</h4>
                     <p className="text-sm text-gray-600">
                       {order.shippingAddress.fullName}
                       <br />
@@ -258,7 +258,7 @@ const Orders = () => {
                     </p>
                   </div>
                   <div>
-                    <h4 className="font-medium mb-2">Payment Details</h4>
+                    <h4 className="text-[#001F3F] text-sm font-semibold mb-2">Payment Details</h4>
                     <p className="text-sm text-gray-600">
                       Method:{" "}
                       {order.payment.method === "cod"

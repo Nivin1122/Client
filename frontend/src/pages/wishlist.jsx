@@ -119,12 +119,12 @@ const Wishlist = () => {
   return (
     <>
       <Header />
-      <div className="container mx-auto px-4 pt-28 pb-8 max-w-7xl mt-20">
-        <h1 className="text-3xl font-serif text-center mb-8">Your Wishlist</h1>
+      <div className="container mx-auto px-4 pt-28 pb-8 max-w-7xl mt-36">
+        <h1 className="text-3xl text-center mb-8 text-[#001F3F] font-semibold">Your Wishlist</h1>
 
         {wishlistData.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">Your wishlist is empty</p>
+            <p className="text-gray-600 mb-4 text-[#001F3F] font-semibold">Your wishlist is empty</p>
             <Link to="/products" className="text-red-500 hover:text-red-600 text-sm">
               Continue shopping
             </Link>
@@ -132,11 +132,11 @@ const Wishlist = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {wishlistData.map((item) => (
-              <div key={item.id} className="border rounded-lg p-4 flex flex-col sm:flex-row gap-4 shadow-sm">
+              <div key={item.id} className="border rounded-lg p-4 flex flex-col sm:flex-row gap-4 shadow-sm text-[#001F3F] font-semibold">
                 <img
                   src={item.variant?.mainImage}
                   alt={item.product?.name}
-                  className="w-full sm:w-32 h-40 object-contain rounded"
+                  className="w-full sm:w-32 h-40 object-contain rounded-2xl"
                 />
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
@@ -161,14 +161,14 @@ const Wishlist = () => {
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       onClick={() => confirmAddToCart(item)}
-                      className="bg-[#010135] text-[#FFF5CC] px-4 py-2 rounded text-sm hover:bg-gray-800"
+                      className="bg-[#010135] text-[#FFF5CC] px-4 py-2 rounded text-sm hover:bg-gray-800 text-[#001F3F] font-semibold"
                       disabled={!item.sizeVariant?.stockCount}
                     >
                       Add to Cart
                     </button>
                     <button
                       onClick={() => confirmRemoveFromWishlist(item)}
-                      className="text-red-500 px-4 py-2 rounded text-sm hover:text-red-600"
+                      className="text-red-500 px-4 py-2 rounded text-sm hover:text-red-600 text-[#001F3F] font-semibold"
                     >
                       Remove
                     </button>
@@ -181,7 +181,7 @@ const Wishlist = () => {
 
         {/* Related Products */}
         <div className="mt-16">
-          <h2 className="text-2xl font-serif text-center mb-8">You May Also Like</h2>
+          <h2 className="text-2xl text-center mb-8 text-[#001F3F] font-semibold">You May Also Like</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Link to="/products" className="group">
               <div className="relative overflow-hidden rounded-lg shadow">

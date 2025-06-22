@@ -51,11 +51,11 @@ const Categories = () => {
   return (
     <div className="mx-auto px-4 py-1 md:py-1 text-[#010135]">
       <div className="text-center mb-8 md:mb-12">
-        <h3 className="text-sm font-medium mb-0.5 text-[#010135]">
+        <h3 className="text-sm font-medium mb-0.5 text-[#010135] font-semibold">
           Celebrating Womanhood
         </h3>
-        <h4 className="text-sm font-normal italic mb-5 text-[#010135]">Since 1984</h4>
-        <h2 className="text-2xl md:text-3xl font-medium text-[#010135]">Our Categories</h2>
+        <h4 className="text-sm font-normal italic mb-5 text-[#010135] font-semibold">Since 1984</h4>
+        <h2 className="text-2xl md:text-3xl font-medium text-[#010135] font-semibold">Our Categories</h2>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-5">
@@ -67,17 +67,17 @@ const Categories = () => {
             <img
               src={category.image}
               alt={category.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-2xl"
             />
             <div className="absolute inset-0 flex flex-col items-center justify-end pb-6">
-              <h3 className="text-white text-base md:text-lg font-medium mb-3 md:mb-4 text-center px-2">
+              <h3 className="text-white text-base md:text-lg font-medium mb-3 md:mb-4 text-center px-2 font-semibold">
                 {category.title}
               </h3>
               <button
                 onClick={() => {
                   navigate(`/products?category=${category._id}`);
                 }}
-                className="bg-[#010135] text-[#FFF5CC] px-5 md:px-7 py-1.5 md:py-2 text-xs md:text-sm font-medium tracking-wide hover:bg-opacity-95 transition-colors duration-300"
+                className="bg-[#010135] font-semibold text-[#FFF5CC] px-5 md:px-7 py-1.5 md:py-2 text-xs md:text-sm font-medium tracking-wide hover:bg-opacity-95 transition-colors duration-300"
               >
                 SHOP NOW
               </button>

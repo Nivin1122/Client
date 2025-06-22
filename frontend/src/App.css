@@ -1,3 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Stardos+Stencil&display=swap');
+.font-stencil {
+  font-family: 'Stardos Stencil', sans-serif;
+}
+.font-jetbrains {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+
 .custom-toast {
     min-height: 40px !important;
     width: 250px !important;
@@ -33,3 +42,18 @@
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1000;
   }
+
+  /* Add transition for smooth appearance */
+.search-transition {
+  transition: all 0.3s ease;
+}
+
+/* Animation for search results dropdown */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.search-results-dropdown {
+  animation: fadeIn 0.3s ease forwards;
+}

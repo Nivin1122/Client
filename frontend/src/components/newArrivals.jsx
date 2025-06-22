@@ -16,7 +16,7 @@ const NewArrivals = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [selectedVariant, setSelectedVariant] = useState({});
-  const [token, setToken] = useState(null)
+  const [token, setToken] = useState(null);
   useEffect(() => {
     let token = localStorage.getItem("token");
     setToken(token);
@@ -167,7 +167,7 @@ const NewArrivals = () => {
                 />
               </svg>
             </button>
-            <h2 className="text-xl font-medium text-center text-[#010135]">
+            <h2 className="text-xl font-medium text-center text-[#010135] font-semibold">
               New Arrivals - Unstitched Suits
             </h2>
             <button className="text-[#010135]" onClick={scrollRight}>
@@ -190,7 +190,7 @@ const NewArrivals = () => {
         </div>
         <a
           href="/products?minPrice=0&maxPrice=10000&sortBy=newest"
-          className="bg-[#010135] text-[#FFF5CC] text-sm uppercase px-4 py-2 rounded-md hover:bg-[#020250] transition-colors"
+          className="bg-[#010135] text-[#FFF5CC] text-sm uppercase px-4 py-2 rounded-md hover:bg-[#020250] transition-colors font-semibold"
         >
           VIEW ALL
         </a>
@@ -213,7 +213,7 @@ const NewArrivals = () => {
                 onMouseLeave={handleProductMouseLeave}
               >
                 {isNew && (
-                  <span className="absolute top-2 left-2 bg-green-500 text-white px-3 py-1 text-xs z-10">
+                  <span className="absolute top-2 left-2 bg-green-500 text-white px-3 py-1 text-xs z-10 font-semibold">
                     New in
                   </span>
                 )}
@@ -221,7 +221,7 @@ const NewArrivals = () => {
                   <img
                     src={mainVariant.mainImage || exclusive}
                     alt={product.name}
-                    className="w-full h-[350px] md:h-[450px] lg:h-[500px] object-cover"
+                    className="w-full h-[350px] md:h-[450px] lg:h-[500px] object-cover rounded-2xl"
                     onClick={() => handleProductClick(product._id)}
                   />
 
@@ -286,7 +286,7 @@ const NewArrivals = () => {
                       }`}
                     >
                       <button
-                        className="w-full bg-white border border-gray-300 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
+                        className="w-full font-semibold bg-white border border-gray-300 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -299,11 +299,11 @@ const NewArrivals = () => {
                   )}
                 </div>
                 <div className="mt-4 space-y-2">
-                  <h3 className="text-sm font-medium line-clamp-2">
+                  <h3 className="text-sm font-medium line-clamp-2 font-semibold">
                     {product.name}
                   </h3>
                   <p className="text-sm">{price}</p>
-                  <p className="text-sm text-[#010135]">
+                  <p className="text-sm text-[#010135] font-semibold">
                     {mainVariant.color || "Various colors"}
                   </p>
                 </div>

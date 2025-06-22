@@ -46,28 +46,24 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
       debounce((filters) => {
         const params = new URLSearchParams();
 
-        // Handle categories - use first category as main category
         if (filters.categories && filters.categories.length > 0) {
           params.set("category", filters.categories[0]);
         }
 
-        // Handle price range
         if (filters.priceRange) {
           params.set("minPrice", filters.priceRange.min);
           params.set("maxPrice", filters.priceRange.max);
         }
 
-        // Handle sort
         if (filters.sortBy) {
           params.set("sortBy", filters.sortBy);
         }
 
-        // Only update URL if params have changed
         if (params.toString() !== searchParams.toString()) {
           setSearchParams(params, { replace: true });
           onApplyFilters(filters);
         }
-      }, 500), // Increased debounce time to 500ms for smoother slider experience
+      }, 500),
     [onApplyFilters, setSearchParams, searchParams]
   );
 
@@ -103,7 +99,6 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
         if (filterType === "priceRange") {
           newFilters = { ...prev, [filterType]: value };
         } else if (filterType === "categories") {
-          // For categories, we only want to keep one category selected at a time
           newFilters = {
             ...prev,
             categories: prev.categories.includes(value) ? [] : [value],
@@ -142,7 +137,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
     };
     setSelectedFilters(initialFilters);
     debouncedApplyFilters(initialFilters);
-  });
+  }, [debouncedApplyFilters]);
 
   const handlePriceSliderChange = useCallback((value) => {
     const [min, max] = Array.isArray(value) ? value : [0, value];
@@ -156,7 +151,6 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
     });
   }, []);
 
-  // Add this effect to apply filters when price range changes
   useEffect(() => {
     if (selectedFilters.priceRange) {
       const timer = setTimeout(() => {
@@ -209,14 +203,14 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
   );
 
   return (
-    <div className="w-64 bg-white p-4 border-r border-gray-200">
+    <div className="w-64 bg-white p-4 border-r border-gray-200 text-[#001F3F] font-semibold">
       {/* Sort By */}
       <div className="mb-6">
         <div
           className="flex justify-between items-center cursor-pointer mb-2"
           onClick={() => toggleAccordion("sortBy")}
         >
-          <h3 className="text-lg font-semibold">Sort By</h3>
+          <h3 className="text-lg">Sort By</h3>
           <span>{accordionOpen.sortBy ? "−" : "+"}</span>
         </div>
         {accordionOpen.sortBy && (
@@ -238,7 +232,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
           className="flex justify-between items-center cursor-pointer mb-2"
           onClick={() => toggleAccordion("priceRange")}
         >
-          <h3 className="text-lg font-semibold">Price Range</h3>
+          <h3 className="text-lg">Price Range</h3>
           <span>{accordionOpen.priceRange ? "−" : "+"}</span>
         </div>
         {accordionOpen.priceRange && (
@@ -268,7 +262,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
             </div>
             <div className="flex gap-2">
               <div className="w-1/2">
-                <label className="block text-xs text-gray-500 mb-1">Min</label>
+                <label className="block text-xs mb-1">Min</label>
                 <input
                   type="text"
                   className="w-full p-2 border rounded text-sm"
@@ -284,7 +278,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
                 />
               </div>
               <div className="w-1/2">
-                <label className="block text-xs text-gray-500 mb-1">Max</label>
+                <label className="block text-xs mb-1">Max</label>
                 <input
                   type="text"
                   className="w-full p-2 border rounded text-sm"
@@ -310,7 +304,7 @@ const FilterSidebar = React.memo(({ onApplyFilters }) => {
           className="flex justify-between items-center cursor-pointer mb-2"
           onClick={() => toggleAccordion("categories")}
         >
-          <h3 className="text-lg font-semibold">Categories</h3>
+          <h3 className="text-lg">Categories</h3>
           <span>{accordionOpen.categories ? "−" : "+"}</span>
         </div>
         {accordionOpen.categories && (

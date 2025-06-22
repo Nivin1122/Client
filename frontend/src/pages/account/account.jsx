@@ -313,10 +313,11 @@ const Account = () => {
   const renderProfileSection = () => (
     <div className="space-y-8">
       {/* Header Section */}
+      <div>
       <div className="bg-gradient-to-r from-yellow-50 to-amber-50 p-4 sm:p-6 md:p-8 border border-yellow-200">
         <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white font-bold text-xl sm:text-2xl shadow-lg rounded-full">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-amber-500 flex  items-center justify-center text-white font-bold text-xl sm:text-2xl shadow-lg rounded-full">
               {userProfile?.username?.charAt(0)?.toUpperCase() || "U"}
             </div>
             <div className="text-center sm:text-left">
@@ -339,6 +340,7 @@ const Account = () => {
             </button>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Quick Actions */}
@@ -722,7 +724,7 @@ const Account = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 mt-28 text-[#001F3F] font-semibold">
         <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl">
           {/* Success/Error Messages */}
           {success && (
@@ -746,7 +748,7 @@ const Account = () => {
             </div>
           )}
 
-          <div className="flex flex-col lg:flex-row gap-8 mt-10">
+          <div className="flex flex-col lg:flex-row gap-8 mt-10 text-[#001F3F] font-semibold">
             {/* Sidebar */}
             <div className="w-full lg:w-1/4">
               <div className="bg-white  shadow-lg border border-gray-100 p-6 sticky top-32">
@@ -779,7 +781,7 @@ const Account = () => {
                       >
                         <Icon size={20} />
                         <div>
-                          <p className="font-medium">{item.label}</p>
+                          <p className="font-semibold">{item.label}</p>
                           <p
                             className={`text-xs ${
                               activeTab === item.id
@@ -802,7 +804,7 @@ const Account = () => {
                     className="w-full flex items-center gap-3 px-4 py-3  text-left text-gray-700 hover:bg-gray-50 transition-all duration-300"
                   >
                     <Package size={20} />
-                    <span className="font-medium">Orders</span>
+                    <span className=" text-[#001F3F] font-semibold">Orders</span>
                   </button>
 
                   <button
@@ -810,7 +812,7 @@ const Account = () => {
                     className="w-full flex items-center gap-3 px-4 py-3  text-left text-gray-700 hover:bg-gray-50 transition-all duration-300"
                   >
                     <ShoppingCart size={20} />
-                    <span className="font-medium">Cart</span>
+                    <span className="text-[#001F3F] font-semibold">Cart</span>
                   </button>
                 </div>
 
@@ -820,7 +822,7 @@ const Account = () => {
                   className="w-full flex items-center gap-3 px-4 py-3  text-left text-red-600 hover:bg-red-50 transition-all duration-300 border-t border-gray-100 pt-6"
                 >
                   <LogOut size={20} />
-                  <span className="font-medium">Logout</span>
+                  <span className="font-semibold">Logout</span>
                 </button>
               </div>
             </div>

@@ -1,54 +1,61 @@
-import React from 'react';
-import store from '../assets/shop.png'
+import React from "react";
+import store from "../assets/shop.png";
 
 const OurStores = () => {
   const stores = [
     {
-      location: 'Faridabad',
-      address: 'LG-19, Crown Plaza Mall, Mathura Road, Faridabad, Haryana - 121007.',
-      timing: 'All Days ( 10:30 am - 8:30 pm )'
+      location: "Faridabad",
+      address:
+        "LG-19, Crown Plaza Mall, Mathura Road, Faridabad, Haryana - 121007.",
+      timing: "All Days ( 10:30 am - 8:30 pm )",
     },
     {
-      location: 'Rohtak',
-      address: 'Shop No 2, Palika Bazar, Rohtak, Haryana - 124001.',
-      timing: 'Mon - Sat ( 9:00 am - 8:00 pm )'
-    }
+      location: "Rohtak",
+      address: "Shop No 2, Palika Bazar, Rohtak, Haryana - 124001.",
+      timing: "Mon - Sat ( 9:00 am - 8:00 pm )",
+    },
   ];
-  
+
   return (
     <div className="w-full">
       {/* Heading */}
       <div className="text-center py-6">
-        <h1 className="text-4xl font-serif text-gray-800">Our Stores</h1>
+        <h1 className="text-4xl text-gray-800 font-semibold">Our Stores</h1>
       </div>
-      
+
       {/* Stores Section */}
       <div className="flex flex-col md:flex-row w-full">
         {/* Left side - Store Information */}
         <div className="w-full md:w-1/2 bg-gray-400 bg-opacity-30 p-8 md:p-12 lg:p-16 flex flex-col justify-center">
           {stores.map((store, index) => (
             <div key={index} className="mb-8">
-              <h2 className="text-2xl font-medium text-gray-800 mb-4">{store.location}</h2>
-              <p className="text-gray-700 mb-2">{store.address}</p>
-              <p className="text-gray-700">Timing : {store.timing}</p>
+              <h2 className="text-2xl font-medium font-semibold mb-4 text-[#001F3F]">
+                {store.location}
+              </h2>
+              <p className="text-[#001F3F] mb-2 font-semibold">
+                {store.address}
+              </p>
+              <p className="text-[#001F3F] font-semibold">
+                Timing : {store.timing}
+              </p>
             </div>
           ))}
         </div>
-        
+
         {/* Right side - Store Image */}
         <div className="w-full md:w-1/2">
-          <img 
+          <img
             src={store}
-            alt="Store Interior" 
+            alt="Store Interior"
             className="w-full h-full object-cover"
           />
         </div>
       </div>
-      
+
       {/* WhatsApp Button */}
       <div className="fixed bottom-6 right-6 z-50">
-        <a 
-          href="#" 
+        <a
+          href="#"
           className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 text-white shadow-lg hover:bg-green-600 transition-colors"
           aria-label="Contact us on WhatsApp"
         >

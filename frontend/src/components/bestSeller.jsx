@@ -139,7 +139,9 @@ const BestSeller = () => {
                 />
               </svg>
             </button>
-            <h2 className="text-xl font-medium text-center">Best Sellers</h2>
+            <h2 className="text-xl font-medium text-center font-semibold">
+              Best Sellers
+            </h2>
             <button className="text-gray-400" onClick={scrollRight}>
               {/* Right Arrow */}
               <svg
@@ -161,7 +163,7 @@ const BestSeller = () => {
         </div>
         <a
           href="/products?minPrice=0&maxPrice=10000&sortBy=newest"
-          className="bg-[#010135] text-[#FFF5CC] text-sm uppercase px-4 py-2 rounded-md hover:bg-[#020250] transition-colors"
+          className="bg-[#010135] text-[#FFF5CC] text-sm uppercase px-4 py-2 rounded-md hover:bg-[#020250] transition-colors font-semibold"
         >
           VIEW ALL
         </a>
@@ -179,7 +181,7 @@ const BestSeller = () => {
                 onMouseEnter={() => setHoveredProductId(product._id)}
                 onMouseLeave={() => setHoveredProductId(null)}
               >
-                <span className="absolute top-2 left-2 bg-[#010135] text-[#FFF5CC] px-3 py-1 text-xs z-10">
+                <span className="absolute top-2 left-2 bg-[#010135] text-[#FFF5CC] px-3 py-1 text-xs z-10 font-semibold">
                   Best Seller
                 </span>
 
@@ -187,7 +189,7 @@ const BestSeller = () => {
                   <img
                     src={variant.mainImage || fallbackImage}
                     alt={product.name}
-                    className="w-full h-[350px] md:h-[450px] lg:h-[500px] object-cover"
+                    className="w-full h-[350px] md:h-[450px] lg:h-[500px] object-cover rounded-2xl"
                     onClick={() => handleProductClick(product._id)}
                   />
 
@@ -239,7 +241,7 @@ const BestSeller = () => {
                       }`}
                     >
                       <button
-                        className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
+                        className="w-full bg-white font-semibold border border-gray-300 text-gray-700 py-3 font-medium uppercase hover:bg-[#010135] hover:text-[#FFF5CC]"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -253,11 +255,11 @@ const BestSeller = () => {
                 </div>
 
                 <div className="mt-4 space-y-2">
-                  <h3 className="text-sm font-medium line-clamp-2">
+                  <h3 className="text-sm font-medium line-clamp-2 font-semibold">
                     {product.name}
                   </h3>
-                  <p className="text-sm">{price}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm font-semibold">{price}</p>
+                  <p className="text-sm text-blue-1000 font-semibold">
                     {variant.color || "Various colors"}
                   </p>
                 </div>

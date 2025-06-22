@@ -33,7 +33,10 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isReturnOpen, setIsReturnOpen] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState({ type: 'image', index: 0 });
+  const [selectedMedia, setSelectedMedia] = useState({
+    type: "image",
+    index: 0,
+  });
   const [error, setError] = useState(null);
   const [sizes, setSizes] = useState([]);
   const navigate = useNavigate();
@@ -56,21 +59,21 @@ const ProductDetail = () => {
 
   // Video event handlers
   useEffect(() => {
-    if (videoRef.current && selectedMedia.type === 'video') {
+    if (videoRef.current && selectedMedia.type === "video") {
       const video = videoRef.current;
-      
+
       const updateTime = () => setCurrentTime(video.currentTime);
       const updateDuration = () => setDuration(video.duration);
       const handleEnd = () => setIsPlaying(false);
-      
-      video.addEventListener('timeupdate', updateTime);
-      video.addEventListener('loadedmetadata', updateDuration);
-      video.addEventListener('ended', handleEnd);
-      
+
+      video.addEventListener("timeupdate", updateTime);
+      video.addEventListener("loadedmetadata", updateDuration);
+      video.addEventListener("ended", handleEnd);
+
       return () => {
-        video.removeEventListener('timeupdate', updateTime);
-        video.removeEventListener('loadedmetadata', updateDuration);
-        video.removeEventListener('ended', handleEnd);
+        video.removeEventListener("timeupdate", updateTime);
+        video.removeEventListener("loadedmetadata", updateDuration);
+        video.removeEventListener("ended", handleEnd);
       };
     }
   }, [selectedMedia]);
@@ -138,7 +141,7 @@ const ProductDetail = () => {
     setSelectedVariant(variant);
     setSelectedImage(0);
     setSelectedSize(null);
-    setSelectedMedia({ type: 'image', index: 0 });
+    setSelectedMedia({ type: "image", index: 0 });
     setIsPlaying(false);
 
     try {
@@ -166,7 +169,7 @@ const ProductDetail = () => {
     setSelectedVariant(variant);
     setSelectedImage(0);
     setSelectedSize(null);
-    setSelectedMedia({ type: 'image', index: 0 });
+    setSelectedMedia({ type: "image", index: 0 });
     setIsPlaying(false);
 
     // Fetch sizes for the selected variant
@@ -255,7 +258,7 @@ const ProductDetail = () => {
   const formatVideoTime = (time) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   // Handle mouse move for zoom effect
@@ -270,7 +273,7 @@ const ProductDetail = () => {
   // Handle media selection
   const handleMediaSelect = (media, index) => {
     setSelectedMedia({ type: media.type, index });
-    if (media.type === 'video') {
+    if (media.type === "video") {
       setIsPlaying(false);
       setCurrentTime(0);
     }
@@ -345,12 +348,15 @@ const ProductDetail = () => {
   // Get current variant's media (images and videos)
   const currentVariantMedia = selectedVariant
     ? [
-        { type: 'image', url: selectedVariant.mainImage },
-        ...selectedVariant.subImages.map(url => ({ type: 'image', url })),
-        ...(selectedVariant.videos && selectedVariant.videos.length > 0 
-            ? selectedVariant.videos.map(video => ({ type: 'video', url: video.url, thumbnail: video.thumbnail }))
-            : []
-        )
+        { type: "image", url: selectedVariant.mainImage },
+        ...selectedVariant.subImages.map((url) => ({ type: "image", url })),
+        ...(selectedVariant.videos && selectedVariant.videos.length > 0
+          ? selectedVariant.videos.map((video) => ({
+              type: "video",
+              url: video.url,
+              thumbnail: video.thumbnail,
+            }))
+          : []),
       ]
     : [];
 
@@ -396,19 +402,21 @@ const ProductDetail = () => {
                 {/* Main Media Display */}
                 <div
                   className="relative w-full h-[700px] overflow-hidden bg-gray-50 rounded-lg"
-                  onMouseEnter={() => currentMediaItem?.type === 'image' && setShowZoom(true)}
+                  onMouseEnter={() =>
+                    currentMediaItem?.type === "image" && setShowZoom(true)
+                  }
                   onMouseLeave={() => {
                     setShowZoom(false);
                     setShowVideoControls(false);
                   }}
                   onMouseMove={handleMouseMove}
                 >
-                  {currentMediaItem?.type === 'image' ? (
+                  {currentMediaItem?.type === "image" ? (
                     <>
                       <img
                         src={currentMediaItem.url || "/placeholder-image.jpg"}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover rounded-2xl"
                         onError={(e) => {
                           e.target.src = "/placeholder-image.jpg";
                         }}
@@ -417,7 +425,9 @@ const ProductDetail = () => {
                         <div
                           className="absolute right-0 top-0 w-[500px] h-[500px] border border-gray-200 overflow-hidden bg-white z-10 shadow-lg"
                           style={{
-                            backgroundImage: `url(${currentMediaItem.url || "/placeholder-image.jpg"})`,
+                            backgroundImage: `url(${
+                              currentMediaItem.url || "/placeholder-image.jpg"
+                            })`,
                             backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
                             backgroundSize: "200%",
                             backgroundRepeat: "no-repeat",
@@ -425,8 +435,8 @@ const ProductDetail = () => {
                         />
                       )}
                     </>
-                  ) : currentMediaItem?.type === 'video' ? (
-                    <div 
+                  ) : currentMediaItem?.type === "video" ? (
+                    <div
                       className="relative w-full h-full bg-black rounded-lg overflow-hidden"
                       onMouseEnter={() => setShowVideoControls(true)}
                       onMouseLeave={() => setShowVideoControls(false)}
@@ -434,54 +444,87 @@ const ProductDetail = () => {
                       <video
                         ref={videoRef}
                         src={currentMediaItem.url}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain rounded-2xl "
                         muted={isMuted}
                         poster={currentMediaItem.thumbnail}
                         onError={(e) => {
-                          console.error('Video load error:', e);
+                          console.error("Video load error:", e);
                         }}
                         onClick={handlePlayPause}
                       />
-                      
+
                       {/* Video Controls Overlay */}
-                      <div className={`absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center ${showVideoControls ? 'opacity-100' : 'opacity-0'}`}>
+                      <div
+                        className={`absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center ${
+                          showVideoControls ? "opacity-100" : "opacity-0"
+                        }`}
+                      >
                         <button
                           onClick={handlePlayPause}
                           className="bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-4 shadow-lg transform transition-all duration-300"
                         >
-                          {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
+                          {isPlaying ? (
+                            <Pause className="w-8 h-8" />
+                          ) : (
+                            <Play className="w-8 h-8 ml-1" />
+                          )}
                         </button>
                       </div>
 
                       {/* Video Controls Bar */}
-                      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 transition-all duration-300 ${showVideoControls ? 'opacity-100' : 'opacity-0'}`}>
+                      <div
+                        className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 transition-all duration-300 ${
+                          showVideoControls ? "opacity-100" : "opacity-0"
+                        }`}
+                      >
                         <div className="flex items-center space-x-3 text-white">
-                          <button onClick={handlePlayPause} className="hover:text-blue-400 transition-colors">
-                            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                          <button
+                            onClick={handlePlayPause}
+                            className="hover:text-blue-400 transition-colors"
+                          >
+                            {isPlaying ? (
+                              <Pause className="w-5 h-5" />
+                            ) : (
+                              <Play className="w-5 h-5" />
+                            )}
                           </button>
-                          
+
                           <div className="flex-1">
                             <input
                               type="range"
                               min="0"
                               max="100"
-                              value={duration ? (currentTime / duration) * 100 : 0}
+                              value={
+                                duration ? (currentTime / duration) * 100 : 0
+                              }
                               onChange={handleProgressChange}
                               className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
                               style={{
-                                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${duration ? (currentTime / duration) * 100 : 0}%, #4b5563 ${duration ? (currentTime / duration) * 100 : 0}%, #4b5563 100%)`
+                                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
+                                  duration ? (currentTime / duration) * 100 : 0
+                                }%, #4b5563 ${
+                                  duration ? (currentTime / duration) * 100 : 0
+                                }%, #4b5563 100%)`,
                               }}
                             />
                           </div>
-                          
+
                           <span className="text-sm min-w-[80px] text-center">
-                            {formatVideoTime(currentTime)} / {formatVideoTime(duration)}
+                            {formatVideoTime(currentTime)} /{" "}
+                            {formatVideoTime(duration)}
                           </span>
-                          
-                          <button onClick={handleMuteToggle} className="hover:text-blue-400 transition-colors">
-                            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+
+                          <button
+                            onClick={handleMuteToggle}
+                            className="hover:text-blue-400 transition-colors"
+                          >
+                            {isMuted ? (
+                              <VolumeX className="w-5 h-5" />
+                            ) : (
+                              <Volume2 className="w-5 h-5" />
+                            )}
                           </button>
-                          
+
                           <input
                             type="range"
                             min="0"
@@ -491,8 +534,8 @@ const ProductDetail = () => {
                             onChange={handleVolumeChange}
                             className="w-20 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
                           />
-                          
-                          <button 
+
+                          <button
                             className="hover:text-blue-400 transition-colors"
                             onClick={() => {
                               if (videoRef.current) {
@@ -528,7 +571,6 @@ const ProductDetail = () => {
                     className="w-full max-w-[400px] mx-auto"
                   >
                     <CarouselContent className="gap-2 transition-transform duration-0 ease-in-out justify-center">
-
                       {currentVariantMedia.map((media, index) => (
                         <CarouselItem
                           key={`${media.type}-${index}`}
@@ -542,11 +584,11 @@ const ProductDetail = () => {
                             } hover:border-gray-400 transition-all duration-200`}
                             onClick={() => handleMediaSelect(media, index)}
                           >
-                            {media.type === 'image' ? (
+                            {media.type === "image" ? (
                               <img
                                 src={media.url}
                                 alt={`Product view ${index + 1}`}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover "
                                 onError={(e) => {
                                   e.target.src = "/placeholder-image.jpg";
                                 }}
@@ -581,24 +623,26 @@ const ProductDetail = () => {
 
           {/* Product Info */}
           <div>
-            <div className="bg-green-500 text-white inline-block px-3 py-1 text-xs mb-4 rounded-full">
+            <div className="bg-green-500 text-white inline-block px-3 py-1 text-xs mb-4 rounded-full font-semibold">
               {product.createdAt &&
               new Date(product.createdAt).getTime() >
                 Date.now() - 20 * 24 * 60 * 60 * 1000
                 ? "New In"
                 : "Featured"}
             </div>
-            <h1 className="text-3xl font-medium mb-4">{product.name}</h1>
+            <h1 className="text-3xl font-medium mb-4 font-semibold text-[#001F3F]">
+              {product.name}
+            </h1>
 
             {selectedSize ? (
               <div className="flex items-center gap-4 mb-2">
-                <p className="text-2xl font-medium">
+                <p className="text-2xl font-medium font-semibold text-[#001F3F]">
                   {formatPrice(selectedSize.discountPrice)}
                 </p>
-                <p className="text-lg text-gray-500 line-through">
+                <p className="text-lg text-gray-500 line-through font-semibold text-[#001F3F]">
                   {formatPrice(selectedSize.price)}
                 </p>
-                <p className="text-green-600 text-lg">
+                <p className="text-green-600 text-lg font-semibold text-[#001F3F]">
                   {getDiscountPercentage(
                     selectedSize.price,
                     selectedSize.discountPrice
@@ -607,13 +651,15 @@ const ProductDetail = () => {
                 </p>
               </div>
             ) : (
-              <p className="text-2xl mb-2">Select a size to see price</p>
+              <p className="text-2xl mb-2 font-semibold text-[#001F3F]">
+                Select a size to see price
+              </p>
             )}
 
             {/* Color Selector */}
             {variants.length > 0 && (
               <div className="mb-6">
-                <p className="font-medium mb-2">
+                <p className="font-medium mb-2 font-semibold text-[#001F3F]">
                   Color: {selectedVariant?.color}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -647,7 +693,11 @@ const ProductDetail = () => {
             {/* Size Selector */}
             {sizes.length > 0 && (
               <div className="mb-6">
-                {sizes[0].size && <p className="font-medium mb-2">Size</p>}
+                {sizes[0].size && (
+                  <p className="font-medium mb-2 font-semibold text-[#001F3F]">
+                    Size
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-2">
                   {sizes.map((size) =>
                     size.size ? (
@@ -662,9 +712,11 @@ const ProductDetail = () => {
                         }`}
                         onClick={() => size.inStock && setSelectedSize(size)}
                       >
-                        <div className="text-sm">{size.size}</div>
+                        <div className="text-sm font-semibold text-[#001F3F]">
+                          {size.size}
+                        </div>
                         {!size.inStock && (
-                          <div className="text-xs text-red-500">
+                          <div className="text-xs text-red-500 font-semibold">
                             Out of stock
                           </div>
                         )}
@@ -677,7 +729,7 @@ const ProductDetail = () => {
                 {selectedSize && (
                   <div className="mt-2 text-sm">
                     {selectedSize.inStock ? (
-                      <div className="text-green-600 flex items-center">
+                      <div className="text-green-600 flex items-center font-semibold">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="16"
@@ -695,7 +747,7 @@ const ProductDetail = () => {
                         In Stock ({selectedSize.stockCount} available)
                       </div>
                     ) : (
-                      <div className="text-red-500 flex items-center">
+                      <div className="text-red-500 flex items-center font-semibold text-[#001F3F]">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="16"
@@ -721,14 +773,16 @@ const ProductDetail = () => {
 
             {/* Quantity Selector */}
             <div className="flex items-center gap-4 mb-6">
-              <label className="text-sm">Quantity</label>
+              <label className="text-sm font-semibold text-[#001F3F]">
+                Quantity
+              </label>
               <div className="flex items-center border border-gray-300 rounded">
                 <button
                   onClick={() => {
                     if (!isAuthenticated) return navigate("/login");
                     decreaseQuantity();
                   }}
-                  className="px-3 py-2 hover:bg-gray-100 transition-colors"
+                  className="px-3 py-2 hover:bg-gray-100 transition-colors font-semibold text-[#001F3F]"
                   disabled={!selectedSize?.inStock || !isAuthenticated}
                 >
                   -
@@ -742,7 +796,7 @@ const ProductDetail = () => {
                     if (!isAuthenticated) return navigate("/login");
                     setQuantity(parseInt(e.target.value) || 1);
                   }}
-                  className="w-12 text-center border-x border-gray-300 py-2"
+                  className="w-12 text-center border-x border-gray-300 py-2 font-semibold text-[#001F3F]"
                   disabled={!selectedSize?.inStock || !isAuthenticated}
                 />
                 <button
@@ -750,7 +804,7 @@ const ProductDetail = () => {
                     if (!isAuthenticated) return navigate("/login");
                     increaseQuantity();
                   }}
-                  className="px-3 py-2 hover:bg-gray-100 transition-colors"
+                  className="px-3 py-2 hover:bg-gray-100 transition-colors font-semibold text-[#001F3F]"
                   disabled={
                     !selectedSize?.inStock ||
                     quantity >= (selectedSize?.stockCount || 1) ||
@@ -764,7 +818,7 @@ const ProductDetail = () => {
             {/* Action Buttons */}
             <div className="space-y-4">
               <Button
-                className="w-full border-2 border-black bg-transparent text-black py-6 text-lg hover:bg-black hover:text-white transition-colors"
+                className="w-full border-2 font-semibold text-[#001F3F] border-black bg-transparent text-black py-6 text-lg hover:bg-black hover:text-white transition-colors"
                 disabled={
                   !selectedSize?.inStock || addingToCart || !isAuthenticated
                 }
@@ -795,7 +849,7 @@ const ProductDetail = () => {
 
               <div className="flex gap-4">
                 <Button
-                  className="flex-1 bg-black text-white py-6 text-lg hover:bg-black/90"
+                  className="flex-1 bg-black text-white font-semibold py-6 text-lg hover:bg-black/90"
                   disabled={!selectedSize?.inStock || !isAuthenticated}
                   onClick={handleBuyNow} // Updated handler
                 >
@@ -803,7 +857,7 @@ const ProductDetail = () => {
                 </Button>
 
                 <Button
-                  className="flex-1 border-2 border-red-500 bg-transparent text-red-500 py-6 text-lg hover:bg-red-500 hover:text-white transition-colors"
+                  className="flex-1 font-semibold text-[#001F3F] border-2 border-red-500 bg-transparent text-red-500 py-6 text-lg hover:bg-red-500 hover:text-white transition-colors"
                   disabled={!selectedSize?.inStock || !isAuthenticated}
                   onClick={async () => {
                     if (!isAuthenticated) return navigate("/login");
@@ -847,7 +901,9 @@ const ProductDetail = () => {
                   onClick={() => setIsDetailsOpen(!isDetailsOpen)}
                   className="w-full flex justify-between items-center p-4 font-medium"
                 >
-                  <span>Product Details</span>
+                  <span className="font-semibold text-[#001F3F]">
+                    Product Details
+                  </span>
                   <span
                     className={`transform transition-transform ${
                       isDetailsOpen ? "rotate-180" : ""
@@ -861,28 +917,46 @@ const ProductDetail = () => {
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       {product.material && (
                         <div>
-                          <p className="font-medium">Material</p>
-                          <p>{product.material}</p>
+                          <p className="font-medium font-semibold text-[#001F3F]">
+                            Material
+                          </p>
+                          <p className="font-semibold text-[#001F3F]">
+                            {product.material}
+                          </p>
                         </div>
                       )}
                       {product.pattern && (
                         <div>
-                          <p className="font-medium">Pattern</p>
-                          <p>{product.pattern}</p>
+                          <p className="font-medium font-semibold text-[#001F3F]">
+                            Pattern
+                          </p>
+                          <p className="font-semibold text-[#001F3F]">
+                            {product.pattern}
+                          </p>
                         </div>
                       )}
                       {product.gender && (
                         <div>
-                          <p className="font-medium">Gender</p>
-                          <p>{product.gender}</p>
+                          <p className="font-medium font-semibold text-[#001F3F]">
+                            Gender
+                          </p>
+                          <p className="font-semibold text-[#001F3F]">
+                            {product.gender}
+                          </p>
                         </div>
                       )}
                     </div>
-                    <p className="text-sm">{product.description}</p>
+                    <p className="text-sm font-semibold text-[#001F3F]">
+                      {product.description}
+                    </p>
                     {selectedSize?.description && (
                       <div className="mt-4">
-                        <p className="font-medium">Size Details</p>
-                        <p className="text-sm">{selectedSize.description}</p>
+                        <p className="font-medium font-semibold text-[#001F3F]">
+                          Size Details
+                        </p>
+                        <p className="text-sm font-semibold text-[#001F3F]">
+                          {selectedSize.description}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -894,9 +968,11 @@ const ProductDetail = () => {
                   onClick={() => setIsReturnOpen(!isReturnOpen)}
                   className="w-full flex justify-between items-center p-4 font-medium"
                 >
-                  <span>Return and Exchange</span>
+                  <span className="font-semibold text-[#001F3F]">
+                    Return and Exchange
+                  </span>
                   <span
-                    className={`transform transition-transform ${
+                    className={`transform transition-transform  ${
                       isReturnOpen ? "rotate-180" : ""
                     }`}
                   >
@@ -905,7 +981,7 @@ const ProductDetail = () => {
                 </button>
                 {isReturnOpen && (
                   <div className="p-4 border-t">
-                    <div className="text-sm space-y-2">
+                    <div className="text-sm space-y-2 font-semibold text-[#001F3F]">
                       <p>Our Return & Exchange Policy:</p>
                       <ul className="list-disc list-inside">
                         <li>Returns accepted within 7 days of delivery</li>
@@ -933,7 +1009,9 @@ const ProductDetail = () => {
 
         {/* Related Products */}
         <div className="mt-12">
-          <h2 className="text-2xl font-medium mb-6">Related Products</h2>
+          <h2 className="text-2xl font-semibold text-[#001F3F] mb-6">
+            Related Products
+          </h2>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {variants &&
               variants.slice(0, 4).map((variant, index) => (
@@ -949,7 +1027,7 @@ const ProductDetail = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                  <h3 className="text-sm font-medium mb-2 group-hover:underline">
+                  <h3 className="text-sm font-medium mb-2 group-hover:underline font-semibold text-[#001F3F]">
                     {product.name} - {variant.color}
                   </h3>
                   <div className="flex items-center gap-2">
@@ -960,7 +1038,7 @@ const ProductDetail = () => {
                         </p>
                         {variant.sizes[0].price >
                           variant.sizes[0].discountPrice && (
-                          <p className="text-sm text-gray-500 line-through">
+                          <p className="text-sm text-gray-500 line-through ">
                             {formatPrice(variant.sizes[0].price)}
                           </p>
                         )}

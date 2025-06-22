@@ -6,7 +6,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        montserrat: ["Montserrat", "sans-serif"],
+        techno: ['Audiowide', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",

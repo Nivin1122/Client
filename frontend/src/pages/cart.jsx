@@ -99,14 +99,22 @@ const Cart = () => {
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-12 max-w-7xl">
-        <h1 className="text-3xl font-serif text-center mt-20 mb-10">
+        <h1 className="text-3xl font-semibold text-[#001F3F] text-center mt-32 mb-10">
           Your Cart
         </h1>
 
-        {loading && <p className="text-center">Loading...</p>}
-        {error && <p className="text-center text-red-500">{error}</p>}
+        {loading && (
+          <p className="text-center text-[#001F3F] font-semibold">Loading...</p>
+        )}
+        {error && (
+          <p className="text-center text-red-500 text-[#001F3F] font-semibold">
+            {error}
+          </p>
+        )}
         {!loading && cartItems.length === 0 && (
-          <p className="text-center">Your cart is empty.</p>
+          <p className="text-center text-[#001F3F] font-semibold">
+            Your cart is empty.
+          </p>
         )}
 
         {cartItems.length > 0 && (
@@ -114,11 +122,21 @@ const Cart = () => {
             <table className="w-full text-sm hidden md:table">
               <thead>
                 <tr className="border-b text-gray-600">
-                  <th className="text-left pb-3">Product</th>
-                  <th className="text-center pb-3">Size / Color</th>
-                  <th className="text-right pb-3">Price</th>
-                  <th className="text-center pb-3">Quantity</th>
-                  <th className="text-right pb-3">Subtotal</th>
+                  <th className="text-left pb-3 text-[#001F3F] font-semibold">
+                    Product
+                  </th>
+                  <th className="text-center pb-3 text-[#001F3F] font-semibold">
+                    Size / Color
+                  </th>
+                  <th className="text-right pb-3 text-[#001F3F] font-semibold">
+                    Price
+                  </th>
+                  <th className="text-center pb-3 text-[#001F3F] font-semibold">
+                    Quantity
+                  </th>
+                  <th className="text-right pb-3 text-[#001F3F] font-semibold">
+                    Subtotal
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -137,10 +155,10 @@ const Cart = () => {
                           }
                         />
                         <div>
-                          <h3 className="font-medium w-80 overflow-hidden h-10">
+                          <h3 className="font-medium w-80 overflow-hidden h-10 text-[#001F3F] font-semibold">
                             {item.product.name}
                           </h3>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs mt-1 text-[#001F3F] font-semibold">
                             Stock:{" "}
                             <span className="text-green-600">
                               {item.sizeVariant.stockCount} available
@@ -148,7 +166,7 @@ const Cart = () => {
                           </p>
                           <button
                             onClick={() => handleRemoveClick(item)}
-                            className="w-100 mt-2 px-4 py-1 border border-red-500 text-red-500 text-sm rounded-md hover:bg-red-500 hover:text-white transition duration-200 text-center"
+                            className="w-100 text-[#001F3F] font-semibold mt-2 px-4 py-1 border border-red-500 text-red-500 text-sm rounded-md hover:bg-red-500 hover:text-white transition duration-200 text-center"
                           >
                             Remove
                           </button>
@@ -164,13 +182,13 @@ const Cart = () => {
                       />
                     </td>
 
-                    <td className="text-right py-4">
+                    <td className="text-right py-4 text-[#001F3F] font-semibold">
                       {item.sizeVariant.discountPrice ? (
                         <div>
-                          <span className="line-through text-gray-400 mr-1">
+                          <span className="line-through text-gray-400 mr-1 text-[#001F3F] font-semibold">
                             Rs. {item.price}
                           </span>
-                          <span className="text-green-600">
+                          <span className="text-green-600 text-[#001F3F] font-semibold">
                             Rs. {item.sizeVariant.discountPrice}
                           </span>
                         </div>
@@ -182,7 +200,7 @@ const Cart = () => {
                     <td className="text-center py-4">
                       <div className="flex justify-center">
                         <button
-                          className="px-2 py-1 border border-gray-300 rounded-l"
+                          className="px-2 py-1 border border-gray-300 rounded-l text-[#001F3F] font-semibold"
                           onClick={() =>
                             updateQuantity(item, item.quantity - 1)
                           }
@@ -190,11 +208,11 @@ const Cart = () => {
                         >
                           -
                         </button>
-                        <span className="px-4 py-1 border-t border-b border-gray-300">
+                        <span className="px-4 py-1 border-t border-b border-gray-300 text-[#001F3F] font-semibold">
                           {item.quantity}
                         </span>
                         <button
-                          className="px-2 py-1 border border-gray-300 rounded-r"
+                          className="px-2 py-1 border border-gray-300 rounded-r text-[#001F3F] font-semibold"
                           onClick={() =>
                             updateQuantity(item, item.quantity + 1)
                           }
@@ -208,7 +226,7 @@ const Cart = () => {
                     </td>
 
                     <td className="text-right py-4">
-                      <span className="text-green-600">
+                      <span className="text-green-600 text-[#001F3F] font-semibold">
                         Rs. {calculateSubtotal().toFixed(2)}
                       </span>
                     </td>
@@ -235,7 +253,9 @@ const Cart = () => {
                     <div className="flex-1">
                       <h3 className="font-medium">{item.product.name}</h3>
                       <div className="mt-1 space-y-1 text-sm text-gray-500">
-                        <p>Size: {item.sizeVariant.size}</p>
+                        <p className="text-[#001F3F] font-semibold">
+                          Size: {item.sizeVariant.size}
+                        </p>
                         <div className="flex items-center gap-1">
                           <span>Color:</span>
                           <span
@@ -245,7 +265,7 @@ const Cart = () => {
                         </div>
                         <p>
                           Stock:{" "}
-                          <span className="text-green-600">
+                          <span className="text-green-600 text-[#001F3F] font-semibold">
                             {item.sizeVariant.stockCount} available
                           </span>
                         </p>
@@ -328,16 +348,12 @@ const Cart = () => {
         {/* Order Summary */}
         {cartItems.length > 0 && (
           <div className="mt-10 flex flex-col lg:flex-row justify-between gap-8">
-            <div className="w-full lg:w-1/2">
-            </div>
+            <div className="w-full lg:w-1/2"></div>
 
             <div className="w-full lg:w-1/2 flex flex-col items-end gap-4">
               <div className="w-full text-right">
-                <p className="text-lg font-semibold">
+                <p className="text-lg text-[#001F3F] font-semibold">
                   Subtotal: Rs. {calculateSubtotal().toFixed(2)}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Tax included. Shipping and discounts calculated at checkout.
                 </p>
               </div>
 
@@ -345,14 +361,14 @@ const Cart = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
                   <button
                     onClick={() => navigate("/checkout")}
-                    className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition duration-200 w-full sm:w-auto text-center"
+                    className=" font-semibold bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition duration-200 w-full sm:w-auto text-center"
                   >
                     CHECKOUT
                   </button>
 
                   <Link
                     to="/products"
-                    className="inline-block border border-red-500 text-red-500 px-6 py-3 rounded-md hover:bg-red-500 hover:text-white transition duration-200 w-full sm:w-auto text-center"
+                    className="font-semibold inline-block border border-red-500 text-red-500 px-6 py-3 rounded-md hover:bg-red-500 hover:text-white transition duration-200 w-full sm:w-auto text-center"
                   >
                     Continue Shopping
                   </Link>
@@ -364,7 +380,9 @@ const Cart = () => {
 
         {/* Shop More Section */}
         <div className="mt-16">
-          <h2 className="text-2xl font-serif text-center mb-8">Shop More</h2>
+          <h2 className="text-2xl text-[#001F3F] font-semibold text-center mb-8">
+            Shop More
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
@@ -395,8 +413,10 @@ const Cart = () => {
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                   <div className="text-white text-center">
-                    <h3 className="text-xl font-medium">{title}</h3>
-                    <p className="text-sm">{products} products</p>
+                    <h3 className="text-xl font-medium font-semibold">
+                      {title}
+                    </h3>
+                    <p className="text-sm font-semibold">{products} products</p>
                   </div>
                 </div>
               </Link>

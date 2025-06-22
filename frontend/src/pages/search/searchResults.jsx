@@ -168,7 +168,7 @@ const SearchResults = () => {
                       <img
                         src={currentVariant?.mainImage || '/placeholder-product.jpg'}
                         alt={product.name}
-                        className="w-full h-[350px] md:h-[450px] lg:h-[500px] object-cover"
+                        className="w-full h-[350px] md:h-[450px] lg:h-[500px] object-cover rounded-2xl"
                       />
                     </a>
 

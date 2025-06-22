@@ -6,6 +6,11 @@ import { fetchWishlistItems } from "../redux/slices/wishlistSlice";
 import axiosInstance from "../utils/axiosInstance";
 import logo from "../assets/headerlogo.webp";
 import SearchResultsDropdown from "./searchDropdown"; // We'll create this component
+import {
+  UserIcon,
+  HeartIcon,
+  ShoppingBagIcon,
+} from "@heroicons/react/24/outline";
 
 const debounce = (func, delay) => {
   let timer;
@@ -25,6 +30,7 @@ const Header = ({ onCategorySelect }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [showSearchInput, setShowSearchInput] = useState(false);
 
   const dispatch = useDispatch();
   const { totalItems } = useSelector((state) => state.cart);
@@ -172,6 +178,8 @@ const Header = ({ onCategorySelect }) => {
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setShowSearchResults(false);
+      setShowSearchInput(false);
+      setSearchQuery("");
     }
   };
 
@@ -259,88 +267,9 @@ const Header = ({ onCategorySelect }) => {
             ))}
           </div>
         </div>
-        {/* Top Bar */}
-        <div className="bg-gray-100 text-gray-600 text-sm py-2 px-4">
-          <div className="container mx-auto flex justify-between items-center">
-            <div className="hidden md:block">Welcome to Emirah Shop!</div>
-            <div className="flex items-center space-x-4 ml-auto">
-              {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/account"
-                    className="hover:text-gray-800 flex items-center"
-                  >
-                    <svg
-                      className="w-4 h-4 mr-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                    My Account
-                  </Link>
-                  <button
-                    onClick={() => checkAuthAndNavigate("/wishlist")}
-                    className="relative hover:text-gray-600 transition-colors"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                        />
-                      </svg>
-                      <div className="hidden md:block text-sm">
-                        <div className="font-semibold">Wishlist</div>
-                      </div>
-                    </div>
-                    {wishlistCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {wishlistCount}
-                      </span>
-                    )}
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  className="hover:text-gray-800 flex items-center"
-                >
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                    />
-                  </svg>
-                  Log in
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Main Header */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white border-b border-gray-200 px-12  flex justify-between items-center">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between py-4">
               {/* Mobile Menu Toggle */}
@@ -366,27 +295,33 @@ const Header = ({ onCategorySelect }) => {
                 </button>
               </div>
 
-              {/* Logo */}
-              <div className="flex-shrink-0">
-                <Link to="/">
-                  <img src={logo} alt="Emirah" className="h-14" />
-                </Link>
-              </div>
-
               {/* Desktop Search */}
-              <div className="hidden md:flex items-center flex-1 max-w-2xl mx-8">
-                <div className="relative w-full search-container">
-                  <form onSubmit={handleSearch} className="flex">
+              <div className="relative transition-all duration-300 ease-in-out">
+                <div
+                  className={`relative ${
+                    showSearchInput ? "w-64" : "w-0"
+                  } overflow-hidden transition-all duration-300 ease-in-out`}
+                >
+                  <form onSubmit={handleSearch} className="flex items-center">
                     <input
                       type="text"
                       placeholder="Search products..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        debouncedSearch(e.target.value);
+                      }}
+                      className="px-4 py-2 w-full focus:outline-none border border-gray-300 rounded-l-md"
+                      autoFocus={showSearchInput}
                     />
                     <button
-                      type="submit"
-                      className="px-4 bg-gray-800 text-white rounded-r-md hover:bg-gray-700 transition-colors"
+                      type="button"
+                      onClick={() => {
+                        setShowSearchInput(false);
+                        setSearchQuery("");
+                        setShowSearchResults(false);
+                      }}
+                      className="px-3 py-2 bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors border border-l-0 border-gray-300 rounded-r-md"
                     >
                       <svg
                         className="w-5 h-5"
@@ -398,56 +333,161 @@ const Header = ({ onCategorySelect }) => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          d="M6 18L18 6M6 6l12 12"
                         />
                       </svg>
                     </button>
                   </form>
+                </div>
 
-                  {/* Search Results Dropdown */}
-                  {showSearchResults && (
-                    <SearchResultsDropdown
-                      searchResults={searchResults}
-                      isSearching={isSearching}
-                      onClose={() => setShowSearchResults(false)}
-                      searchQuery={searchQuery}
+                {/* Search Icon Button (always visible but moves when input appears) */}
+                <button
+                  onClick={() => {
+                    setShowSearchInput(!showSearchInput);
+                    if (!showSearchInput) {
+                      // Focus the input when showing it
+                      setTimeout(() => {
+                        document.querySelector('input[type="text"]')?.focus();
+                      }, 300);
+                    } else {
+                      setSearchQuery("");
+                      setShowSearchResults(false);
+                    }
+                  }}
+                  className={`absolute top-0 p-2 text-gray-600 hover:text-gray-900 transition-all duration-300 ease-in-out ${
+                    showSearchInput ? "right-full mr-2" : "right-0"
+                  }`}
+                  aria-label="Search"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Search Results Dropdown - Only shown when there are results */}
+              {showSearchResults && searchQuery.trim() && (
+                <div className="absolute top-full right-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
+                  {isSearching ? (
+                    <div className="flex justify-center items-center py-8">
+                      <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-gray-800 border-r-transparent"></div>
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      No products found
+                    </div>
+                  ) : (
+                    <div className="p-2">
+                      {searchResults.slice(0, 4).map((product) => (
+                        <Link
+                          key={product._id}
+                          to={`/detail/${product._id}`}
+                          className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-md transition-colors border-b border-gray-100 last:border-b-0"
+                          onClick={() => {
+                            setShowSearchResults(false);
+                            setShowSearchInput(false);
+                            setSearchQuery("");
+                          }}
+                        >
+                          <img
+                            src={
+                              product.variants?.[0]?.mainImage ||
+                              "/placeholder-product.jpg"
+                            }
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-gray-900 truncate">
+                              {product.name}
+                            </h4>
+                            <p className="text-sm text-gray-500">
+                              Rs.{" "}
+                              {product.variants?.[0]?.sizes?.[0]?.price?.toFixed(
+                                2
+                              ) || "N/A"}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                      {searchResults.length > 4 && (
+                        <div className="mt-2 text-center">
+                          <Link
+                            to={`/search?q=${encodeURIComponent(searchQuery)}`}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            onClick={() => {
+                              setShowSearchResults(false);
+                              setShowSearchInput(false);
+                              setSearchQuery("");
+                            }}
+                          >
+                            View all {searchResults.length} results
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
+              )}
+              {/* </div> */}
+
+              {/* Logo */}
+              <div className="flex-shrink-0">
+                <Link to="/">
+                  <img src={logo} alt="Emirah" className="h-20" />
+                </Link>
               </div>
 
               {/* Cart */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center gap-4 text-black">
+                {/* Cart Button */}
                 <button
                   onClick={() => checkAuthAndNavigate("/cart")}
                   className="relative hover:text-gray-600 transition-colors"
                 >
-                  <div className="flex items-center space-x-2">
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0L17 18m0 0l2.5-5M17 18l-2.5-5"
-                      />
-                    </svg>
-                    <div className="hidden md:block text-sm">
-                      <div className="text-gray-600">
-                        ({totalItems} item{totalItems !== 1 ? "s" : ""})
-                      </div>
-                    </div>
-                  </div>
+                  <ShoppingBagIcon className="w-6 h-6" />
                   {totalItems > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {totalItems}
                     </span>
                   )}
                 </button>
+
+                {/* Account or Login */}
+                {isAuthenticated ? (
+                  <>
+                    <Link to="/account" className="hover:text-gray-600">
+                      <UserIcon className="w-6 h-6" />
+                    </Link>
+
+                    {/* Wishlist */}
+                    <button
+                      onClick={() => checkAuthAndNavigate("/wishlist")}
+                      className="relative hover:text-gray-600 transition-colors"
+                    >
+                      <HeartIcon className="w-6 h-6" />
+                      {wishlistCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {wishlistCount}
+                        </span>
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <Link to="/login" className="hover:text-gray-600">
+                    <UserIcon className="w-6 h-6" />
+                  </Link>
+                )}
               </div>
             </div>
 
@@ -561,12 +601,12 @@ const Header = ({ onCategorySelect }) => {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="bg-[#001F3F] text-white hidden md:block">
+        <nav className="bg-white text-[#001F3F] hidden md:block">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-center space-x-8 py-3">
               {loading ? (
                 <div className="flex justify-center py-3">
-                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-black border-r-transparent"></div>
                 </div>
               ) : (
                 categories.map((category) => {
@@ -581,10 +621,14 @@ const Header = ({ onCategorySelect }) => {
                       <button
                         onClick={() => handleCategoryClick(category)}
                         className={`${
-                          isActive ? "text-yellow-400" : "text-white"
-                        } hover:text-yellow-400 transition-colors duration-200 flex items-center space-x-1 py-2 px-3 rounded-md`}
+                          isActive
+                            ? "text-yellow-400 font-bold"
+                            : "text-[#001F3F] font-bold"
+                        } hover:text-blue-800 hover:underline hover:underline-offset-2 hover:decoration-2 transition-colors duration-200 flex items-center space-x-1 py-2 px-3 rounded-md text-base`}
                       >
-                        <span className="font-medium">{category.name}</span>
+                        <span className="text-base font-semibold">
+                          {category.name}
+                        </span>
                         {category.children && category.children.length > 0 && (
                           <svg
                             className="w-4 h-4"
