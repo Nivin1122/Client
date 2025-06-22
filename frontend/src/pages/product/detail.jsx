@@ -40,6 +40,7 @@ const ProductDetail = () => {
   const [error, setError] = useState(null);
   const [sizes, setSizes] = useState([]);
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(false);
 
   // Video controls state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -55,6 +56,16 @@ const ProductDetail = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize(); // Set initial value
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Video event handlers
@@ -403,13 +414,17 @@ const ProductDetail = () => {
                 <div
                   className="relative w-full h-[700px] overflow-hidden bg-gray-50 rounded-lg"
                   onMouseEnter={() =>
-                    currentMediaItem?.type === "image" && setShowZoom(true)
+                    !isMobile &&
+                    currentMediaItem?.type === "image" &&
+                    setShowZoom(true)
                   }
                   onMouseLeave={() => {
                     setShowZoom(false);
                     setShowVideoControls(false);
                   }}
-                  onMouseMove={handleMouseMove}
+                  onMouseMove={(e) => {
+                    if (!isMobile) handleMouseMove(e);
+                  }}
                 >
                   {currentMediaItem?.type === "image" ? (
                     <>
@@ -421,7 +436,7 @@ const ProductDetail = () => {
                           e.target.src = "/placeholder-image.jpg";
                         }}
                       />
-                      {showZoom && (
+                      {showZoom && !isMobile && (
                         <div
                           className="absolute right-0 top-0 w-[500px] h-[500px] border border-gray-200 overflow-hidden bg-white z-10 shadow-lg"
                           style={{

@@ -22,10 +22,12 @@ import Shipping from "./pages/privacy/shiping";
 import TermsAndConditions from "./pages/privacy/termsAndConditions";
 import About from "./pages/privacy/about";
 import Contact from "./pages/privacy/contactUs";
+import ScrollToTop from "./utils/scrollToTop";
 
 function App() {
   return (
     <>
+      <ScrollToTop />
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -51,7 +53,6 @@ function App() {
         <Route path="/termsandcondition" element={<TermsAndConditions />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-
 
         <Route path="/shiping" element={<Shipping />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
