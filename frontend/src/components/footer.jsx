@@ -19,7 +19,7 @@ const Footer = () => {
             
             {/* Contact Information */}
             <div className="space-y-3">
-              <p className="text-gray-700 text-sm leading-relaxed">
+              <p className="text-gray-700 text-sm font-semibold leading-relaxed">
                 <span className="font-semibold">Address:</span> TC 25/3347, Marian Enclave, Trivandrum,
               </p>
               <p className="text-gray-700 text-sm font-semibold">Kerala - 695003</p>
@@ -63,7 +63,7 @@ const Footer = () => {
 
           {/* Help Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-6 text-yellow-500 font-techno">Help</h3>
+            <h3 className="text-lg font-semibold mb-6 text-yellow-500">Help</h3>
             <ul className="space-y-3">
               <li><a href="/privacypolicy" className="text-[#001F3F] text-sm hover:text-gray-800 hover:underline transition-colors font-semibold">Privacy Policy</a></li>
               <li><a href="/returnandrefunds" className="text-[#001F3F] text-sm hover:text-gray-800 hover:underline transition-colors font-semibold">Returns & Refunds</a></li>
@@ -75,7 +75,7 @@ const Footer = () => {
 
           {/* About Us Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-6 text-yellow-500 font-techno">About us</h3>
+            <h3 className="text-lg font-semibold mb-6 text-yellow-500">About us</h3>
             <ul className="space-y-3">
               <li><a href="/about" className="text-[#001F3F] text-sm hover:text-gray-800 hover:underline transition-colors font-semibold">Our Story</a></li>
               <li><a href="#" className="text-[#001F3F] text-sm hover:text-gray-800 hover:underline transition-colors font-semibold">Visit Our Store</a></li>
@@ -86,7 +86,7 @@ const Footer = () => {
 
           {/* Useful Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-6 text-yellow-500 font-techno">Useful Link</h3>
+            <h3 className="text-lg font-semibold mb-6 text-yellow-500">Useful Link</h3>
             <ul className="space-y-3">
               <li><a href="/products?page=1&limit=8&category=68410ecb0fa10b2d72ec2515&sortBy=newest" className="text-[#001F3F] text-sm hover:text-gray-800 hover:underline transition-colors font-semibold">New Arrivals</a></li>
               <li><a href="/products?page=1&limit=8&category=684110490fa10b2d72ec25c5&sortBy=newest" className="text-[#001F3F] text-sm hover:text-gray-800 hover:underline transition-colors font-semibold">Bestseller</a></li>
@@ -105,8 +105,8 @@ const Footer = () => {
 
         {/* Bottom Section with Copyright and Payment Icons */}
         <div className="mt-16 pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center">
-          <div className="text-gray-500 text-sm mb-4 md:mb-0">
-            © 2025 Emirah. All Rights Reserved | Powered by <span className="text-blue-600">crioweb</span>
+          <div className="text-gray-500 text-sm mb-4 md:mb-0 font-semibold">
+            © 2025 Emirah. All Rights Reserved | Powered by <span className="text-blue-600">BSN</span>
           </div>
           
           {/* Payment Icons */}

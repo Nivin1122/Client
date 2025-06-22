@@ -186,12 +186,17 @@ const BestSeller = () => {
                 </span>
 
                 <div className="relative cursor-pointer group">
-                  <img
-                    src={variant.mainImage || fallbackImage}
-                    alt={product.name}
-                    className="w-full h-[350px] md:h-[450px] lg:h-[500px] object-cover rounded-2xl"
+                  <div
+                    className="relative cursor-pointer group overflow-hidden rounded-2xl w-full h-[350px] md:h-[450px] lg:h-[500px]"
                     onClick={() => handleProductClick(product._id)}
-                  />
+                  >
+                    <img
+                      src={variant.mainImage || fallbackImage}
+                      alt={product.name}
+                      className="w-full h-[350px] md:h-[450px] lg:h-[500px] object-cover rounded-2xl transform transition-transform duration-500 ease-in-out group-hover:scale-105"
+                      onClick={() => handleProductClick(product._id)}
+                    />
+                  </div>
 
                   {/* Hover arrows */}
                   {hoveredProductId === product._id &&
